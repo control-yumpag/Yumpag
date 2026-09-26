@@ -7833,6 +7833,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   <button data-v="v-res"><span class="ic">◈</span> Resumen</button>
   <button data-v="v-bim" class="bim-badge"><span class="ic">🏛️</span> BIM 4D · Construcción</button>
   <button data-v="v-proc"><span class="ic">🏗️</span> Proceso Constructivo</button>
+  <button data-v="v-fot"><span class="ic">📷</span> Fotos de obra</button>
 </div>
 
 <div class="views">
@@ -8144,6 +8145,26 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   </section>
 
   <!-- ==================== PROCESO CONSTRUCTIVO ==================== -->
+  <!-- ==================== FOTOS DE OBRA (v72.3) ==================== -->
+  <section id="v-fot" class="view">
+    <div class="card fot-zona"><h3><span class="dot"></span>Zona · torre o camino</h3>
+      <div class="desc">Histórico fotográfico de la obra ubicado por GPS (o por el sello de la foto). Elige una torre o un camino; el plano muestra dónde se tomó cada foto, coloreada por la fase que se reconoce en ella.</div>
+      <div class="fot-kpis" id="fotKpis"></div>
+      <div class="cam-chips fot-chips" id="fotZonas"></div>
+      <div class="fot-plano" id="fotPlano"></div>
+      <div class="fot-leyenda" id="fotLeyenda"></div>
+    </div>
+    <div class="card fot-hist"><h3><span class="dot"></span><span id="fotTitulo">Fotos de obra</span></h3>
+      <div class="desc" id="fotDesc"></div>
+      <div class="fot-filtros" id="fotFiltros"></div>
+      <div class="fot-dias" id="fotDias"></div>
+      <div class="body scroll fot-body">
+        <div class="fot-tabla" id="fotTabla"></div>
+        <div class="fot-galeria" id="fotGaleria"></div>
+      </div>
+    </div>
+  </section>
+
   <section id="v-proc" class="view">
     <div class="card pc-card"><h3><span class="dot"></span>Secuencia constructiva · obra civil y montaje electromecánico</h3>
       <div class="desc">Actividades de la hoja Avance del reporte: ejecutado (EV) sobre plan (PV) y tira de las 23 torres. Pasa el puntero para ver el porcentaje; clic en la actividad para el detalle por torre; clic en una torre (tira, chip o barra) para verla en el BIM.</div>
@@ -9262,6 +9283,7 @@ async function cargarFotosCampo(){
     const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(f=>Object.assign({}, f, {src:'fotos/'+f.archivo}));
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
     pintarFotosTorre(); construirPinesFotos(); pintarAlertaFotos();
+    try{ renderFotosTab(); }catch(e){ console.warn('fotos', e); }
     try{ if (typeof renderCamProc==='function') renderCamProc(); }catch(e){}
   }catch(e){ /* sin índice de fotos: el tablero funciona igual */ }
 }
@@ -9315,14 +9337,120 @@ function pintarAlertaFotos(){
     <div class="ax">${inco.length?lin+(inco.length>6?` · +${inco.length-6}`:''):'La fase reconocida en cada foto de avance coincide con el % oficial de su torre ese día.'}${conf.length?` · ${conf.length} foto(s) con torre por confirmar (sin GPS legible: se usó la carpeta).`:''} Fotos en la ficha de cada torre (BIM 4D) y en el panel Caminos.</div>`;
   el.prepend(div);
 }
-function abrirFoto(src){
+/* =====================================================================
+   PESTAÑA FOTOS DE OBRA (v72.3) · histórico fotográfico por torre y camino
+   Solo usa fotos/fotos.json (FOTOS_CAMPO), GEO/CAMINOS_KMZ (plano) y DATA.towers[].seq (% oficial por día).
+   ===================================================================== */
+const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', otro:'#8f9a96'};
+const FASES_ORD = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat','otro','sin fase'];
+const faseColor = f => f && f.fase ? (FASE_COLOR[f.fase]||'#8f9a96') : '#c2ccc8';
+let fotSel = {zona:'Todas', dia:null, fase:'Todas', cat:'Todas'};
+let fotListaActual = [];
+const fotNat = (a,b)=>{ const f=s=>{const m=String(s).match(/^([A-Z]+)(\d+)([A-Z]*)$/);return m?[m[1],+m[2],m[3]]:[s,0,''];}; const x=f(a),y=f(b); return x[0]<y[0]?-1:x[0]>y[0]?1:(x[1]-y[1])||(x[2]<y[2]?-1:x[2]>y[2]?1:0); };
+function utmAEN(E,N){ return { e:UTM_AFIN.e[0]*E+UTM_AFIN.e[1]*N+UTM_AFIN.e[2], n:UTM_AFIN.n[0]*E+UTM_AFIN.n[1]*N+UTM_AFIN.n[2] }; }
+/* fotos de una zona: torre = las asignadas a ella; camino = las tomadas sobre él (lejos de toda torre o etiquetadas «acceso») */
+function fotDeZona(z){ return z==='Todas' ? FOTOS_CAMPO.slice() : FOTOS_CAMPO.filter(f => f.torre===z || (f.camino===z && (!f.torre || f.fase==='acceso'))); }
+function fotFiltrar(base){ return base.filter(f => (fotSel.fase==='Todas' || (f.fase||'sin fase')===fotSel.fase) && (fotSel.cat==='Todas' || f.categoria===fotSel.cat)); }
+/* % oficial de la torre (Exc·Sol·Stub·Ace·Enc·Con) al último corte ≤ fecha, desde la serie del tablero */
+function pctReporte(torre, fecha){
+  const t = DATA.towers.find(x=>x.t===torre); if(!t) return null;
+  const F = DATA.tl_weeks||[]; let idx=-1; for(let i=0;i<F.length;i++){ if(F[i]<=fecha) idx=i; }
+  const acts = DATA.PATA_ACTS || ['Excavación','Solado','Stub','Acero','Encofrado','Concreto'];
+  return {corte: idx>=0?F[idx]:null, vals: acts.map(a=>{ if(t.d[a]==='NA') return [a,'NA']; const s=(t.seq||{})[a]; const v=(s && idx>=0 && idx<s.length) ? s[idx] : t.d[a]; return [a, v==null?'NA':v]; })};
+}
+function renderFotosTab(){
+  const $z=document.getElementById('fotZonas'); if(!$z) return;
+  const todas = FOTOS_CAMPO;
+  if(!todas.length){
+    ['fotKpis','fotZonas','fotPlano','fotLeyenda','fotFiltros','fotDias','fotTabla'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
+    document.getElementById('fotGaleria').innerHTML = `<div class="fot-vacio">Sin fotos indexadas todavía.<br>Las fotos del día se suben a Drive <b>CLAUDE/02_fotos/NNN DD-Mes-AA/</b> (subcarpetas T-NN · MA · SST · AA.SS) y el generador las ubica, reconoce la fase y las publica aquí.</div>`; return; }
+  const dias=[...new Set(todas.map(f=>f.fecha))].sort(), nT=new Set(todas.filter(f=>f.torre).map(f=>f.torre)).size, nC=new Set(todas.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino)).size;
+  const inco=todas.filter(f=>f.coherente===false).length;
+  document.getElementById('fotKpis').innerHTML = [[todas.length,'fotos'],[dias.length,dias.length===1?'día':'días'],[fdFoto(dias[dias.length-1]),'última captura'],[nT,'torres'],[nC,'caminos'],[inco?`⚠ ${inco}`:'✓ 0','vs reporte']].map(x=>`<div class="k"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+  const cnt = z => fotDeZona(z).length;
+  const caminos=[...new Set(todas.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino))].sort(fotNat);
+  const confZ = new Set(todas.filter(f=>f.estado==='conf'&&f.torre).map(f=>f.torre));
+  if(fotSel.zona!=='Todas' && !cnt(fotSel.zona) && !DATA.towers.some(t=>t.t===fotSel.zona)) fotSel.zona='Todas';
+  $z.innerHTML = `<button data-z="Todas" class="${fotSel.zona==='Todas'?'on':''}">Toda la línea<span class="n">${todas.length}</span></button><span class="sep">Torres</span>`+
+    DATA.towers.map(t=>{ const n=cnt(t.t); return `<button data-z="${t.t}" class="${fotSel.zona===t.t?'on':''} ${n?'':'vacio'} ${confZ.has(t.t)?'conf':''}" title="${n} foto(s)${confZ.has(t.t)?' · alguna con torre por confirmar':''}">${t.t}${n?`<span class="n">${n}</span>`:''}</button>`; }).join('')+
+    (caminos.length?`<span class="sep">Caminos</span>`+caminos.map(c=>`<button data-z="${c}" class="${fotSel.zona===c?'on':''} ${/^CP/.test(c)?'peat':''}">${c}<span class="n">${cnt(c)}</span></button>`).join(''):'');
+  $z.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel.zona=b.dataset.z; fotSel.dia=null; renderFotosTab(); });
+  try{ pintarPlanoFotos(); }catch(e){ console.warn('plano fotos', e); }
+  pintarHistorialFotos();
+}
+/* plano de la línea (SVG): trazo, caminos KMZ, torres y un punto por foto coloreado por fase */
+function pintarPlanoFotos(){
+  const el=document.getElementById('fotPlano'); if(!el) return;
+  const T=GEO.towers, es=T.map(t=>t.e), ns=T.map(t=>t.n);
+  const conUtm = FOTOS_CAMPO.filter(f=>f.utm).map(f=>Object.assign(utmAEN(f.utm[0],f.utm[1]),{f}));
+  const sinUtm = FOTOS_CAMPO.filter(f=>!f.utm && f.torre).map(f=>{ const t=T.find(x=>x.t===f.torre); if(!t) return null; const h=parseInt((f.hash||'0000').slice(0,4),16); return {e:t.e+(h%61-30), n:t.n+((h>>6)%61-30), f}; }).filter(Boolean);
+  const pts = conUtm.concat(sinUtm); pts.forEach(p=>{ es.push(p.e); ns.push(p.n); });
+  const m=260, x0=Math.min(...es)-m, x1=Math.max(...es)+m, y0=Math.min(...ns)-m, y1=Math.max(...ns)+m;
+  const W=300, S=W/(x1-x0), H=Math.max(150, Math.round((y1-y0)*S));
+  const X=e=>+((e-x0)*S).toFixed(1), Y=n=>+(H-(n-y0)*S).toFixed(1);
+  const zona=fotSel.zona, enZona=new Set(fotDeZona(zona).map(f=>f.src));
+  const cams=(typeof CAMINOS_KMZ!=='undefined'?CAMINOS_KMZ:[]).map(c=>`<polyline class="cam ${c.tipo==='peatonal'?'peat':''} ${zona===c.id?'sel':''}" points="${c.p.map(p=>X(p[0])+','+Y(p[1])).join(' ')}"${zona===c.id?' style="stroke:var(--sky);stroke-width:2.2;opacity:1"':''}><title>${c.id} · ${c.tipo} · ${c.L} m</title></polyline>`).join('');
+  const linea=`<polyline class="lin" points="${T.map(t=>X(t.e)+','+Y(t.n)).join(' ')}"/>`;
+  const se=GEO.se?`<rect class="se" x="${X(GEO.se.e)-4}" y="${Y(GEO.se.n)-4}" width="8" height="8"><title>SE Yumpag</title></rect>`:'';
+  const dots = pts.map(p=>{ const v=enZona.has(p.f.src); return `<circle class="pt ${p.f.utm?'':'conf'}" data-src="${p.f.src}" cx="${X(p.e)}" cy="${Y(p.n)}" r="${v?3.2:1.7}" fill="${faseColor(p.f)}" opacity="${v?.95:.3}"><title>${p.f.torre||p.f.camino||'sin ubicar'} · ${p.f.fecha} ${p.f.hora||''}${p.f.fase?' · '+faseTxt(p.f):''}${p.f.utm?'':' · sin GPS legible (torre de la carpeta)'}</title></circle>`; }).join('');
+  const conF=new Set(FOTOS_CAMPO.filter(f=>f.torre).map(f=>f.torre));
+  const torres=T.map((t,i)=>`<circle class="tw ${conF.has(t.t)?'con':''} ${zona===t.t?'sel':''}" data-z="${t.t}" cx="${X(t.e)}" cy="${Y(t.n)}" r="${zona===t.t?7:5}"><title>${t.t} · ${conF.has(t.t)?cnt2(t.t)+' foto(s)':'sin fotos'}</title></circle>`+((i%2===0||zona===t.t||conF.has(t.t))?`<text class="tl" x="${X(t.e)}" y="${Y(t.n)-8}" text-anchor="middle">${t.t.replace(/^T0/,'T')}</text>`:'')).join('');
+  function cnt2(z){ return fotDeZona(z).length; }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plano de la línea con la ubicación de las fotos">${cams}${linea}${se}${dots}${torres}</svg>`;
+  el.querySelectorAll('.tw').forEach(c=>c.onclick=()=>{ fotSel.zona=c.dataset.z; fotSel.dia=null; renderFotosTab(); });
+  el.querySelectorAll('.pt').forEach(c=>c.onclick=()=>abrirFoto(c.dataset.src, fotListaActual.some(x=>x.src===c.dataset.src)?fotListaActual:null));
+  document.getElementById('fotLeyenda').innerHTML = Object.entries(FASE_COLOR).filter(([k])=>FOTOS_CAMPO.some(f=>f.fase===k)).map(([k,c])=>`<span><i style="background:${c}"></i>${FASE_TXT[k]||k}</span>`).join('')+
+    (FOTOS_CAMPO.some(f=>!f.fase)?`<span><i style="background:#c2ccc8"></i>sin fase</span>`:'')+`<span><i style="background:transparent;border:2px solid var(--c-civ,#2d7667)"></i>torre con fotos</span>`+(FOTOS_CAMPO.some(f=>!f.utm&&f.torre)?`<span><i style="background:transparent;border:1px dashed #1a1a1a"></i>sin GPS (carpeta)</span>`:'');
+}
+/* historial de la zona: filtros, días con capturas, tabla día · fotos · fases vistas · % oficial, y galería por día */
+function pintarHistorialFotos(){
+  const zona=fotSel.zona, base=fotDeZona(zona), t=DATA.towers.find(x=>x.t===zona);
+  const fases=[...new Set(base.map(f=>f.fase||'sin fase'))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
+  const cats=[...new Set(base.map(f=>f.categoria))];
+  if(!fases.includes(fotSel.fase)) fotSel.fase='Todas'; if(!cats.includes(fotSel.cat)) fotSel.cat='Todas';
+  const $f=document.getElementById('fotFiltros');
+  $f.innerHTML = (fases.length>1?`<span class="sep">Fase</span><button data-k="fase" data-v="Todas" class="${fotSel.fase==='Todas'?'on':''}">Todas</button>`+fases.map(x=>`<button data-k="fase" data-v="${x}" class="${fotSel.fase===x?'on':''}"><i style="background:${FASE_COLOR[x]||'#c2ccc8'}"></i>${FASE_TXT[x]||x}</button>`).join(''):'')+
+    (cats.length>1?`<span class="sep">Categoría</span><button data-k="cat" data-v="Todas" class="${fotSel.cat==='Todas'?'on':''}">Todas</button>`+cats.map(x=>`<button data-k="cat" data-v="${x}" class="${fotSel.cat===x?'on':''}">${x}</button>`).join(''):'');
+  $f.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel[b.dataset.k]=b.dataset.v; pintarHistorialFotos(); });
+  const fil = fotFiltrar(base);
+  const porDia={}; fil.forEach(f=>{ (porDia[f.fecha]=porDia[f.fecha]||[]).push(f); });
+  Object.values(porDia).forEach(L=>L.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')));
+  const dias=Object.keys(porDia).sort().reverse();
+  if(fotSel.dia && !porDia[fotSel.dia]) fotSel.dia=null;
+  const $d=document.getElementById('fotDias');
+  $d.innerHTML = dias.length ? `<button data-d="" class="${!fotSel.dia?'on':''}">Todo<small>${fil.length} foto${fil.length!==1?'s':''}</small></button>`+dias.map(d=>`<button data-d="${d}" class="${fotSel.dia===d?'on':''} ${porDia[d].some(f=>f.coherente===false)?'inco':''}">${fdFoto(d)}<small>${porDia[d].length} foto${porDia[d].length!==1?'s':''}</small></button>`).join('') : '';
+  $d.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel.dia=b.dataset.d||null; pintarHistorialFotos(); });
+  document.getElementById('fotTitulo').textContent = zona==='Todas' ? 'Fotos de obra · toda la línea' : t ? `Fotos de obra · ${zona} · ${t.tp||''} · obra civil ${Math.round(t.pct||0)} %` : `Fotos de obra · camino ${zona}`;
+  document.getElementById('fotDesc').textContent = zona==='Todas'
+    ? `${fil.length} fotos en ${dias.length} día(s). Cada fila es un día de captura; la galería agrupa por día, la más reciente arriba. Clic en una foto para verla grande y recorrer con ◀ ▶.`
+    : t ? `Evidencia fotográfica de ${zona} frente al % oficial del reporte vigente ese día (Excavación · Solado · Stub · Acero · Encofrado · Concreto; — = N/A). ⚠ = la fase que se ve en la foto no coincide con lo reportado; ◌ = torre tomada de la carpeta (sin GPS legible).`
+    : `Fotos tomadas sobre el camino ${zona}: lejos de toda torre o etiquetadas como acceso.`;
+  const filas = dias.map(d=>{ const L=porDia[d]; const fs=[...new Set(L.filter(f=>f.fase&&f.fase!=='otro').map(f=>f.fase))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
+    const inco=L.filter(f=>f.coherente===false).length, conf=L.filter(f=>f.estado==='conf').length; let extra='';
+    if(t){ const r=pctReporte(zona,d); extra = r ? `<td><span class="pc">${r.vals.map(([a,v])=> v==='NA'?`<s title="${a} N/A">—</s>`:`<b title="${a}">${Math.round(+v)}</b>`).join('<s>·</s>')}</span>${r.corte&&r.corte!==d?` <small style="color:var(--ink-mut)">(${fdFoto(r.corte)})</small>`:''}</td>` : '<td>—</td>'; }
+    else { const zs={}; L.forEach(f=>{ const z=f.torre||f.camino||'sin ubicar'; zs[z]=(zs[z]||0)+1; }); extra=`<td>${Object.entries(zs).sort((a,b)=>b[1]-a[1]).map(([z,n])=>`${z} ${n}`).join(' · ')}</td>`; }
+    return `<tr data-d="${d}" class="${fotSel.dia===d?'sel':''}"><td class="f">${fdFoto(d)}</td><td>${L.length}${conf?` <span title="${conf} con torre por confirmar">◌${conf}</span>`:''}</td><td>${fs.map(x=>`<span class="fase" style="background:${FASE_COLOR[x]}">${FASE_TXT[x]||x}</span>`).join('')||'<span style="color:var(--ink-mut)">—</span>'}</td>${extra}<td>${inco?`<span class="ft-inco">⚠ ${inco}</span>`:(fs.length&&t?'✓':'')}</td></tr>`; });
+  document.getElementById('fotTabla').innerHTML = dias.length ? `<table class="fot-t"><thead><tr><th>Día</th><th>Fotos</th><th>Fases vistas</th><th>${t?'% oficial · Exc·Sol·Stub·Ace·Enc·Con':'Dónde'}</th><th>vs reporte</th></tr></thead><tbody>${filas.join('')}</tbody></table>` : '';
+  document.querySelectorAll('#fotTabla tr[data-d]').forEach(tr=>tr.onclick=()=>{ fotSel.dia = fotSel.dia===tr.dataset.d ? null : tr.dataset.d; pintarHistorialFotos(); });
+  const mostrar = fotSel.dia ? [fotSel.dia] : dias;
+  fotListaActual = mostrar.flatMap(d=>porDia[d]);
+  document.getElementById('fotGaleria').innerHTML = fil.length ? mostrar.map(d=>`<div class="dia">${fdFoto(d)} <small>· ${porDia[d].length} foto${porDia[d].length!==1?'s':''}</small></div><div class="ft-tira">${porDia[d].map(f=>figFoto(f,null,!t)).join('')}</div>`).join('') : `<div class="fot-vacio">Sin fotos para este filtro.</div>`;
+  document.querySelectorAll('#fotGaleria .ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src, fotListaActual));
+}
+let ftNav = {lista:null, i:-1};
+function ftMover(d){ if(!ftNav.lista) return; const j=ftNav.i+d; if(j<0||j>=ftNav.lista.length) return; abrirFoto(ftNav.lista[j].src, ftNav.lista); }
+function abrirFoto(src, lista){
   const f=FOTOS_CAMPO.find(x=>x.src===src); if(!f) return;
   let box=document.getElementById('ftBox');
-  if(!box){ box=document.createElement('div'); box.id='ftBox'; box.innerHTML='<div class="ftb-in"><img><div class="ftb-pie"></div><button class="ftb-x" aria-label="Cerrar">×</button></div>';
+  if(!box){ box=document.createElement('div'); box.id='ftBox'; box.innerHTML='<div class="ftb-in"><img><div class="ftb-pie"></div><button class="ftb-x" aria-label="Cerrar">×</button><button class="ftb-nav ftb-prev" aria-label="Anterior">‹</button><button class="ftb-nav ftb-next" aria-label="Siguiente">›</button></div>';
     document.body.appendChild(box); box.onclick=e=>{ if(e.target===box||e.target.classList.contains('ftb-x')) box.style.display='none'; };
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape') box.style.display='none'; }); }
+    box.querySelector('.ftb-prev').onclick=e=>{ e.stopPropagation(); ftMover(-1); }; box.querySelector('.ftb-next').onclick=e=>{ e.stopPropagation(); ftMover(1); };
+    document.addEventListener('keydown',e=>{ if(box.style.display!=='flex') return; if(e.key==='Escape') box.style.display='none'; else if(e.key==='ArrowLeft') ftMover(-1); else if(e.key==='ArrowRight') ftMover(1); }); }
+  ftNav.lista = (lista && lista.length>1) ? lista : null; ftNav.i = ftNav.lista ? ftNav.lista.findIndex(x=>x.src===src) : -1;
+  const bp=box.querySelector('.ftb-prev'), bn=box.querySelector('.ftb-next');
+  bp.style.display = bn.style.display = ftNav.lista ? '' : 'none'; bp.disabled = !ftNav.lista || ftNav.i<=0; bn.disabled = !ftNav.lista || ftNav.i>=ftNav.lista.length-1;
   box.querySelector('img').src=f.src;
-  box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:'Sin ubicar')}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${f.fase_conf?` (visión ${Math.round(f.fase_conf*100)} %)`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}<br><small>${f.origen||''}</small>`;
+  box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:'Sin ubicar')}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${f.fase_conf?` (visión ${Math.round(f.fase_conf*100)} %)`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}${ftNav.lista?` · ${ftNav.i+1}/${ftNav.lista.length}`:''}<br><small>${f.origen||''}</small>`;
   box.style.display='flex';
 }
 /* pines de cámara en la vista de ruta, en el punto UTM del sello */
@@ -11810,6 +11938,8 @@ document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
   b.classList.add('active');
   const targetView = $(b.dataset.v);
   targetView.classList.add('on');
+
+  if (b.dataset.v === 'v-fot') { setTimeout(() => { try { renderFotosTab(); } catch(e){ console.warn('fotos', e); } }, 30); }
 
   if (b.dataset.v === 'v-res') {
     // la curva S de construcción vive ahora dentro del Resumen
@@ -14442,6 +14572,57 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .ft{position:relative} .ft-fase{position:absolute;left:4px;top:4px;font-size:.5rem;font-weight:700;letter-spacing:.2px;padding:1px 5px;border-radius:999px;background:rgba(31,78,69,.88);color:#fff;pointer-events:none}
 .ft-fase.inco{background:var(--amber);color:#1a1a1a} .ft.inco{border-color:var(--amber)} .ft-inco{color:var(--amber)} .ft-fases{font-style:normal;color:var(--ink-mut);font-weight:500}
 .ft-cont.cam{margin-top:10px} .ft-tira.cam{grid-template-columns:repeat(6,minmax(0,1fr))} @media(max-width:860px){.ft-tira.cam{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* ===== Fotos de obra (v72.3) ===== */
+#v-fot{grid-template-columns:330px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+#v-fot .card{min-height:0}
+#v-fot .fot-zona{overflow:auto}
+#v-fot .fot-hist{display:flex;flex-direction:column;min-height:0}
+#v-fot .fot-body{flex:1;min-height:0;overflow:auto}
+.fot-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:4px 0 8px}
+.fot-kpis .k{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+.fot-kpis .k b{display:block;font-family:"Archivo";font-size:1.05rem;color:var(--ink);line-height:1.1} .fot-kpis .k span{font-size:.55rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.3px}
+.fot-chips{margin:2px 0 8px} .fot-chips button{position:relative;padding-right:9px}
+.fot-chips button.vacio{opacity:.45;border-style:dotted}
+.fot-chips button .n{font-size:.52rem;font-weight:800;margin-left:4px;color:inherit;opacity:.85}
+.fot-chips button.on .n{color:#fff}
+.fot-chips button.conf{outline:1px dashed var(--amber);outline-offset:1px}
+.fot-plano{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:4px;margin-top:4px}
+.fot-plano svg{width:100%;height:auto;display:block}
+.fot-plano .lin{fill:none;stroke:var(--ink-mut);stroke-width:1.1}
+.fot-plano .cam{fill:none;stroke:#8a9a92;stroke-width:.9;opacity:.75} .fot-plano .cam.peat{stroke-dasharray:3 3}
+.fot-plano .tw{fill:var(--panel);stroke:var(--ink-2);stroke-width:1;cursor:pointer} .fot-plano .tw.con{fill:var(--lime)} .fot-plano .tw.sel{stroke:var(--sky);stroke-width:2.5}
+.fot-plano .tl{font:600 7px "IBM Plex Mono",monospace;fill:var(--ink-2);pointer-events:none}
+.fot-plano .pt{cursor:pointer;stroke:#fff;stroke-width:.7} .fot-plano .pt.conf{fill-opacity:.35;stroke:#1a1a1a;stroke-dasharray:1.5 1}
+.fot-plano .se{fill:var(--sky);opacity:.85}
+.fot-leyenda{display:flex;flex-wrap:wrap;gap:4px 9px;font-size:.56rem;color:var(--ink-2);margin-top:6px}
+.fot-leyenda i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;vertical-align:-1px}
+.fot-filtros{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:2px 0 4px}
+.fot-filtros .sep{font-size:.55rem;color:var(--ink-mut);font-weight:800;letter-spacing:.4px;margin:0 4px 0 6px;text-transform:uppercase}
+.fot-filtros button{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:999px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2)}
+.fot-filtros button.on{background:var(--c-civ,#2d7667);border-color:var(--c-civ,#2d7667);color:#fff}
+.fot-filtros button i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:0}
+.fot-dias{display:flex;gap:4px;overflow-x:auto;padding:4px 0 6px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.fot-dias::-webkit-scrollbar{height:4px}
+.fot-dias button{flex:0 0 auto;font-family:"IBM Plex Mono",monospace;font-size:.6rem;font-weight:700;padding:4px 8px;border-radius:8px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
+.fot-dias button small{font-size:.52rem;font-weight:600;color:var(--ink-mut)}
+.fot-dias button.on{background:var(--sky);border-color:var(--sky);color:#fff} .fot-dias button.on small{color:#e8f4ff}
+.fot-dias button.inco{border-color:var(--amber)}
+.fot-tabla{margin-bottom:8px;overflow-x:auto;max-width:100%}
+.fot-t{width:100%;border-collapse:collapse;font-size:.6rem}
+.fot-t th{font-size:.54rem;text-transform:uppercase;letter-spacing:.3px;color:var(--ink-mut);text-align:left;padding:3px 6px;border-bottom:1px solid var(--line)}
+.fot-t td{padding:3px 6px;border-bottom:1px solid var(--line);color:var(--ink-2);white-space:nowrap} .fot-t td.f{color:var(--ink);font-weight:700}
+.fot-t td .pc{font-family:"IBM Plex Mono",monospace} .fot-t td .pc b{color:var(--ink)} .fot-t td .pc s{text-decoration:none;color:var(--ink-mut)}
+.fot-t tr.sel td{background:var(--panel-2)} .fot-t tr{cursor:pointer}
+.fot-t .fase{display:inline-block;padding:0 5px;border-radius:999px;color:#fff;font-size:.52rem;font-weight:700;margin-right:2px}
+.fot-galeria .dia{font-size:.66rem;font-weight:800;color:var(--ink);margin:8px 0 5px;display:flex;align-items:center;gap:8px}
+.fot-galeria .dia small{font-weight:600;color:var(--ink-mut)}
+.fot-galeria .ft-tira{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.fot-galeria .ft figcaption{font-size:.56rem;white-space:normal;line-height:1.25}
+.fot-vacio{padding:18px 10px;text-align:center;color:var(--ink-mut);font-size:.68rem;line-height:1.5}
+#ftBox .ftb-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:56px;border:0;border-radius:8px;background:rgba(255,255,255,.85);font-size:24px;cursor:pointer;color:#1f4e45}
+#ftBox .ftb-prev{left:-46px} #ftBox .ftb-next{right:-46px} #ftBox .ftb-nav:disabled{opacity:.25;cursor:default}
+@media(max-width:1200px){ #v-fot{grid-template-columns:280px minmax(0,1fr)} .fot-galeria .ft-tira{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media(max-width:860px){ .fot-t td{white-space:normal} .fot-t{font-size:.58rem} #v-fot.view.on{display:block!important} #v-fot .fot-hist{height:auto} #v-fot .fot-body{overflow:visible} .fot-galeria .ft-tira{grid-template-columns:repeat(3,minmax(0,1fr))} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
 #ftBox{position:fixed;inset:0;z-index:99999;background:rgba(8,20,16,.86);display:none;align-items:center;justify-content:center;padding:24px}
 #ftBox .ftb-in{position:relative;max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:8px}
 #ftBox img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:8px;background:#000}
