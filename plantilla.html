@@ -8158,10 +8158,10 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <div class="card fot-hist"><h3><span class="dot"></span><span id="fotTitulo">Línea de tiempo</span></h3>
       <div class="desc" id="fotDesc"></div>
       <div class="fot-filtros" id="fotFiltros"></div>
-      <div class="fot-body lt-body">
-        <div class="fot-linea" id="fotLinea"></div>
-        <div class="fot-detalle" id="fotDetalle"></div>
-      </div>
+      <div class="fot-linea" id="fotLinea"></div>
+    </div>
+    <div class="card fot-fotos"><h3><span class="dot"></span><span id="fotFotosTit">Fotos de la selección</span></h3>
+      <div class="fot-detalle" id="fotDetalle"></div>
     </div>
   </section>
 
@@ -9412,36 +9412,114 @@ function renderFotosTab(){
   try{ pintarPlanoFotos(); }catch(e){ console.warn('plano fotos', e); }
   pintarHistorialFotos();
 }
-/* plano de la línea (SVG): trazo, caminos KMZ, torres y un punto por foto coloreado por fase */
+/* plano de la línea (SVG): trazo, caminos KMZ, torres y un punto por foto coloreado por fase.
+   v72.9: zoom con la rueda, doble clic, los botones + − o pellizcando; arrastrar mueve el plano; ⛶ lo amplía a pantalla grande.
+   Los puntos, torres y rótulos mantienen su tamaño en pantalla a cualquier zoom (el plano se redibuja en su ventana visible). */
+let fotMapa = {k:1, cx:null, cy:null, D:null, vista:null, arr:0};
 function pintarPlanoFotos(){
   const el=document.getElementById('fotPlano'); if(!el) return;
-  const T=GEO.towers, es=T.map(t=>t.e), ns=T.map(t=>t.n);
+  const T=GEO.towers;
   const conUtm = FOTOS_CAMPO.filter(f=>f.utm).map(f=>Object.assign(utmAEN(f.utm[0],f.utm[1]),{f}));
-  const sinUtm = FOTOS_CAMPO.filter(f=>!f.utm && f.torre).map(f=>{ const t=T.find(x=>x.t===f.torre); if(!t) return null; const h=parseInt((f.hash||'0000').slice(0,4),16); return {e:t.e+(h%61-30), n:t.n+((h>>6)%61-30), f}; }).filter(Boolean);
+  const sinUtm = FOTOS_CAMPO.filter(f=>!f.utm && f.torre).map(f=>{ const t=T.find(x=>x.t===f.torre); if(!t) return null; const h=parseInt(fotCod(f).slice(0,4)||'0',16)||0; return {e:t.e+(h%61-30), n:t.n+((h>>6)%61-30), f}; }).filter(Boolean);
   const cerca = p => T.some(t=>Math.hypot(t.e-p.e, t.n-p.n) <= 1500);   // fotos a > 1,5 km de toda torre (GPS o sello erróneo) no entran al plano
-  const pts = conUtm.concat(sinUtm).filter(cerca); pts.forEach(p=>{ es.push(p.e); ns.push(p.n); });
+  const pts = conUtm.concat(sinUtm).filter(cerca);
   const cp = (FOT_CAMPAMENTO && FOT_CAMPAMENTO.utm) ? utmAEN(FOT_CAMPAMENTO.utm[0], FOT_CAMPAMENTO.utm[1]) : null;   // v72.8: zona Campamento
-  const hayCamp = cp && cerca(cp); if (hayCamp){ es.push(cp.e); ns.push(cp.n); }
-  const m=260, x0=Math.min(...es)-m, x1=Math.max(...es)+m, y0=Math.min(...ns)-m, y1=Math.max(...ns)+m;
-  const W=300, S=W/(x1-x0), H=Math.max(150, Math.round((y1-y0)*S));
-  const X=e=>+((e-x0)*S).toFixed(1), Y=n=>+(H-(n-y0)*S).toFixed(1);
-  const zona=fotSel.zona, enZona=new Set(fotDeZona(zona).map(f=>f.src));
-  const cams=(typeof CAMINOS_KMZ!=='undefined'?CAMINOS_KMZ:[]).map(c=>`<polyline class="cam ${c.tipo==='peatonal'?'peat':''} ${zona===c.id?'sel':''}" points="${c.p.map(p=>X(p[0])+','+Y(p[1])).join(' ')}"${zona===c.id?' style="stroke:var(--sky);stroke-width:2.2;opacity:1"':''}><title>${c.id} · ${c.tipo} · ${c.L} m</title></polyline>`).join('');
-  const linea=`<polyline class="lin" points="${T.map(t=>X(t.e)+','+Y(t.n)).join(' ')}"/>`;
-  const se=GEO.se?`<rect class="se" x="${X(GEO.se.e)-4}" y="${Y(GEO.se.n)-4}" width="8" height="8"><title>SE Yumpag</title></rect>`:'';
-  const dots = pts.map(p=>{ const v=enZona.has(p.f.src); return `<circle class="pt ${p.f.utm?'':'conf'}" data-src="${p.f.src}" cx="${X(p.e)}" cy="${Y(p.n)}" r="${v?3.2:1.7}" fill="${faseColor(p.f)}" opacity="${v?.95:.3}"><title>${fotZona(p.f)} · ${p.f.fecha} ${p.f.hora||''}${p.f.fase?' · '+faseTxt(p.f):''}${p.f.utm?'':' · sin GPS legible (torre de la carpeta)'}</title></circle>`; }).join('');
-  const nCamp = fotDeZona('Campamento').length, rc = hayCamp ? Math.max(4, (FOT_CAMPAMENTO.radio_m||200)*S) : 0;
-  const camp = hayCamp ? `<g class="camp${zona==='Campamento'?' sel':''}${nCamp?' con':''}"><circle cx="${X(cp.e)}" cy="${Y(cp.n)}" r="${rc.toFixed(1)}"/><path d="M${(X(cp.e)-4).toFixed(1)},${(Y(cp.n)+3).toFixed(1)} L${X(cp.e)},${(Y(cp.n)-4).toFixed(1)} L${(X(cp.e)+4).toFixed(1)},${(Y(cp.n)+3).toFixed(1)} Z"/><title>Campamento · radio ${FOT_CAMPAMENTO.radio_m||200} m · ${nCamp} foto(s)</title></g>` : '';
-  const conF=new Set(FOTOS_CAMPO.filter(f=>f.torre).map(f=>f.torre));
-  const torres=T.map((t,i)=>`<circle class="tw ${conF.has(t.t)?'con':''} ${zona===t.t?'sel':''}" data-z="${t.t}" cx="${X(t.e)}" cy="${Y(t.n)}" r="${zona===t.t?7:5}"><title>${t.t} · ${conF.has(t.t)?cnt2(t.t)+' foto(s)':'sin fotos'}</title></circle>`+((i%2===0||zona===t.t||conF.has(t.t))?`<text class="tl" x="${X(t.e)}" y="${Y(t.n)-8}" text-anchor="middle">${t.t.replace(/^T0/,'T')}</text>`:'')).join('');
-  function cnt2(z){ return fotDeZona(z).length; }
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plano de la línea con la ubicación de las fotos">${cams}${linea}${se}${camp}${dots}${torres}</svg>`;
-  el.querySelectorAll('.tw').forEach(c=>c.onclick=()=>{ ltParar(); fotSel.zona=c.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
-  el.querySelectorAll('.camp.con').forEach(c=>c.onclick=()=>{ ltParar(); fotSel.zona='Campamento'; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
-  el.querySelectorAll('.pt').forEach(c=>c.onclick=()=>abrirFoto(c.dataset.src, fotListaActual.some(x=>x.src===c.dataset.src)?fotListaActual:null));
+  const hayCamp = !!(cp && cerca(cp));
+  const es=T.map(t=>t.e).concat(pts.map(p=>p.e)), ns=T.map(t=>t.n).concat(pts.map(p=>p.n)); if (hayCamp){ es.push(cp.e); ns.push(cp.n); }
+  const m=260, ext={x0:Math.min(...es)-m, x1:Math.max(...es)+m, y0:Math.min(...ns)-m, y1:Math.max(...ns)+m};
+  fotMapa.D = {T, pts, cp, hayCamp, ext};
+  if (fotMapa.cx==null){ fotMapa.cx=(ext.x0+ext.x1)/2; fotMapa.cy=(ext.y0+ext.y1)/2; }
+  if (fotMapa.k>1){ const t=T.find(x=>x.t===fotSel.zona); if (t){ fotMapa.cx=t.e; fotMapa.cy=t.n; } else if (fotSel.zona==='Campamento' && hayCamp){ fotMapa.cx=cp.e; fotMapa.cy=cp.n; } }   // con zoom, la zona elegida al centro
+  if (!el.querySelector('.fp-svg')){
+    el.innerHTML = `<div class="fp-svg" title="Rueda del mouse, doble clic o pellizco para acercar · arrastra para moverte"></div>
+      <div class="fp-ctl"><button type="button" data-a="+" title="Acercar">+</button><button type="button" data-a="-" title="Alejar">−</button><button type="button" data-a="0" title="Ver toda la línea">⟲</button><button type="button" data-a="g" title="Ampliar el plano">⛶</button></div><div class="fp-k"></div>`;
+    armarZoomPlano(el);
+  }
+  dibujarPlano();
   document.getElementById('fotLeyenda').innerHTML = Object.entries(FASE_COLOR).filter(([k])=>FOTOS_CAMPO.some(f=>f.fase===k)).map(([k,c])=>`<span><i style="background:${c}"></i>${FASE_TXT[k]||k}</span>`).join('')+
     (FOTOS_CAMPO.some(f=>!f.fase)?`<span><i style="background:#c2ccc8"></i>sin fase</span>`:'')+`<span><i style="background:transparent;border:2px solid var(--c-civ,#2d7667)"></i>torre con fotos</span>`+(FOTOS_CAMPO.some(f=>!f.utm&&f.torre)?`<span><i style="background:transparent;border:1px dashed #1a1a1a"></i>sin GPS (carpeta)</span>`:'')+
     (hayCamp?`<span><i class="lg-camp"></i>campamento</span>`:'');
+}
+function dibujarPlano(){
+  const el=document.getElementById('fotPlano'), D=fotMapa.D; if(!el||!D) return;
+  const box=el.querySelector('.fp-svg'); if(!box) return;
+  const {T, pts, cp, hayCamp, ext}=D, grande=el.classList.contains('grande'), k=fotMapa.k;
+  const ew=ext.x1-ext.x0, eh=ext.y1-ext.y0, W=Math.max(200, Math.round(box.clientWidth||290));
+  const H=grande ? Math.max(200, Math.round(box.clientHeight||500)) : Math.max(150, Math.round(eh*W/ew));
+  const S=Math.min(W/ew, H/eh)*k, vw=W/S, vh=H/S;
+  const lim=(c,a,b,v)=> v>=b-a ? (a+b)/2 : Math.min(Math.max(c, a+v/2), b-v/2);
+  fotMapa.cx=lim(fotMapa.cx, ext.x0, ext.x1, vw); fotMapa.cy=lim(fotMapa.cy, ext.y0, ext.y1, vh);
+  const vx0=fotMapa.cx-vw/2, vy1=fotMapa.cy+vh/2; fotMapa.vista={W, H, S, vx0, vy1};
+  const X=e=>+((e-vx0)*S).toFixed(1), Y=n=>+((vy1-n)*S).toFixed(1), mg=30/S;
+  const ve=(e,n)=> e>=vx0-mg && e<=vx0+vw+mg && n>=vy1-vh-mg && n<=vy1+mg;
+  const zona=fotSel.zona, enZona=new Set(fotDeZona(zona).map(f=>f.src)), rz = (k>=6 ? 1.35 : k>=3 ? 1.15 : 1) * (grande ? 1.6 : 1), rt = grande ? 1.4 : 1;
+  const cams=(typeof CAMINOS_KMZ!=='undefined'?CAMINOS_KMZ:[]).map(c=>`<polyline class="cam ${c.tipo==='peatonal'?'peat':''} ${zona===c.id?'sel':''}" points="${c.p.map(p=>X(p[0])+','+Y(p[1])).join(' ')}"${zona===c.id?' style="stroke:var(--sky);stroke-width:2.2;opacity:1"':''}><title>${c.id} · ${c.tipo} · ${c.L} m</title></polyline>`).join('');
+  const linea=`<polyline class="lin" points="${T.map(t=>X(t.e)+','+Y(t.n)).join(' ')}"/>`;
+  const se=GEO.se?`<rect class="se" x="${X(GEO.se.e)-4}" y="${Y(GEO.se.n)-4}" width="8" height="8"><title>SE Yumpag</title></rect>`:'';
+  const dots = pts.filter(p=>ve(p.e,p.n)).map(p=>{ const v=enZona.has(p.f.src); return `<circle class="pt ${p.f.utm?'':'conf'}" data-src="${p.f.src}" cx="${X(p.e)}" cy="${Y(p.n)}" r="${((v?3.2:1.7)*rz).toFixed(1)}" fill="${faseColor(p.f)}" opacity="${v?.95:.3}"><title>${fotZona(p.f)} · ${p.f.fecha} ${p.f.hora||''}${p.f.fase?' · '+faseTxt(p.f):''}${p.f.utm?'':' · sin GPS legible (torre de la carpeta)'}</title></circle>`; }).join('');
+  const nCamp = fotDeZona('Campamento').length, rc = hayCamp ? Math.max(4, (FOT_CAMPAMENTO.radio_m||200)*S) : 0;
+  const camp = hayCamp ? `<g class="camp${zona==='Campamento'?' sel':''}${nCamp?' con':''}"><circle cx="${X(cp.e)}" cy="${Y(cp.n)}" r="${rc.toFixed(1)}"/><path d="M${(X(cp.e)-4).toFixed(1)},${(Y(cp.n)+3).toFixed(1)} L${X(cp.e)},${(Y(cp.n)-4).toFixed(1)} L${(X(cp.e)+4).toFixed(1)},${(Y(cp.n)+3).toFixed(1)} Z"/><title>Campamento · radio ${FOT_CAMPAMENTO.radio_m||200} m · ${nCamp} foto(s)</title></g>` : '';
+  const conF=new Set(FOTOS_CAMPO.filter(f=>f.torre).map(f=>f.torre)), cnt2 = z => fotDeZona(z).length;
+  const torres=T.map((t,i)=>`<circle class="tw ${conF.has(t.t)?'con':''} ${zona===t.t?'sel':''}" data-z="${t.t}" cx="${X(t.e)}" cy="${Y(t.n)}" r="${((zona===t.t?7:5)*rt).toFixed(1)}"><title>${t.t} · ${conF.has(t.t)?cnt2(t.t)+' foto(s)':'sin fotos'}</title></circle>`+((k>=2||grande||i%2===0||zona===t.t||conF.has(t.t))?`<text class="tl" x="${X(t.e)}" y="${(Y(t.n)-8*rt).toFixed(1)}" text-anchor="middle">${k>=2||grande?t.t:t.t.replace(/^T0/,'T')}</text>`:'')).join('');
+  box.classList.toggle('zoom', k>1);
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plano de la línea con la ubicación de las fotos">${cams}${linea}${se}${camp}${dots}${torres}</svg>`;
+  const clic = fn => function(){ if (Date.now()-fotMapa.arr < 350) return; fn(this); };   // un arrastre no abre fotos ni cambia la zona
+  box.querySelectorAll('.tw').forEach(c=>c.onclick=clic(c=>{ ltParar(); fotSel.zona=c.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); }));
+  box.querySelectorAll('.camp.con').forEach(c=>c.onclick=clic(()=>{ ltParar(); fotSel.zona='Campamento'; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); }));
+  box.querySelectorAll('.pt').forEach(c=>c.onclick=clic(c=>abrirFoto(c.dataset.src, fotListaActual.some(x=>x.src===c.dataset.src)?fotListaActual:null)));
+  const kt=el.querySelector('.fp-k'); if (kt) kt.textContent = k>1 ? `zoom ×${k<10?k.toFixed(1).replace('.',','):Math.round(k)}` : '';
+  el.querySelectorAll('.fp-ctl button[data-a="-"], .fp-ctl button[data-a="0"]').forEach(b=>b.disabled = k<=1);
+  const bg=el.querySelector('.fp-ctl button[data-a="g"]'); if (bg){ bg.textContent = grande ? '×' : '⛶'; bg.title = grande ? 'Cerrar el plano grande' : 'Ampliar el plano'; }
+}
+function armarZoomPlano(el){
+  const box=el.querySelector('.fp-svg'), ptrs=new Map(); let ini=null, pinch=null, raf=0;
+  const redibujar=()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; dibujarPlano(); }); };
+  const escala=()=>{ const r=box.getBoundingClientRect(), v=fotMapa.vista; return {r, sx: v ? v.W/Math.max(1,r.width) : 1}; };
+  const zoomEn=(px,py,f)=>{
+    const v=fotMapa.vista; if(!v) return;
+    const k0=fotMapa.k, k1=Math.min(40, Math.max(1, k0*f)); if (Math.abs(k1-k0)<1e-6) return;
+    const {r, sx}=escala(), ux=(px-r.left)*sx, uy=(py-r.top)*sx, e=v.vx0+ux/v.S, n=v.vy1-uy/v.S, S1=v.S/k0*k1;   // el punto bajo el cursor no se mueve
+    fotMapa.k=k1; fotMapa.cx=e-ux/S1+(v.W/S1)/2; fotMapa.cy=n+uy/S1-(v.H/S1)/2; redibujar();
+  };
+  box.addEventListener('wheel', ev=>{ const f = ev.deltaY<0 ? 1.25 : 1/1.25; if (f<1 && fotMapa.k<=1) return; ev.preventDefault(); zoomEn(ev.clientX, ev.clientY, f); }, {passive:false});
+  box.addEventListener('dblclick', ev=>{ ev.preventDefault(); zoomEn(ev.clientX, ev.clientY, 2); });
+  box.addEventListener('pointerdown', ev=>{
+    ptrs.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if (ptrs.size===1) ini={x:ev.clientX, y:ev.clientY, cx:fotMapa.cx, cy:fotMapa.cy, mov:false, id:ev.pointerId};
+    if (ptrs.size===2){ const [a,b]=[...ptrs.values()]; pinch={d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)), k:fotMapa.k}; try{ box.setPointerCapture(ev.pointerId); }catch(e){} }
+  });
+  box.addEventListener('pointermove', ev=>{
+    if (!ptrs.has(ev.pointerId)) return; ptrs.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if (ptrs.size===2 && pinch){ const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y); zoomEn((a.x+b.x)/2, (a.y+b.y)/2, (pinch.k*d/pinch.d)/fotMapa.k); fotMapa.arr=Date.now(); return; }
+    if (ptrs.size===1 && ini){
+      const dx=ev.clientX-ini.x, dy=ev.clientY-ini.y;
+      if (!ini.mov){ if (Math.hypot(dx,dy)<5) return; ini.mov=true; box.classList.add('arr'); try{ box.setPointerCapture(ini.id); }catch(e){} }   // se captura recién al arrastrar: un clic sigue llegando al punto
+      const v=fotMapa.vista, {sx}=escala(); if(!v) return;
+      fotMapa.cx=ini.cx-dx*sx/v.S; fotMapa.cy=ini.cy+dy*sx/v.S; fotMapa.arr=Date.now(); redibujar();
+    }
+  });
+  const fin=ev=>{ ptrs.delete(ev.pointerId); if (ptrs.size<2) pinch=null; if (!ptrs.size){ if (ini && ini.mov) fotMapa.arr=Date.now(); ini=null; box.classList.remove('arr'); } };
+  box.addEventListener('pointerup', fin); box.addEventListener('pointercancel', fin);
+  el.querySelectorAll('.fp-ctl button').forEach(b=>b.onclick=()=>{
+    const r=box.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, a=b.dataset.a;
+    if (a==='+') zoomEn(cx, cy, 1.6); else if (a==='-') zoomEn(cx, cy, 1/1.6); else if (a==='0'){ fotMapa.k=1; redibujar(); } else if (a==='g') ampliarPlano(el);
+  });
+  window.addEventListener('resize', ()=>{ if (document.getElementById('fotPlano')) redibujar(); });
+}
+function ampliarPlano(el){
+  /* el plano se lleva al <body> mientras está grande (así no lo recorta ni lo tapa la tarjeta) y vuelve a su sitio al cerrar */
+  const abrir = !el.classList.contains('grande');
+  let fondo=document.getElementById('fpFondo');
+  if (abrir){
+    el._casa = {padre:el.parentNode, sig:el.nextSibling};
+    if (!fondo){ fondo=document.createElement('div'); fondo.id='fpFondo'; fondo.className='fp-fondo'; fondo.onclick=()=>ampliarPlano(el); }
+    document.body.appendChild(fondo); document.body.appendChild(el); el.classList.add('grande');
+    document.addEventListener('keydown', ampliarPlano._esc = ev=>{ if (ev.key==='Escape') ampliarPlano(el); });
+  } else {
+    el.classList.remove('grande'); if (fondo) fondo.remove(); if (ampliarPlano._esc) document.removeEventListener('keydown', ampliarPlano._esc);
+    if (el._casa && el._casa.padre) el._casa.padre.insertBefore(el, el._casa.sig);
+  }
+  requestAnimationFrame(()=>dibujarPlano());
 }
 /* =====================================================================
    LÍNEA DE TIEMPO FOTOGRÁFICA (v72.7 · 27-Set-26)
@@ -9488,13 +9566,14 @@ function ltMatriz(fil, W){
     W.map(w=>{ const L=G[z+'|'+w], cs=fotSel.sem===w?' csel':'';
       if(!L) return `<div class="lt-v${cs}"></div>`;
       const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; }); const ks=FASES_ORD.filter(k=>cnt[k]);
-      return `<button type="button" class="lt-c${cs}${c.z===z&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-z="${z}" data-w="${w}" title="${z} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}: ${ks.map(k=>`${ltNom(k)} ${cnt[k]}`).join(', ')}">${L.length}<span class="fr">${ks.map(k=>`<i style="flex:${cnt[k]};background:${FASE_COLOR[k]||'#c2ccc8'}"></i>`).join('')}</span></button>`; }).join('');
+      const pk = ks.length>4 ? FASES_ORD.filter(k=>ks.slice().sort((a,b)=>cnt[b]-cnt[a]).slice(0,4).includes(k)) : ks;   // v72.9: hasta 4 puntos (las fases con más fotos), en el orden de la leyenda
+      return `<button type="button" class="lt-c${cs}${c.z===z&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-z="${z}" data-w="${w}" title="${z} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}: ${ks.map(k=>`${ltNom(k)} ${cnt[k]}`).join(', ')}">${L.length}<span class="pts">${pk.map(k=>`<i style="background:${FASE_COLOR[k]||'#c2ccc8'}"></i>`).join('')}</span></button>`; }).join('');
   let h = ltCabecera(W) + DATA.towers.map(t=>fila(t.t)).join('');
   if (cams.length) h += `<div class="lt-grupo">Caminos de acceso</div>` + cams.map(fila).join('');
   if (zonas.length) h += `<div class="lt-grupo">Otras zonas · campamento, charlas y otras (sin torre ni camino)</div>` + zonas.map(fila).join('');
   el.innerHTML = `<div class="lt-scroll"><div class="lt-mx" style="--n:${W.length}">${h}</div></div>`;
-  el.querySelectorAll('.lt-sem').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda=null; pintarHistorialFotos(); });
-  el.querySelectorAll('.lt-c').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={z:b.dataset.z, w:b.dataset.w}; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-sem').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda=null; pintarHistorialFotos(); ltVerFotos(); });
+  el.querySelectorAll('.lt-c').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={z:b.dataset.z, w:b.dataset.w}; pintarHistorialFotos(); ltVerFotos(); });
   el.querySelectorAll('.lt-fila').forEach(b=>b.onclick=()=>{ if(!N[b.dataset.z]) return; ltParar(); fotSel.zona=b.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
 }
 /* una torre o un camino: película por fases */
@@ -9513,9 +9592,9 @@ function ltPelicula(fil, W){
       return `<button type="button" class="lt-p hay${cs}${c.fase===k&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-f="${k}" data-w="${w}" style="--fc:${col}" title="${nom} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}"><img src="${m.src}" loading="lazy" alt="${nom} ${ltDM(m.fecha)}"><span class="n">${L.length}</span></button>`; }).join('');
   });
   el.innerHTML = `<div class="lt-scroll"><div class="lt-pel" style="--n:${W.length}">${h}</div></div>`;
-  el.querySelectorAll('.lt-sem, .lt-c.tot').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={w:b.dataset.w}; pintarHistorialFotos(); });
-  el.querySelectorAll('.lt-p.hay').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={fase:b.dataset.f, w:b.dataset.w}; pintarHistorialFotos(); });
-  el.querySelectorAll('.lt-carril[data-f]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.celda={fase:b.dataset.f}; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-sem, .lt-c.tot').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={w:b.dataset.w}; pintarHistorialFotos(); ltVerFotos(); });
+  el.querySelectorAll('.lt-p.hay').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={fase:b.dataset.f, w:b.dataset.w}; pintarHistorialFotos(); ltVerFotos(); });
+  el.querySelectorAll('.lt-carril[data-f]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.celda={fase:b.dataset.f}; pintarHistorialFotos(); ltVerFotos(); });
 }
 /* las fotos de la selección, agrupadas (por día, por semana o por torre), todas: las imágenes cargan al verse */
 function ltDetalle(fil){
@@ -9537,6 +9616,7 @@ function ltDetalle(fil){
   const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; });
   const chips=FASES_ORD.filter(k=>cnt[k]).map(k=>`<span class="lt-chip" style="background:${FASE_COLOR[k]||'#9aa5b1'}">${ltNom(k)} ${cnt[k]}</span>`).join('');
   const av=ltAvance(L), etq = k => grupo==='zona' ? k : grupo==='semana' ? `Semana del ${ltRango(k)}` : fdFoto(k);
+  const tit=document.getElementById('fotFotosTit'); if(tit) tit.textContent='Fotos de la selección';
   det.innerHTML = L.length
     ? `<div class="lt-cab">${cab} <small>· ${L.length} foto${L.length>1?'s':''}</small>${chips}</div>${av?`<div class="lt-av">${av}</div>`:''}`+
       orden.map(k=>`<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div><div class="ft-tira lt-tira">${G[k].map(f=>figFoto(f, null, false)).join('')}</div>`).join('')
@@ -9545,6 +9625,8 @@ function ltDetalle(fil){
   det.querySelectorAll('.ft').forEach(e=>e.onclick=()=>abrirFoto(e.dataset.src, fotListaActual));
 }
 let ltTimer=null, ltW=[];
+/* v72.9: en celular las fotos van debajo de la línea de tiempo: al elegir una semana o celda se baja a ellas */
+function ltVerFotos(){ if (window.innerWidth>860) return; setTimeout(()=>{ const c=document.querySelector('#v-fot .fot-fotos'); if (!c) return; const se=document.scrollingElement||document.documentElement; se.scrollTo({top: se.scrollTop + c.getBoundingClientRect().top - 6, behavior:'smooth'}); }, 80); }
 function ltParar(){ if(ltTimer){ clearInterval(ltTimer); ltTimer=null; } const b=document.getElementById('ltPlay'); if(b){ b.classList.remove('on'); b.textContent='▶ Recorrer semanas'; } }
 function ltPlay(){
   if (ltTimer){ ltParar(); return; }
@@ -9564,7 +9646,7 @@ function pintarObsFotos(fil){
   el.innerHTML = `<div class="fo-t">Por revisar <small>· ${tot?`${tot} foto${tot>1?'s':''}${donde}`:`nada${donde}`}</small></div>`+
     OBS_TIPOS.filter(([k])=>n[k]).map(([k,nom,ayuda])=>`<button type="button" data-o="${k}" class="${fotSel.obs===k?'on':''}" title="${ayuda}">${nom}<b>${n[k]}</b></button>`).join('');
   el.querySelectorAll('button[data-o]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.obs = fotSel.obs===b.dataset.o ? null : b.dataset.o; fotSel.celda=null; pintarHistorialFotos();
-    if (fotSel.obs && window.innerWidth<=860){ const h=document.querySelector('#v-fot .fot-hist'); if(h) h.scrollIntoView({behavior:'smooth', block:'start'}); } });
+    if (fotSel.obs) ltVerFotos(); });
 }
 function ltObservaciones(fil){
   const k=fotSel.obs, tipo=OBS_TIPOS.find(x=>x[0]===k)||[k,k,''];
@@ -9574,10 +9656,14 @@ function ltObservaciones(fil){
   fotListaActual = dias.flatMap(d=>G[d]);
   document.getElementById('fotDesc').innerHTML = `${tipo[2]} Para corregir, dime en el chat el <b>#código</b> de la foto y lo correcto (torre, fase o fecha): queda como etiqueta revisada.`;
   const $l=document.getElementById('fotLinea');
-  $l.innerHTML = `<div class="lt-obs-bar"><span><b>${L.length}</b> foto${L.length===1?'':'s'} · de la más reciente a la más antigua</span><button type="button" class="lt-obs-x">✕ Volver a la línea de tiempo</button></div>`;
+  /* v72.9: en la columna de la línea de tiempo, un índice por día (clic = ir a ese día en la columna de fotos) */
+  const resZ = d => { const c={}; G[d].forEach(f=>{ const z=fotZona(f); c[z]=(c[z]||0)+1; }); const e=Object.entries(c).sort((a,b)=>b[1]-a[1]); return e.slice(0,4).map(([z,n])=>`${z} ${n}`).join(' · ')+(e.length>4?` · +${e.length-4}`:''); };
+  $l.innerHTML = `<div class="lt-obs-bar"><span><b>${L.length}</b> foto${L.length===1?'':'s'} en ${dias.length} día${dias.length===1?'':'s'} · de la más reciente a la más antigua</span><button type="button" class="lt-obs-x">✕ Volver a la línea de tiempo</button></div>`+
+    (dias.length?`<div class="lt-obs-idx">${dias.map(d=>`<button type="button" data-d="${d}"><b>${ltDM(d)}</b><span class="n">${G[d].length}</span><small>${resZ(d)}</small></button>`).join('')}</div>`:'');
   $l.querySelector('.lt-obs-x').onclick=()=>{ fotSel.obs=null; pintarHistorialFotos(); };
-  const det=document.getElementById('fotDetalle');
-  det.innerHTML = L.length ? dias.map(d=>`<div class="lt-grp">${fdFoto(d)} <small>· ${G[d].length}</small></div><div class="ft-tira lt-tira">${G[d].map(f=>figFoto(f, null, false, k)).join('')}</div>`).join('')
+  $l.querySelectorAll('.lt-obs-idx button').forEach(b=>b.onclick=()=>{ const g=document.getElementById('fg-'+b.dataset.d); if(g) g.scrollIntoView({behavior:'smooth', block:'start'}); });
+  const det=document.getElementById('fotDetalle'), tit=document.getElementById('fotFotosTit'); if(tit) tit.textContent=`Fotos por revisar · ${tipo[1]}`;
+  det.innerHTML = L.length ? dias.map(d=>`<div class="lt-grp" id="fg-${d}">${fdFoto(d)} <small>· ${G[d].length}</small></div><div class="ft-tira lt-tira">${G[d].map(f=>figFoto(f, null, false, k)).join('')}</div>`).join('')
                            : `<div class="fot-vacio">Nada por revisar en esta selección.</div>`;
   det.scrollTop = 0;
   det.querySelectorAll('.ft').forEach(e=>e.onclick=()=>abrirFoto(e.dataset.src, fotListaActual));
@@ -9606,8 +9692,8 @@ function pintarHistorialFotos(enPlay){
   const con=new Set(fil.map(f=>ltLunes(f.fecha)));
   if(!fotSel.sem || !ltW.includes(fotSel.sem)) fotSel.sem=[...ltW].reverse().find(w=>con.has(w)) || ltW[ltW.length-1];
   document.getElementById('fotDesc').textContent = zona==='Todas'
-    ? `${fil.length} fotos en ${new Set(fechas).size} días, del ${ltDM(fechas[0])} al ${ltDM(ult)}. Cada columna es una semana (lunes a domingo): el número son las fotos y la franja, las fases que se ven. Clic en una semana o en una celda para ver sus fotos abajo; clic en una torre, camino o zona para ver su película por fases.`
-    : `Película ${t?'de la torre '+zona:zn?'de '+zona+' ('+FOT_ZONA_TXT[zona]+')':'del camino '+zona}: un carril por fase y una columna por semana, con la foto más representativa (primero la del pie del PPT). Clic en una celda o en una fase para ver sus fotos abajo. ⚠ = la fase de la foto no coincide con la del reporte; ◌ = torre tomada de la carpeta.`;
+    ? `${fil.length} fotos en ${new Set(fechas).size} días, del ${ltDM(fechas[0])} al ${ltDM(ult)}. Cada columna es una semana (lunes a domingo): el número son las fotos y los puntos, las fases que se ven (colores de la leyenda). Clic en una semana o en una celda para ver sus fotos; clic en una torre, camino o zona para ver su película por fases.`
+    : `Película ${t?'de la torre '+zona:zn?'de '+zona+' ('+FOT_ZONA_TXT[zona]+')':'del camino '+zona}: un carril por fase y una columna por semana, con la foto más representativa (primero la del pie del PPT). Clic en una celda o en una fase para ver sus fotos. ⚠ = la fase de la foto no coincide con la del reporte; ◌ = torre tomada de la carpeta.`;
   if(zona==='Todas') ltMatriz(fil, ltW); else ltPelicula(fil, ltW);
   ltDetalle(fil);
   const sc=document.querySelector('#fotLinea .lt-scroll'), bs=document.querySelector('#fotLinea .lt-sem.sel');   // la semana elegida a la vista, sin mover la página
@@ -14751,11 +14837,10 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .ft-fase.inco{background:var(--amber);color:#1a1a1a} .ft.inco{border-color:var(--amber)} .ft-inco{color:var(--amber)} .ft-fases{font-style:normal;color:var(--ink-mut);font-weight:500}
 .ft-cont.cam{margin-top:10px} .ft-tira.cam{grid-template-columns:repeat(6,minmax(0,1fr))} @media(max-width:860px){.ft-tira.cam{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* ===== Fotos de obra (v72.3) ===== */
-#v-fot{grid-template-columns:330px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+#v-fot{grid-template-columns:300px minmax(0,1.35fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}   /* v72.9: zona y plano · línea de tiempo · fotos, en tres columnas */
 #v-fot .card{min-height:0}
 #v-fot .fot-zona{overflow:auto}
-#v-fot .fot-hist{display:flex;flex-direction:column;min-height:0}
-#v-fot .fot-body{flex:1;min-height:0;overflow:auto}
+#v-fot .fot-hist,#v-fot .fot-fotos{display:flex;flex-direction:column;min-height:0}
 .fot-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:4px 0 8px}
 .fot-kpis .k{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
 .fot-kpis .k b{display:block;font-family:"Archivo";font-size:1.05rem;color:var(--ink);line-height:1.1} .fot-kpis .k span{font-size:.55rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.3px}
@@ -14780,8 +14865,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-filtros button.on{background:var(--c-civ,#2d7667);border-color:var(--c-civ,#2d7667);color:#fff}
 .fot-filtros button i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:0}
 /* ===== Línea de tiempo fotográfica (v72.7) ===== */
-#v-fot .lt-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-#fotLinea{flex:0 0 auto;min-height:0}
+#fotLinea{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#fotLinea .lt-scroll{flex:1 1 auto;max-height:none;min-height:0;border-bottom:0;margin-bottom:0}
 #fotDetalle{flex:1 1 auto;min-height:0;overflow:auto;padding:0 4px 6px 0}
 .lt-play{margin-left:auto;font-size:.6rem;font-weight:800;padding:3px 11px;border-radius:999px;cursor:pointer;border:1px solid var(--c-civ,#2d7667);background:var(--panel);color:var(--c-civ,#2d7667)}
 .lt-play.on{background:var(--c-civ,#2d7667);color:#fff}
@@ -14796,16 +14881,16 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .lt-mes.ini{border-left:1px solid var(--line-2);padding-left:3px}
 .lt-sem{position:sticky;top:15px;z-index:3;font:600 .56rem "IBM Plex Mono",monospace;color:var(--ink-mut);background:var(--panel);border:0;border-radius:5px;padding:2px 0;cursor:pointer;height:20px}
 .lt-sem:hover{background:var(--panel-2);color:var(--ink)} .lt-sem.sel{background:var(--sky);color:#fff}
-.lt-fila{position:sticky;left:0;z-index:2;background:var(--panel);border:0;text-align:right;padding:0 6px 0 0;font:700 .6rem "IBM Plex Mono",monospace;color:var(--ink);cursor:pointer;height:21px;white-space:nowrap}
+.lt-fila{position:sticky;left:0;z-index:2;background:var(--panel);border:0;text-align:right;padding:0 6px 0 0;font:700 .6rem "IBM Plex Mono",monospace;color:var(--ink);cursor:pointer;height:25px;white-space:nowrap}
 .lt-fila:hover{color:var(--c-civ,#2d7667);text-decoration:underline} .lt-fila.vacia{color:var(--ink-mut);font-weight:500;cursor:default;text-decoration:none}
 .lt-grupo{grid-column:1 / -1;font-size:.55rem;font-weight:800;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.4px;padding:7px 0 2px}
-.lt-v{height:21px;border-radius:4px} .lt-vt{height:22px}
+.lt-v{height:25px;border-radius:4px} .lt-vt{height:22px}
 .lt-v.csel,.lt-p.csel:not(.hay){background:var(--panel-2)}
-.lt-c{position:relative;height:21px;border-radius:4px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;padding:0 0 5px;overflow:hidden;font:700 .55rem "IBM Plex Mono",monospace;color:var(--ink-2);line-height:1}
+.lt-c{position:relative;height:25px;border-radius:4px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;padding:0;overflow:hidden;font:700 .55rem "IBM Plex Mono",monospace;color:var(--ink-2);line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .lt-c.csel{border-color:var(--sky)} .lt-c:hover{border-color:var(--ink-2)} .lt-c.sel{outline:2px solid var(--sky);outline-offset:1px;z-index:1}
-.lt-c .fr{position:absolute;left:0;right:0;bottom:0;height:5px;display:flex} .lt-c .fr i{display:block;height:100%}
+.lt-c .pts{display:flex;gap:2px;height:6px;align-items:center} .lt-c .pts i{display:block;width:6px;height:6px;border-radius:50%;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}   /* v72.9: fases vistas como puntos, con los colores de la leyenda */
 .lt-c.inco::after,.lt-p.inco::after{content:"";position:absolute;top:0;right:0;border-top:8px solid var(--amber);border-left:8px solid transparent}
-.lt-c.tot{height:22px;padding:0}
+.lt-c.tot{height:22px;padding:0;display:flex}
 .lt-carril{position:sticky;left:0;z-index:2;background:var(--panel);border:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 8px 0 0;height:48px;color:var(--ink)}
 .lt-carril span{font-size:.64rem;font-weight:800;display:flex;align-items:center;gap:5px} .lt-carril span i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:0 0 auto}
 .lt-carril small{font:500 .52rem "IBM Plex Mono",monospace;color:var(--ink-mut)}
@@ -14827,8 +14912,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-vacio{padding:18px 10px;text-align:center;color:var(--ink-mut);font-size:.68rem;line-height:1.5}
 #ftBox .ftb-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:56px;border:0;border-radius:8px;background:rgba(255,255,255,.85);font-size:24px;cursor:pointer;color:#1f4e45}
 #ftBox .ftb-prev{left:-46px} #ftBox .ftb-next{right:-46px} #ftBox .ftb-nav:disabled{opacity:.25;cursor:default}
-@media(max-width:1200px){ #v-fot{grid-template-columns:280px minmax(0,1fr)} }
-@media(max-width:860px){ #v-fot.view.on{display:flex!important;flex-direction:column;gap:10px} #v-fot .fot-hist{order:-1} #v-fot .fot-hist{height:auto} #v-fot .fot-body,#v-fot .lt-body{overflow:visible;display:block} #fotDetalle{overflow:visible} .lt-scroll{max-height:64vh} .lt-mx{grid-template-columns:46px repeat(var(--n),minmax(26px,1fr));min-width:calc(46px + var(--n) * 28px)} .lt-pel{grid-template-columns:98px repeat(var(--n),minmax(56px,1fr));min-width:calc(98px + var(--n) * 59px)} .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} .lt-play{margin-left:0} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
+@media(max-width:1200px){ #v-fot{grid-template-columns:260px minmax(0,1.25fr) minmax(0,1fr)} }
+@media(max-width:860px){ #v-fot.view.on{display:flex!important;flex-direction:column;gap:10px} #v-fot .fot-hist{order:-2;height:auto} #v-fot .fot-fotos{order:-1;height:auto} #fotDetalle{overflow:auto;max-height:78vh} #fotLinea .lt-scroll{max-height:64vh} .lt-mx{grid-template-columns:46px repeat(var(--n),minmax(26px,1fr));min-width:calc(46px + var(--n) * 28px)} .lt-pel{grid-template-columns:98px repeat(var(--n),minmax(56px,1fr));min-width:calc(98px + var(--n) * 59px)} .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} .lt-play{margin-left:0} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
 #ftBox{position:fixed;inset:0;z-index:99999;background:rgba(8,20,16,.86);display:none;align-items:center;justify-content:center;padding:24px}
 #ftBox .ftb-in{position:relative;max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:8px}
 #ftBox img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:8px;background:#000}
@@ -14851,6 +14936,23 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-plano .camp.con{cursor:pointer} .fot-plano .camp.sel circle{stroke-width:2;fill:rgba(181,87,123,.22)}
 .fot-leyenda .lg-camp{border-radius:2px;background:#b5577b;clip-path:polygon(50% 0,100% 100%,0 100%)}
 #ftBox .ftb-priv{color:#9fbdb4;font-size:.72rem}
+/* v72.9 · tres columnas, índice de «Por revisar», puntos de fase, plano con zoom */
+.lt-obs-idx{flex:1 1 auto;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px;align-content:start;padding:2px 2px 6px}
+.lt-obs-idx button{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 8px;text-align:left;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;color:var(--ink)}
+.lt-obs-idx button b{font:700 .66rem "IBM Plex Mono",monospace}
+.lt-obs-idx button .n{justify-self:end;font:800 .6rem "IBM Plex Mono",monospace;background:var(--amber-soft);border-radius:999px;padding:1px 7px}
+.lt-obs-idx button small{grid-column:1 / -1;font-size:.54rem;color:var(--ink-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-obs-idx button:hover{border-color:var(--c-civ,#2d7667)}
+#fotDetalle .lt-cab{position:sticky;top:0;z-index:2;background:var(--panel);padding-bottom:4px}
+.fot-plano{position:relative}
+.fot-plano .fp-svg{touch-action:none;cursor:grab;overflow:hidden;border-radius:6px} .fot-plano .fp-svg.arr{cursor:grabbing}
+.fot-plano .fp-ctl{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:3px;z-index:2}
+.fot-plano .fp-ctl button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);font:700 15px/1 "IBM Plex Sans",system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fot-plano .fp-ctl button:hover{border-color:var(--c-civ,#2d7667);color:var(--c-civ,#2d7667)} .fot-plano .fp-ctl button:disabled{opacity:.35;cursor:default}
+.fot-plano .fp-k{position:absolute;left:8px;bottom:6px;font:600 .5rem "IBM Plex Mono",monospace;color:var(--ink-mut);background:var(--panel);border-radius:5px;padding:1px 5px;opacity:.9;pointer-events:none}
+.fot-plano.grande{position:fixed;inset:4vh 4vw;z-index:9500;margin:0;padding:8px;display:flex;flex-direction:column;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+.fot-plano.grande .fp-svg{flex:1 1 auto;min-height:0} .fot-plano.grande svg{height:100%} .fot-plano.grande .tl{font-size:10px}
+.fp-fondo{position:fixed;inset:0;z-index:9400;background:rgba(8,20,16,.55)}
 #ftBox .ftb-pie{color:#fff;font-size:.8rem;text-align:center} #ftBox .ftb-pie small{color:#9fbdb4} .ftb-rev{color:#f0c674}
 #ftBox .ftb-x{position:absolute;top:-6px;right:-6px;width:34px;height:34px;border-radius:50%;border:0;background:#fff;font-size:22px;cursor:pointer;line-height:1}
 </style>
