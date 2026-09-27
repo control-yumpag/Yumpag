@@ -9534,6 +9534,8 @@ const MES3 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov',
 const ltLunes = f => { const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.toISOString().slice(0,10); };
 const ltMas = (f,n) => { const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 const ltDM = f => `${f.slice(8,10)}-${MES3[+f.slice(5,7)-1]}`;
+const DIA3 = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const ltDia = f => `${DIA3[new Date(f+'T12:00:00').getDay()]} ${ltDM(f)}`;   // «Sáb 26-Set»
 const ltRango = w => `${ltDM(w)} al ${ltDM(ltMas(w,6))}`;
 const faseDe = f => f.fase || 'sin fase';
 const ltNom = k => k==='sin fase' ? 'Sin fase' : (FASE_TXT[k]||k);
@@ -9602,7 +9604,7 @@ function ltDetalle(fil){
   let L, cab, grupo;
   if (z==='Todas'){
     if (c.z){ L=fil.filter(f=>zonaFila(f)===c.z && ltLunes(f.fecha)===c.w); cab=`${c.z} · semana del ${ltRango(c.w)}`; grupo='dia'; }
-    else { L=fil.filter(f=>ltLunes(f.fecha)===fotSel.sem); cab=`Semana del ${ltRango(fotSel.sem)} · toda la línea`; grupo='zona'; }
+    else { L=fil.filter(f=>ltLunes(f.fecha)===fotSel.sem); cab=`Semana del ${ltRango(fotSel.sem)} · toda la línea`; grupo='dia-zona'; }   // v72.10: por día, el más reciente arriba
   } else if (c.fase){
     L=fil.filter(f=>faseDe(f)===c.fase && (!c.w || ltLunes(f.fecha)===c.w));
     cab=`${z} · ${ltNom(c.fase)}${c.w?` · semana del ${ltRango(c.w)}`:' · todas las semanas'}`; grupo=c.w?'dia':'semana';
@@ -9611,15 +9613,22 @@ function ltDetalle(fil){
   const clave = f => grupo==='zona' ? zonaFila(f) : grupo==='semana' ? ltLunes(f.fecha) : f.fecha;
   const G={}; L.forEach(f=>{ (G[clave(f)]=G[clave(f)]||[]).push(f); });
   const pos = k => { const i=DATA.towers.findIndex(t=>t.t===k); return i>=0 ? i : FOT_ZONAS.includes(k) ? 9000+FOT_ZONAS.indexOf(k) : 500; };
-  const orden = Object.keys(G).sort(grupo==='zona' ? ((a,b)=>pos(a)-pos(b) || fotNat(a,b)) : undefined);
-  fotListaActual = orden.flatMap(k=>G[k]);
+  const porLinea = (a,b)=>pos(a)-pos(b) || fotNat(a,b);
+  const orden = Object.keys(G).sort(grupo==='zona' ? porLinea : grupo==='dia-zona' ? ((a,b)=>b.localeCompare(a)) : undefined);
+  /* v72.10: en la semana de toda la línea, cada día (el más reciente arriba) se parte por torre, camino y zona, en el orden de la línea */
+  const SUB={}; if (grupo==='dia-zona') orden.forEach(d=>{ const g={}; G[d].forEach(f=>{ (g[zonaFila(f)]=g[zonaFila(f)]||[]).push(f); }); SUB[d]=Object.keys(g).sort(porLinea).map(z=>[z,g[z]]); });
+  fotListaActual = grupo==='dia-zona' ? orden.flatMap(d=>SUB[d].flatMap(([,fs])=>fs)) : orden.flatMap(k=>G[k]);
   const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; });
   const chips=FASES_ORD.filter(k=>cnt[k]).map(k=>`<span class="lt-chip" style="background:${FASE_COLOR[k]||'#9aa5b1'}">${ltNom(k)} ${cnt[k]}</span>`).join('');
-  const av=ltAvance(L), etq = k => grupo==='zona' ? k : grupo==='semana' ? `Semana del ${ltRango(k)}` : fdFoto(k);
+  const av=ltAvance(L), etq = k => grupo==='zona' ? k : grupo==='semana' ? `Semana del ${ltRango(k)}` : grupo==='dia-zona' ? ltDia(k) : fdFoto(k);
+  const tira = fs => `<div class="ft-tira lt-tira">${fs.map(f=>figFoto(f, null, false)).join('')}</div>`;
+  const bloque = k => grupo==='dia-zona'
+    ? `<div class="lt-grp lt-dia">${etq(k)} <small>· ${G[k].length} foto${G[k].length>1?'s':''}</small></div>`+SUB[k].map(([z,fs])=>`<div class="lt-sub">${z} <small>· ${fs.length}</small></div>${tira(fs)}`).join('')
+    : `<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div>${tira(G[k])}`;
   const tit=document.getElementById('fotFotosTit'); if(tit) tit.textContent='Fotos de la selección';
   det.innerHTML = L.length
     ? `<div class="lt-cab">${cab} <small>· ${L.length} foto${L.length>1?'s':''}</small>${chips}</div>${av?`<div class="lt-av">${av}</div>`:''}`+
-      orden.map(k=>`<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div><div class="ft-tira lt-tira">${G[k].map(f=>figFoto(f, null, false)).join('')}</div>`).join('')
+      orden.map(bloque).join('')
     : `<div class="fot-vacio">Sin fotos en esta selección.</div>`;
   det.scrollTop = 0;
   det.querySelectorAll('.ft').forEach(e=>e.onclick=()=>abrirFoto(e.dataset.src, fotListaActual));
@@ -14905,6 +14914,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .lt-chip{display:inline-block;padding:0 6px;border-radius:999px;color:#fff;font-size:.52rem;font-weight:700;line-height:1.6}
 .lt-av{font-size:.6rem;color:var(--ink-2);margin:3px 0 2px} .lt-av b{color:var(--ink)}
 .lt-grp{font-size:.62rem;font-weight:800;color:var(--ink-2);margin:10px 0 4px} .lt-grp small{font-weight:600;color:var(--ink-mut)}
+.lt-grp.lt-dia{font-size:.68rem;color:var(--ink);margin:12px 0 2px;padding:3px 0 3px 7px;border-left:3px solid var(--sky);background:var(--sky-soft);border-radius:2px}
+.lt-sub{font-size:.6rem;font-weight:700;color:var(--ink-2);margin:6px 0 3px 8px} .lt-sub small{font-weight:600;color:var(--ink-mut)}
 .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:7px}
 .lt-tira .ft figcaption{font-size:.56rem;white-space:normal;line-height:1.25}
 .ft-ir{display:inline-block;margin:2px 0 6px;font-size:.6rem;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid var(--c-civ,#2d7667);background:var(--panel);color:var(--c-civ,#2d7667);cursor:pointer}
