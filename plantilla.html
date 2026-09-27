@@ -9293,10 +9293,10 @@ const fdFoto = f => { const d=new Date(f+'T12:00:00'); return d.toLocaleDateStri
 /* una miniatura con su pie: fecha, hora, fase reconocida (⚠ si no coincide con el % del reporte) */
 function figFoto(f, hasta, conTorre){
   const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.coherente===false?'inco':''}`;
-  const tt = `${f.torre||f.camino||'Sin ubicar'} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(f.fase_conf?` (${Math.round(f.fase_conf*100)} %)`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}`;
+  const tt = `${f.descripcion?f.descripcion+' — ':''}${f.torre||f.camino||'Sin ubicar'} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(f.fase_conf?` (${Math.round(f.fase_conf*100)} %)`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt}">
       <img src="${f.src}" loading="lazy" alt="${f.torre||''} ${f.fecha}">${f.fase?`<span class="ft-fase ${f.coherente===false?'inco':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:''}
-      <figcaption>${conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i></figcaption></figure>`;
+      <figcaption>${conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${f.descripcion?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
   const cont=document.getElementById('fotosTorre'); if(!cont) return;
@@ -9464,7 +9464,7 @@ function abrirFoto(src, lista){
   const bp=box.querySelector('.ftb-prev'), bn=box.querySelector('.ftb-next');
   bp.style.display = bn.style.display = ftNav.lista ? '' : 'none'; bp.disabled = !ftNav.lista || ftNav.i<=0; bn.disabled = !ftNav.lista || ftNav.i>=ftNav.lista.length-1;
   box.querySelector('img').src=f.src;
-  box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:'Sin ubicar')}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${f.fase_conf?` (visión ${Math.round(f.fase_conf*100)} %)`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}${ftNav.lista?` · ${ftNav.i+1}/${ftNav.lista.length}`:''}<br><small>${f.origen||''}</small>`;
+  box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:'Sin ubicar')}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${f.etiquetador==='ppt'?' (pie del PPT)':f.etiquetador==='humano'?' (revisada)':f.fase_conf?` (${f.etiquetador==='yolo'?'YOLO':'visión'} ${Math.round(f.fase_conf*100)} %)`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}${ftNav.lista?` · ${ftNav.i+1}/${ftNav.lista.length}`:''}${f.descripcion?`<br><span class="ftb-desc">«${f.descripcion}»${f.pata?` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}`:''}</span>`:''}<br><small>${f.origen||''}</small>`;
   box.style.display='flex';
 }
 /* pines de cámara en la vista de ruta, en el punto UTM del sello */
@@ -14641,6 +14641,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #ftBox{position:fixed;inset:0;z-index:99999;background:rgba(8,20,16,.86);display:none;align-items:center;justify-content:center;padding:24px}
 #ftBox .ftb-in{position:relative;max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:8px}
 #ftBox img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:8px;background:#000}
+#ftBox .ftb-desc{color:#d8f0a8;font-weight:600} .ft figcaption .ft-desc{display:block;white-space:normal;color:var(--ink);font-weight:600;font-size:.54rem;line-height:1.25;margin-top:1px}
 #ftBox .ftb-pie{color:#fff;font-size:.8rem;text-align:center} #ftBox .ftb-pie small{color:#9fbdb4} .ftb-rev{color:#f0c674}
 #ftBox .ftb-x{position:absolute;top:-6px;right:-6px;width:34px;height:34px;border-radius:50%;border:0;background:#fff;font-size:22px;cursor:pointer;line-height:1}
 </style>
