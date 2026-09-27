@@ -8145,7 +8145,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   </section>
 
   <!-- ==================== PROCESO CONSTRUCTIVO ==================== -->
-  <!-- ==================== FOTOS DE OBRA (v72.3) ==================== -->
+  <!-- ==================== FOTOS DE OBRA (v72.3 · línea de tiempo v72.7) ==================== -->
   <section id="v-fot" class="view">
     <div class="card fot-zona"><h3><span class="dot"></span>Zona · torre o camino</h3>
       <div class="desc">Histórico fotográfico de la obra ubicado por GPS (o por el sello de la foto). Elige una torre o un camino; el plano muestra dónde se tomó cada foto, coloreada por la fase que se reconoce en ella.</div>
@@ -8154,13 +8154,12 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       <div class="fot-plano" id="fotPlano"></div>
       <div class="fot-leyenda" id="fotLeyenda"></div>
     </div>
-    <div class="card fot-hist"><h3><span class="dot"></span><span id="fotTitulo">Fotos de obra</span></h3>
+    <div class="card fot-hist"><h3><span class="dot"></span><span id="fotTitulo">Línea de tiempo</span></h3>
       <div class="desc" id="fotDesc"></div>
       <div class="fot-filtros" id="fotFiltros"></div>
-      <div class="fot-dias" id="fotDias"></div>
-      <div class="body scroll fot-body">
-        <div class="fot-tabla" id="fotTabla"></div>
-        <div class="fot-galeria" id="fotGaleria"></div>
+      <div class="fot-body lt-body">
+        <div class="fot-linea" id="fotLinea"></div>
+        <div class="fot-detalle" id="fotDetalle"></div>
       </div>
     </div>
   </section>
@@ -9309,9 +9308,11 @@ function pintarFotosTorre(){
   const dia = hoy.filter(f=>f.fecha===hasta).length, inco = hoy.filter(f=>f.coherente===false).length;
   const fases = [...new Set(hoy.filter(f=>f.fase && f.fase!=='otro').map(f=>faseTxt(f)))];
   cont.innerHTML = `<div class="tw-sec">Fotos de campo · ${hoy.length} hasta el ${fdFoto(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${fases.length?` · <i class="ft-fases">${fases.join(' · ')}</i>`:''}${inco?` · <b class="ft-inco">⚠ ${inco} no coincide${inco>1?'n':''} con el reporte</b>`:''}</div>
+    <button type="button" class="ft-ir" data-z="${t.t}">Ver la línea de tiempo de ${t.t} →</button>
     <div class="ft-tira">${hoy.slice(0,12).map(f=>figFoto(f, hasta, false)).join('')}
     ${hoy.length>12?`<div class="ft-mas">+${hoy.length-12} más</div>`:''}</div>`;
   cont.querySelectorAll('.ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src));
+  const ir=cont.querySelector('.ft-ir'); if(ir) ir.onclick=()=>{ ltParar(); fotSel.zona=ir.dataset.z; fotSel.celda=null; fotSel.sem=null; const nb=document.querySelector('#nav button[data-v="v-fot"]'); if(nb) nb.click(); };
 }
 /* fotos tomadas sobre un camino de acceso (panel Caminos del Proceso Constructivo) */
 function pintarFotosCamino(cont, cam){
@@ -9349,7 +9350,7 @@ const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1',
 const FASES_ORD = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat','otro','sin fase'];
 const faseColor = f => f && f.fase ? (FASE_COLOR[f.fase]||'#8f9a96') : '#c2ccc8';
 const FASE_ACT = {acceso:'Caminos', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Concreto', relleno:'Relleno', pat:'PAT'};   // fase de la foto → actividad del Resumen
-let fotSel = {zona:'Todas', dia:null, fase:'Todas', cat:'Todas'};
+let fotSel = {zona:'Todas', sem:null, celda:null, fase:'Todas', cat:'Todas'};   // v72.7: semana y celda elegidas en la línea de tiempo
 let fotListaActual = [];
 const fotNat = (a,b)=>{ const f=s=>{const m=String(s).match(/^([A-Z]+)(\d+)([A-Z]*)$/);return m?[m[1],+m[2],m[3]]:[s,0,''];}; const x=f(a),y=f(b); return x[0]<y[0]?-1:x[0]>y[0]?1:(x[1]-y[1])||(x[2]<y[2]?-1:x[2]>y[2]?1:0); };
 function utmAEN(E,N){ return { e:UTM_AFIN.e[0]*E+UTM_AFIN.e[1]*N+UTM_AFIN.e[2], n:UTM_AFIN.n[0]*E+UTM_AFIN.n[1]*N+UTM_AFIN.n[2] }; }
@@ -9367,8 +9368,8 @@ function renderFotosTab(){
   const $z=document.getElementById('fotZonas'); if(!$z) return;
   const todas = FOTOS_CAMPO;
   if(!todas.length){
-    ['fotKpis','fotZonas','fotPlano','fotLeyenda','fotFiltros','fotDias','fotTabla'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
-    document.getElementById('fotGaleria').innerHTML = `<div class="fot-vacio">Sin fotos indexadas todavía.<br>Las fotos del día se suben a Drive <b>CLAUDE/02_fotos/NNN DD-Mes-AA/</b> (subcarpetas T-NN · MA · SST · AA.SS) y el generador las ubica, reconoce la fase y las publica aquí.</div>`; return; }
+    ['fotKpis','fotZonas','fotPlano','fotLeyenda','fotFiltros','fotLinea'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
+    document.getElementById('fotDetalle').innerHTML = `<div class="fot-vacio">Sin fotos indexadas todavía.<br>Las fotos del día se suben a Drive <b>CLAUDE/02_fotos/&lt;Mes&gt;/NNN DD-Mes-AA/</b> (subcarpetas T-NN · MA · SST · AA.SS) y el generador las ubica, reconoce la fase y las publica aquí.</div>`; return; }
   const dias=[...new Set(todas.map(f=>f.fecha))].sort(), nT=new Set(todas.filter(f=>f.torre).map(f=>f.torre)).size, nC=new Set(todas.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino)).size;
   const inco=todas.filter(f=>f.coherente===false).length;
   document.getElementById('fotKpis').innerHTML = [[todas.length,'fotos'],[dias.length,dias.length===1?'día':'días'],[fdFoto(dias[dias.length-1]),'última captura'],[nT,'torres'],[nC,'caminos'],[inco?`⚠ ${inco}`:'✓ 0','vs reporte']].map(x=>`<div class="k"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
@@ -9379,7 +9380,7 @@ function renderFotosTab(){
   $z.innerHTML = `<button data-z="Todas" class="${fotSel.zona==='Todas'?'on':''}">Toda la línea<span class="n">${todas.length}</span></button><span class="sep">Torres</span>`+
     DATA.towers.map(t=>{ const n=cnt(t.t); return `<button data-z="${t.t}" class="${fotSel.zona===t.t?'on':''} ${n?'':'vacio'} ${confZ.has(t.t)?'conf':''}" title="${n} foto(s)${confZ.has(t.t)?' · alguna con torre por confirmar':''}">${t.t}${n?`<span class="n">${n}</span>`:''}</button>`; }).join('')+
     (caminos.length?`<span class="sep">Caminos</span>`+caminos.map(c=>`<button data-z="${c}" class="${fotSel.zona===c?'on':''} ${/^CP/.test(c)?'peat':''}">${c}<span class="n">${cnt(c)}</span></button>`).join(''):'');
-  $z.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel.zona=b.dataset.z; fotSel.dia=null; renderFotosTab(); });
+  $z.querySelectorAll('button').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.zona=b.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
   try{ pintarPlanoFotos(); }catch(e){ console.warn('plano fotos', e); }
   pintarHistorialFotos();
 }
@@ -9403,53 +9404,147 @@ function pintarPlanoFotos(){
   const torres=T.map((t,i)=>`<circle class="tw ${conF.has(t.t)?'con':''} ${zona===t.t?'sel':''}" data-z="${t.t}" cx="${X(t.e)}" cy="${Y(t.n)}" r="${zona===t.t?7:5}"><title>${t.t} · ${conF.has(t.t)?cnt2(t.t)+' foto(s)':'sin fotos'}</title></circle>`+((i%2===0||zona===t.t||conF.has(t.t))?`<text class="tl" x="${X(t.e)}" y="${Y(t.n)-8}" text-anchor="middle">${t.t.replace(/^T0/,'T')}</text>`:'')).join('');
   function cnt2(z){ return fotDeZona(z).length; }
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plano de la línea con la ubicación de las fotos">${cams}${linea}${se}${dots}${torres}</svg>`;
-  el.querySelectorAll('.tw').forEach(c=>c.onclick=()=>{ fotSel.zona=c.dataset.z; fotSel.dia=null; renderFotosTab(); });
+  el.querySelectorAll('.tw').forEach(c=>c.onclick=()=>{ ltParar(); fotSel.zona=c.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
   el.querySelectorAll('.pt').forEach(c=>c.onclick=()=>abrirFoto(c.dataset.src, fotListaActual.some(x=>x.src===c.dataset.src)?fotListaActual:null));
   document.getElementById('fotLeyenda').innerHTML = Object.entries(FASE_COLOR).filter(([k])=>FOTOS_CAMPO.some(f=>f.fase===k)).map(([k,c])=>`<span><i style="background:${c}"></i>${FASE_TXT[k]||k}</span>`).join('')+
     (FOTOS_CAMPO.some(f=>!f.fase)?`<span><i style="background:#c2ccc8"></i>sin fase</span>`:'')+`<span><i style="background:transparent;border:2px solid var(--c-civ,#2d7667)"></i>torre con fotos</span>`+(FOTOS_CAMPO.some(f=>!f.utm&&f.torre)?`<span><i style="background:transparent;border:1px dashed #1a1a1a"></i>sin GPS (carpeta)</span>`:'');
 }
-/* historial de la zona: filtros, días con capturas, tabla día · fotos · fases vistas · % oficial, y galería por día */
-function pintarHistorialFotos(){
+/* =====================================================================
+   LÍNEA DE TIEMPO FOTOGRÁFICA (v72.7 · 27-Set-26)
+   · Toda la línea: matriz torres/caminos × semanas (lunes a domingo). El número es la cantidad de fotos y la franja,
+     las fases que se ven. Clic en una semana o en una celda: sus fotos aparecen debajo, completas y sin «ver más».
+   · Una torre o un camino: película por fases (un carril por fase, una columna por semana) con la foto más
+     representativa de cada celda (primero la del pie del PPT). Clic en una celda o en una fase: sus fotos debajo.
+   · ▶ Recorrer semanas: avanza sola por las semanas con fotos.
+   Solo usa fotos/fotos.json (FOTOS_CAMPO) y fotos/avance_actividad.json (Resumen: avance global por actividad y día).
+   ===================================================================== */
+const MES3 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+const ltLunes = f => { const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.toISOString().slice(0,10); };
+const ltMas = (f,n) => { const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const ltDM = f => `${f.slice(8,10)}-${MES3[+f.slice(5,7)-1]}`;
+const ltRango = w => `${ltDM(w)} al ${ltDM(ltMas(w,6))}`;
+const faseDe = f => f.fase || 'sin fase';
+const ltNom = k => k==='sin fase' ? 'Sin fase' : (FASE_TXT[k]||k);
+const zonaFila = f => f.torre || f.camino || 'Sin ubicar';
+const ltRgba = (hex,a) => { const n=parseInt(String(hex||'#c2ccc8').slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+const ltOrd = L => L.slice().sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
+function ltSemanas(desde, hasta){ const L=[]; for(let w=ltLunes(desde); w<=hasta; w=ltMas(w,7)) L.push(w); return L; }
+/* la foto que representa un grupo: pie del PPT o revisada primero, luego la de mayor confianza, luego la más reciente */
+function ltMejor(L){ const r=f=>((f.etiquetador==='ppt'||f.etiquetador==='humano')?2:0)+(f.coherente===false?-1:0)+(+f.fase_conf||0);
+  return L.slice().sort((a,b)=>r(b)-r(a) || (b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')))[0]; }
+/* avance global de las actividades vistas, según el último Resumen disponible entre los días de la selección */
+function ltAvance(L){
+  const AV=window.FOTOS_AVANCE||{}; const d=[...new Set(L.map(f=>f.fecha))].sort().reverse().find(x=>AV[x]); if(!d) return '';
+  const fases=[...new Set(L.map(f=>f.fase).filter(x=>x&&FASE_ACT[x]))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
+  const p=fases.map(x=>AV[d][FASE_ACT[x]]!=null?`${FASE_TXT[x]||x} <b>${(+AV[d][FASE_ACT[x]]).toFixed(1)} %</b>`:null).filter(Boolean);
+  return p.length?`Avance global de la actividad según el Resumen del ${ltDM(d)}: ${p.join(' · ')}`:'';
+}
+function ltCabecera(W){
+  let prev='';
+  const mes=W.map((w,i)=>{ const m=w.slice(0,7), ini=m!==prev; prev=m; return `<div class="lt-mes${ini?' ini':''}">${ini?MES3[+m.slice(5)-1]+((i===0||m.endsWith('-01'))?' '+m.slice(0,4):''):''}</div>`; }).join('');
+  return `<div class="lt-esq"></div>${mes}<div class="lt-esq lt-esq2">semana</div>`+
+    W.map(w=>`<button type="button" class="lt-sem${fotSel.sem===w?' sel':''}" data-w="${w}" title="Semana del ${ltRango(w)}">${w.slice(8,10)}</button>`).join('');
+}
+/* toda la línea: torres y caminos por semana */
+function ltMatriz(fil, W){
+  const el=document.getElementById('fotLinea'), c=fotSel.celda||{};
+  const G={}, N={}; fil.forEach(f=>{ const z=zonaFila(f); (G[z+'|'+ltLunes(f.fecha)]=G[z+'|'+ltLunes(f.fecha)]||[]).push(f); N[z]=(N[z]||0)+1; });
+  const cams=[...new Set(fil.filter(f=>!f.torre&&f.camino).map(f=>f.camino))].sort(fotNat);
+  const fila = z => `<button type="button" class="lt-fila${N[z]?'':' vacia'}" data-z="${z}" title="${N[z]||0} foto(s)${N[z]?' · ver la película de '+z:''}">${z==='Sin ubicar'?'sin ubicar':z}</button>`+
+    W.map(w=>{ const L=G[z+'|'+w], cs=fotSel.sem===w?' csel':'';
+      if(!L) return `<div class="lt-v${cs}"></div>`;
+      const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; }); const ks=FASES_ORD.filter(k=>cnt[k]);
+      return `<button type="button" class="lt-c${cs}${c.z===z&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-z="${z}" data-w="${w}" title="${z} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}: ${ks.map(k=>`${ltNom(k)} ${cnt[k]}`).join(', ')}">${L.length}<span class="fr">${ks.map(k=>`<i style="flex:${cnt[k]};background:${FASE_COLOR[k]||'#c2ccc8'}"></i>`).join('')}</span></button>`; }).join('');
+  let h = ltCabecera(W) + DATA.towers.map(t=>fila(t.t)).join('');
+  if (cams.length) h += `<div class="lt-grupo">Caminos de acceso</div>` + cams.map(fila).join('');
+  if (N['Sin ubicar']) h += `<div class="lt-grupo">Sin torre ni camino (sin GPS legible)</div>` + fila('Sin ubicar');
+  el.innerHTML = `<div class="lt-scroll"><div class="lt-mx" style="--n:${W.length}">${h}</div></div>`;
+  el.querySelectorAll('.lt-sem').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda=null; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-c').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={z:b.dataset.z, w:b.dataset.w}; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-fila').forEach(b=>b.onclick=()=>{ if(!N[b.dataset.z] || b.dataset.z==='Sin ubicar') return; ltParar(); fotSel.zona=b.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
+}
+/* una torre o un camino: película por fases */
+function ltPelicula(fil, W){
+  const el=document.getElementById('fotLinea'), c=fotSel.celda||{};
+  const G={}, T={}; fil.forEach(f=>{ const w=ltLunes(f.fecha), k=faseDe(f)+'|'+w; (G[k]=G[k]||[]).push(f); (T[w]=T[w]||[]).push(f); });
+  const fases=FASES_ORD.filter(k=>fil.some(f=>faseDe(f)===k));
+  let h = ltCabecera(W) + `<div class="lt-carril tot"><span>Todas las fases</span></div>` +
+    W.map(w=>{ const L=T[w], cs=fotSel.sem===w?' csel':''; return L ? `<button type="button" class="lt-c tot${cs}${!c.fase&&c.w===w?' sel':''}" data-w="${w}" title="Semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}">${L.length}</button>` : `<div class="lt-v lt-vt${cs}"></div>`; }).join('');
+  fases.forEach(k=>{
+    const Lf=fil.filter(f=>faseDe(f)===k), fs=Lf.map(f=>f.fecha).sort(), ws=W.filter(w=>G[k+'|'+w]), col=FASE_COLOR[k]||'#c2ccc8', nom=ltNom(k);
+    h += `<button type="button" class="lt-carril${c.fase===k&&!c.w?' sel':''}" data-f="${k}" title="Ver todas las fotos de ${nom}"><span><i style="background:${col}"></i>${nom}</span><small>${Lf.length} · ${ltDM(fs[0])}${fs[0]!==fs[fs.length-1]?' → '+ltDM(fs[fs.length-1]):''}</small></button>`;
+    h += W.map(w=>{ const L=G[k+'|'+w], cs=fotSel.sem===w?' csel':'';
+      if(!L){ const tramo = ws.length>1 && w>ws[0] && w<ws[ws.length-1]; return `<div class="lt-p${cs}"${tramo?` style="background:${ltRgba(col,.16)}"`:''}></div>`; }
+      const m=ltMejor(L);
+      return `<button type="button" class="lt-p hay${cs}${c.fase===k&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-f="${k}" data-w="${w}" style="--fc:${col}" title="${nom} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}"><img src="${m.src}" loading="lazy" alt="${nom} ${ltDM(m.fecha)}"><span class="n">${L.length}</span></button>`; }).join('');
+  });
+  el.innerHTML = `<div class="lt-scroll"><div class="lt-pel" style="--n:${W.length}">${h}</div></div>`;
+  el.querySelectorAll('.lt-sem, .lt-c.tot').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={w:b.dataset.w}; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-p.hay').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={fase:b.dataset.f, w:b.dataset.w}; pintarHistorialFotos(); });
+  el.querySelectorAll('.lt-carril[data-f]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.celda={fase:b.dataset.f}; pintarHistorialFotos(); });
+}
+/* las fotos de la selección, agrupadas (por día, por semana o por torre), todas: las imágenes cargan al verse */
+function ltDetalle(fil){
+  const det=document.getElementById('fotDetalle'), z=fotSel.zona, c=fotSel.celda||{};
+  let L, cab, grupo;
+  if (z==='Todas'){
+    if (c.z){ L=fil.filter(f=>zonaFila(f)===c.z && ltLunes(f.fecha)===c.w); cab=`${c.z==='Sin ubicar'?'Sin ubicar':c.z} · semana del ${ltRango(c.w)}`; grupo='dia'; }
+    else { L=fil.filter(f=>ltLunes(f.fecha)===fotSel.sem); cab=`Semana del ${ltRango(fotSel.sem)} · toda la línea`; grupo='zona'; }
+  } else if (c.fase){
+    L=fil.filter(f=>faseDe(f)===c.fase && (!c.w || ltLunes(f.fecha)===c.w));
+    cab=`${z} · ${ltNom(c.fase)}${c.w?` · semana del ${ltRango(c.w)}`:' · todas las semanas'}`; grupo=c.w?'dia':'semana';
+  } else { const w=c.w||fotSel.sem; L=fil.filter(f=>ltLunes(f.fecha)===w); cab=`${z} · semana del ${ltRango(w)}`; grupo='dia'; }
+  L=ltOrd(L);
+  const clave = f => grupo==='zona' ? zonaFila(f) : grupo==='semana' ? ltLunes(f.fecha) : f.fecha;
+  const G={}; L.forEach(f=>{ (G[clave(f)]=G[clave(f)]||[]).push(f); });
+  const pos = k => { const i=DATA.towers.findIndex(t=>t.t===k); return i>=0 ? i : k==='Sin ubicar' ? 9999 : 500; };
+  const orden = Object.keys(G).sort(grupo==='zona' ? ((a,b)=>pos(a)-pos(b) || fotNat(a,b)) : undefined);
+  fotListaActual = orden.flatMap(k=>G[k]);
+  const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; });
+  const chips=FASES_ORD.filter(k=>cnt[k]).map(k=>`<span class="lt-chip" style="background:${FASE_COLOR[k]||'#9aa5b1'}">${ltNom(k)} ${cnt[k]}</span>`).join('');
+  const av=ltAvance(L), etq = k => grupo==='zona' ? (k==='Sin ubicar'?'Sin ubicar':k) : grupo==='semana' ? `Semana del ${ltRango(k)}` : fdFoto(k);
+  det.innerHTML = L.length
+    ? `<div class="lt-cab">${cab} <small>· ${L.length} foto${L.length>1?'s':''}</small>${chips}</div>${av?`<div class="lt-av">${av}</div>`:''}`+
+      orden.map(k=>`<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div><div class="ft-tira lt-tira">${G[k].map(f=>figFoto(f, null, false)).join('')}</div>`).join('')
+    : `<div class="fot-vacio">Sin fotos en esta selección.</div>`;
+  det.scrollTop = 0;
+  det.querySelectorAll('.ft').forEach(e=>e.onclick=()=>abrirFoto(e.dataset.src, fotListaActual));
+}
+let ltTimer=null, ltW=[];
+function ltParar(){ if(ltTimer){ clearInterval(ltTimer); ltTimer=null; } const b=document.getElementById('ltPlay'); if(b){ b.classList.remove('on'); b.textContent='▶ Recorrer semanas'; } }
+function ltPlay(){
+  if (ltTimer){ ltParar(); return; }
+  const con=new Set(fotFiltrar(fotDeZona(fotSel.zona)).map(f=>ltLunes(f.fecha))), W=ltW.filter(w=>con.has(w)); if(!W.length) return;
+  let i=0; const paso=()=>{ fotSel.sem=W[i]; fotSel.celda = fotSel.zona==='Todas' ? null : {w:W[i]}; pintarHistorialFotos(true); };
+  paso(); ltTimer=setInterval(()=>{ i++; if(i>=W.length){ ltParar(); return; } paso(); }, 1800);
+  const b=document.getElementById('ltPlay'); if(b){ b.classList.add('on'); b.textContent='⏸ Pausa'; }
+}
+/* historial de la zona: filtros, línea de tiempo (matriz o película) y fotos de la selección */
+function pintarHistorialFotos(enPlay){
   const zona=fotSel.zona, base=fotDeZona(zona), t=DATA.towers.find(x=>x.t===zona);
-  const fases=[...new Set(base.map(f=>f.fase||'sin fase'))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
+  const fases=[...new Set(base.map(faseDe))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
   const cats=[...new Set(base.map(f=>f.categoria))];
-  if(!fases.includes(fotSel.fase)) fotSel.fase='Todas'; if(!cats.includes(fotSel.cat)) fotSel.cat='Todas';
+  if(fotSel.fase!=='Todas' && !fases.includes(fotSel.fase)) fotSel.fase='Todas'; if(fotSel.cat!=='Todas' && !cats.includes(fotSel.cat)) fotSel.cat='Todas';
   const $f=document.getElementById('fotFiltros');
-  $f.innerHTML = (fases.length>1?`<span class="sep">Fase</span><button data-k="fase" data-v="Todas" class="${fotSel.fase==='Todas'?'on':''}">Todas</button>`+fases.map(x=>`<button data-k="fase" data-v="${x}" class="${fotSel.fase===x?'on':''}"><i style="background:${FASE_COLOR[x]||'#c2ccc8'}"></i>${FASE_TXT[x]||x}</button>`).join(''):'')+
-    (cats.length>1?`<span class="sep">Categoría</span><button data-k="cat" data-v="Todas" class="${fotSel.cat==='Todas'?'on':''}">Todas</button>`+cats.map(x=>`<button data-k="cat" data-v="${x}" class="${fotSel.cat===x?'on':''}">${x}</button>`).join(''):'');
-  $f.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel[b.dataset.k]=b.dataset.v; pintarHistorialFotos(); });
-  const fil = fotFiltrar(base);
-  const porDia={}; fil.forEach(f=>{ (porDia[f.fecha]=porDia[f.fecha]||[]).push(f); });
-  Object.values(porDia).forEach(L=>L.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')));
-  const dias=Object.keys(porDia).sort().reverse();
-  if(fotSel.dia && !porDia[fotSel.dia]) fotSel.dia=null;
-  const $d=document.getElementById('fotDias');
-  $d.innerHTML = dias.length ? `<button data-d="" class="${!fotSel.dia?'on':''}">Todo<small>${fil.length} foto${fil.length!==1?'s':''}</small></button>`+dias.map(d=>`<button data-d="${d}" class="${fotSel.dia===d?'on':''} ${porDia[d].some(f=>f.coherente===false)?'inco':''}">${fdFoto(d)}<small>${porDia[d].length} foto${porDia[d].length!==1?'s':''}</small></button>`).join('') : '';
-  $d.querySelectorAll('button').forEach(b=>b.onclick=()=>{ fotSel.dia=b.dataset.d||null; pintarHistorialFotos(); });
-  document.getElementById('fotTitulo').textContent = zona==='Todas' ? 'Fotos de obra · toda la línea' : t ? `Fotos de obra · ${zona} · ${t.tp||''} · obra civil ${Math.round(t.pct||0)} %` : `Fotos de obra · camino ${zona}`;
+  $f.innerHTML = (fases.length>1?`<span class="sep">Fase</span><button data-k="fase" data-v="Todas" class="${fotSel.fase==='Todas'?'on':''}">Todas</button>`+fases.map(x=>`<button data-k="fase" data-v="${x}" class="${fotSel.fase===x?'on':''}"><i style="background:${FASE_COLOR[x]||'#c2ccc8'}"></i>${ltNom(x)}</button>`).join(''):'')+
+    (cats.length>1?`<span class="sep">Categoría</span><button data-k="cat" data-v="Todas" class="${fotSel.cat==='Todas'?'on':''}">Todas</button>`+cats.map(x=>`<button data-k="cat" data-v="${x}" class="${fotSel.cat===x?'on':''}">${x}</button>`).join(''):'')+
+    `<button type="button" id="ltPlay" class="lt-play${ltTimer?' on':''}" title="Avanza sola por las semanas con fotos">${ltTimer?'⏸ Pausa':'▶ Recorrer semanas'}</button>`;
+  $f.querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel[b.dataset.k]=b.dataset.v; fotSel.celda=null; pintarHistorialFotos(); });
+  document.getElementById('ltPlay').onclick=ltPlay;
+  const fil=fotFiltrar(base);
+  document.getElementById('fotTitulo').textContent = zona==='Todas' ? 'Línea de tiempo · toda la línea' : t ? `Línea de tiempo · ${zona}${t.tp?' · '+t.tp:''}` : `Línea de tiempo · camino ${zona}`;
+  if(!fil.length){ document.getElementById('fotLinea').innerHTML=''; document.getElementById('fotDesc').textContent=''; document.getElementById('fotDetalle').innerHTML='<div class="fot-vacio">Sin fotos para este filtro.</div>'; return; }
+  const fechas=fil.map(f=>f.fecha).sort(), ult=fechas[fechas.length-1], TW=DATA.tl_weeks||[], corte=TW[TW.length-1]||ult;
+  ltW = ltSemanas(zona==='Todas' ? FOTOS_CAMPO.map(f=>f.fecha).sort()[0] : fechas[0], corte>ult ? corte : ult);
+  const con=new Set(fil.map(f=>ltLunes(f.fecha)));
+  if(!fotSel.sem || !ltW.includes(fotSel.sem)) fotSel.sem=[...ltW].reverse().find(w=>con.has(w)) || ltW[ltW.length-1];
   document.getElementById('fotDesc').textContent = zona==='Todas'
-    ? `${fil.length} fotos en ${dias.length} día(s). Cada fila es un día de captura; la galería agrupa por día, la más reciente arriba. Clic en una foto para verla grande y recorrer con ◀ ▶.`
-    : t ? `Evidencia fotográfica de ${zona} por día, con el avance global de la actividad según el Resumen de ese día. ⚠ = la fase que se ve en la foto no coincide con lo reportado para la torre; ◌ = torre tomada de la carpeta (sin GPS legible). Fotos repetidas, sin valor de obra y con personas no se muestran.`
-    : `Fotos tomadas sobre el camino ${zona}: lejos de toda torre o etiquetadas como acceso.`;
-  const filas = dias.map(d=>{ const L=porDia[d]; const fs=[...new Set(L.filter(f=>f.fase&&f.fase!=='otro').map(f=>f.fase))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
-    const inco=L.filter(f=>f.coherente===false).length, conf=L.filter(f=>f.estado==='conf').length; let extra='';
-    const AV=(window.FOTOS_AVANCE||{})[d];
-    const glob = AV ? fs.map(x=>{ const k=FASE_ACT[x]; return (k && AV[k]!=null) ? `${FASE_TXT[x]||x} <b>${(+AV[k]).toFixed(1)} %</b>` : null; }).filter(Boolean).join(' · ') : '';
-    if(t){ extra = `<td>${glob || '<span style="color:var(--ink-mut)">—</span>'}</td>`; }
-    else { const zs={}; L.forEach(f=>{ const z=f.torre||f.camino||'sin ubicar'; zs[z]=(zs[z]||0)+1; }); extra=`<td>${glob?glob+'<br>':''}<small>${Object.entries(zs).sort((a,b)=>b[1]-a[1]).map(([z,n])=>`${z} ${n}`).join(' · ')}</small></td>`; }
-    return `<tr data-d="${d}" class="${fotSel.dia===d?'sel':''}"><td class="f">${fdFoto(d)}</td><td>${L.length}${conf?` <span title="${conf} con torre por confirmar">◌${conf}</span>`:''}</td><td>${fs.map(x=>`<span class="fase" style="background:${FASE_COLOR[x]}">${FASE_TXT[x]||x}</span>`).join('')||'<span style="color:var(--ink-mut)">—</span>'}</td>${extra}<td>${inco?`<span class="ft-inco">⚠ ${inco}</span>`:(L.some(f=>f.coherente===true)?'✓':(fs.length&&t?'<span title="sin reporte del mismo día o del anterior para comparar" style="color:var(--ink-mut)">s/r</span>':''))}</td></tr>`; });
-  document.getElementById('fotTabla').innerHTML = dias.length ? `<table class="fot-t"><thead><tr><th>Día</th><th>Fotos</th><th>Fases vistas</th><th>${t?'Avance global de la actividad ese día (reporte)':'Avance global ese día (reporte) · dónde'}</th><th>vs reporte</th></tr></thead><tbody>${filas.join('')}</tbody></table>` : '';
-  document.querySelectorAll('#fotTabla tr[data-d]').forEach(tr=>tr.onclick=()=>{ fotSel.dia = fotSel.dia===tr.dataset.d ? null : tr.dataset.d; pintarHistorialFotos(); });
-  const mostrar = fotSel.dia ? [fotSel.dia] : dias;
-  fotListaActual = mostrar.flatMap(d=>porDia[d]);
-  const clave = [zona, fotSel.dia, fotSel.fase, fotSel.cat].join('|'); if (fotSel._clave !== clave){ fotSel._clave = clave; fotSel.lim = 60; }
-  let resto = fotSel.lim; const bloques = [];
-  for (const d of mostrar){ if (resto <= 0) break; const L = porDia[d].slice(0, resto); resto -= L.length;
-    bloques.push(`<div class="dia">${fdFoto(d)} <small>· ${porDia[d].length} foto${porDia[d].length!==1?'s':''}${L.length<porDia[d].length?` (${L.length} mostradas)`:''}</small></div><div class="ft-tira">${L.map(f=>figFoto(f,null,!t)).join('')}</div>`); }
-  const quedan = fotListaActual.length - Math.min(fotSel.lim, fotListaActual.length);
-  document.getElementById('fotGaleria').innerHTML = fil.length ? bloques.join('') + (quedan>0 ? `<button class="fot-mas" id="fotMas">Mostrar ${Math.min(60,quedan)} más · quedan ${quedan}</button>` : '') : `<div class="fot-vacio">Sin fotos para este filtro.</div>`;
-  const bm=document.getElementById('fotMas'); if (bm) bm.onclick=()=>{ fotSel.lim += 60; pintarHistorialFotos(); };
-  document.querySelectorAll('#fotGaleria .ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src, fotListaActual));
+    ? `${fil.length} fotos en ${new Set(fechas).size} días, del ${ltDM(fechas[0])} al ${ltDM(ult)}. Cada columna es una semana (lunes a domingo): el número son las fotos y la franja, las fases que se ven. Clic en una semana o en una celda para ver sus fotos abajo; clic en una torre para ver su película por fases.`
+    : `Película ${t?'de la torre':'del camino'} ${zona}: un carril por fase y una columna por semana, con la foto más representativa (primero la del pie del PPT). Clic en una celda o en una fase para ver sus fotos abajo. ⚠ = la fase de la foto no coincide con la del reporte; ◌ = torre tomada de la carpeta.`;
+  if(zona==='Todas') ltMatriz(fil, ltW); else ltPelicula(fil, ltW);
+  ltDetalle(fil);
+  const sc=document.querySelector('#fotLinea .lt-scroll'), bs=document.querySelector('#fotLinea .lt-sem.sel');   // la semana elegida a la vista, sin mover la página
+  if(sc && bs) sc.scrollLeft = Math.max(0, bs.offsetLeft - sc.clientWidth/2 + bs.offsetWidth/2);
 }
 let ftNav = {lista:null, i:-1};
 function ftMover(d){ if(!ftNav.lista) return; const j=ftNav.i+d; if(j<0||j>=ftNav.lista.length) return; abrirFoto(ftNav.lista[j].src, ftNav.lista); }
@@ -14615,29 +14710,56 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-filtros button{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:999px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2)}
 .fot-filtros button.on{background:var(--c-civ,#2d7667);border-color:var(--c-civ,#2d7667);color:#fff}
 .fot-filtros button i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:0}
-.fot-dias{display:flex;gap:4px;overflow-x:auto;padding:4px 0 6px;border-bottom:1px solid var(--line);margin-bottom:6px}
-.fot-dias::-webkit-scrollbar{height:4px}
-.fot-dias button{flex:0 0 auto;font-family:"IBM Plex Mono",monospace;font-size:.6rem;font-weight:700;padding:4px 8px;border-radius:8px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
-.fot-dias button small{font-size:.52rem;font-weight:600;color:var(--ink-mut)}
-.fot-dias button.on{background:var(--sky);border-color:var(--sky);color:#fff} .fot-dias button.on small{color:#e8f4ff}
-.fot-dias button.inco{border-color:var(--amber)}
-.fot-tabla{margin-bottom:8px;overflow-x:auto;max-width:100%}
-.fot-t{width:100%;border-collapse:collapse;font-size:.6rem}
-.fot-t th{font-size:.54rem;text-transform:uppercase;letter-spacing:.3px;color:var(--ink-mut);text-align:left;padding:3px 6px;border-bottom:1px solid var(--line)}
-.fot-t td{padding:3px 6px;border-bottom:1px solid var(--line);color:var(--ink-2);white-space:nowrap} .fot-t td.f{color:var(--ink);font-weight:700}
-.fot-t td .pc{font-family:"IBM Plex Mono",monospace} .fot-t td .pc b{color:var(--ink)} .fot-t td .pc s{text-decoration:none;color:var(--ink-mut)}
-.fot-t tr.sel td{background:var(--panel-2)} .fot-t tr{cursor:pointer}
-.fot-t .fase{display:inline-block;padding:0 5px;border-radius:999px;color:#fff;font-size:.52rem;font-weight:700;margin-right:2px}
-.fot-galeria .dia{font-size:.66rem;font-weight:800;color:var(--ink);margin:8px 0 5px;display:flex;align-items:center;gap:8px}
-.fot-galeria .dia small{font-weight:600;color:var(--ink-mut)}
-.fot-galeria .ft-tira{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
-.fot-galeria .ft figcaption{font-size:.56rem;white-space:normal;line-height:1.25}
-.fot-mas{display:block;margin:10px auto 4px;font-size:.66rem;font-weight:700;padding:6px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);cursor:pointer}
+/* ===== Línea de tiempo fotográfica (v72.7) ===== */
+#v-fot .lt-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#fotLinea{flex:0 0 auto;min-height:0}
+#fotDetalle{flex:1 1 auto;min-height:0;overflow:auto;padding:0 4px 6px 0}
+.lt-play{margin-left:auto;font-size:.6rem;font-weight:800;padding:3px 11px;border-radius:999px;cursor:pointer;border:1px solid var(--c-civ,#2d7667);background:var(--panel);color:var(--c-civ,#2d7667)}
+.lt-play.on{background:var(--c-civ,#2d7667);color:#fff}
+.lt-scroll{overflow:auto;max-width:100%;max-height:46vh;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.lt-scroll::-webkit-scrollbar{height:7px;width:7px} .lt-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+.lt-mx,.lt-pel{position:relative;display:grid;align-items:center}
+.lt-mx{grid-template-columns:58px repeat(var(--n),minmax(28px,76px));gap:2px;min-width:calc(58px + var(--n) * 30px)}
+.lt-pel{grid-template-columns:136px repeat(var(--n),minmax(64px,220px));gap:4px 3px;min-width:calc(136px + var(--n) * 67px)}
+.lt-esq{position:sticky;left:0;top:0;z-index:4;background:var(--panel);align-self:stretch;min-height:14px}
+.lt-esq2{top:15px;font-size:.5rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.lt-mes{position:sticky;top:0;z-index:3;background:var(--panel);font-size:.56rem;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:visible;height:15px;line-height:15px}
+.lt-mes.ini{border-left:1px solid var(--line-2);padding-left:3px}
+.lt-sem{position:sticky;top:15px;z-index:3;font:600 .56rem "IBM Plex Mono",monospace;color:var(--ink-mut);background:var(--panel);border:0;border-radius:5px;padding:2px 0;cursor:pointer;height:20px}
+.lt-sem:hover{background:var(--panel-2);color:var(--ink)} .lt-sem.sel{background:var(--sky);color:#fff}
+.lt-fila{position:sticky;left:0;z-index:2;background:var(--panel);border:0;text-align:right;padding:0 6px 0 0;font:700 .6rem "IBM Plex Mono",monospace;color:var(--ink);cursor:pointer;height:21px;white-space:nowrap}
+.lt-fila:hover{color:var(--c-civ,#2d7667);text-decoration:underline} .lt-fila.vacia{color:var(--ink-mut);font-weight:500;cursor:default;text-decoration:none}
+.lt-grupo{grid-column:1 / -1;font-size:.55rem;font-weight:800;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.4px;padding:7px 0 2px}
+.lt-v{height:21px;border-radius:4px} .lt-vt{height:22px}
+.lt-v.csel,.lt-p.csel:not(.hay){background:var(--panel-2)}
+.lt-c{position:relative;height:21px;border-radius:4px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;padding:0 0 5px;overflow:hidden;font:700 .55rem "IBM Plex Mono",monospace;color:var(--ink-2);line-height:1}
+.lt-c.csel{border-color:var(--sky)} .lt-c:hover{border-color:var(--ink-2)} .lt-c.sel{outline:2px solid var(--sky);outline-offset:1px;z-index:1}
+.lt-c .fr{position:absolute;left:0;right:0;bottom:0;height:5px;display:flex} .lt-c .fr i{display:block;height:100%}
+.lt-c.inco::after,.lt-p.inco::after{content:"";position:absolute;top:0;right:0;border-top:8px solid var(--amber);border-left:8px solid transparent}
+.lt-c.tot{height:22px;padding:0}
+.lt-carril{position:sticky;left:0;z-index:2;background:var(--panel);border:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 8px 0 0;height:48px;color:var(--ink)}
+.lt-carril span{font-size:.64rem;font-weight:800;display:flex;align-items:center;gap:5px} .lt-carril span i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:0 0 auto}
+.lt-carril small{font:500 .52rem "IBM Plex Mono",monospace;color:var(--ink-mut)}
+.lt-carril.tot{height:22px;cursor:default;font-size:.56rem;color:var(--ink-mut)} .lt-carril.tot span{font-size:.56rem;font-weight:700;color:var(--ink-mut)}
+.lt-carril.sel span{color:var(--sky)} .lt-carril[data-f]:hover span{text-decoration:underline}
+.lt-p{position:relative;height:48px;border-radius:6px;padding:0;border:0;overflow:hidden;background:transparent}
+.lt-p.hay{cursor:pointer;border:2px solid var(--fc);background:var(--panel-2);transition:transform .12s}
+.lt-p.hay img{width:100%;height:100%;object-fit:cover;display:block}
+.lt-p.hay:hover{transform:translateY(-1px)} .lt-p.sel{outline:2px solid var(--sky);outline-offset:1px;z-index:1}
+.lt-p .n{position:absolute;right:3px;bottom:3px;background:rgba(8,20,16,.72);color:#fff;font:700 .5rem "IBM Plex Mono",monospace;padding:0 4px;border-radius:999px;line-height:1.5}
+.lt-cab{font-size:.7rem;font-weight:800;color:var(--ink);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding-top:2px} .lt-cab small{font-weight:600;color:var(--ink-mut)}
+.lt-chip{display:inline-block;padding:0 6px;border-radius:999px;color:#fff;font-size:.52rem;font-weight:700;line-height:1.6}
+.lt-av{font-size:.6rem;color:var(--ink-2);margin:3px 0 2px} .lt-av b{color:var(--ink)}
+.lt-grp{font-size:.62rem;font-weight:800;color:var(--ink-2);margin:10px 0 4px} .lt-grp small{font-weight:600;color:var(--ink-mut)}
+.ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:7px}
+.lt-tira .ft figcaption{font-size:.56rem;white-space:normal;line-height:1.25}
+.ft-ir{display:inline-block;margin:2px 0 6px;font-size:.6rem;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid var(--c-civ,#2d7667);background:var(--panel);color:var(--c-civ,#2d7667);cursor:pointer}
+@media (prefers-reduced-motion:reduce){ .lt-p.hay{transition:none} .lt-p.hay:hover{transform:none} }
 .fot-vacio{padding:18px 10px;text-align:center;color:var(--ink-mut);font-size:.68rem;line-height:1.5}
 #ftBox .ftb-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:56px;border:0;border-radius:8px;background:rgba(255,255,255,.85);font-size:24px;cursor:pointer;color:#1f4e45}
 #ftBox .ftb-prev{left:-46px} #ftBox .ftb-next{right:-46px} #ftBox .ftb-nav:disabled{opacity:.25;cursor:default}
-@media(max-width:1200px){ #v-fot{grid-template-columns:280px minmax(0,1fr)} .fot-galeria .ft-tira{grid-template-columns:repeat(4,minmax(0,1fr))} }
-@media(max-width:860px){ .fot-t td{white-space:normal} .fot-t{font-size:.58rem} #v-fot.view.on{display:block!important} #v-fot .fot-hist{height:auto} #v-fot .fot-body{overflow:visible} .fot-galeria .ft-tira{grid-template-columns:repeat(3,minmax(0,1fr))} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
+@media(max-width:1200px){ #v-fot{grid-template-columns:280px minmax(0,1fr)} }
+@media(max-width:860px){ #v-fot.view.on{display:flex!important;flex-direction:column;gap:10px} #v-fot .fot-hist{order:-1} #v-fot .fot-hist{height:auto} #v-fot .fot-body,#v-fot .lt-body{overflow:visible;display:block} #fotDetalle{overflow:visible} .lt-scroll{max-height:64vh} .lt-mx{grid-template-columns:46px repeat(var(--n),minmax(26px,1fr));min-width:calc(46px + var(--n) * 28px)} .lt-pel{grid-template-columns:98px repeat(var(--n),minmax(56px,1fr));min-width:calc(98px + var(--n) * 59px)} .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} .lt-play{margin-left:0} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
 #ftBox{position:fixed;inset:0;z-index:99999;background:rgba(8,20,16,.86);display:none;align-items:center;justify-content:center;padding:24px}
 #ftBox .ftb-in{position:relative;max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:8px}
 #ftBox img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:8px;background:#000}
