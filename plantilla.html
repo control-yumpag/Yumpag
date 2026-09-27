@@ -9281,6 +9281,7 @@ async function cargarFotosCampo(){
   try{
     const r = await fetch('fotos/fotos.json', {cache:'no-store'}); if(!r.ok) return;
     const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(f=>Object.assign({}, f, {src:'fotos/'+f.archivo}));
+    try{ const ra = await fetch('fotos/avance_actividad.json', {cache:'no-store'}); if (ra.ok) window.FOTOS_AVANCE = (await ra.json()).dias || {}; }catch(e){}   // % global por actividad y día (Resumen, columna EV)
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
     { const corte = (DATA.tl_weeks||[])[DATA.tl_weeks.length-1]; if (corte) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.fecha<=corte); }   // v72.4: solo fotos hasta la fecha del corte
     pintarFotosTorre(); construirPinesFotos(); pintarAlertaFotos();
@@ -9347,6 +9348,7 @@ function pintarAlertaFotos(){
 const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', otro:'#8f9a96'};
 const FASES_ORD = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat','otro','sin fase'];
 const faseColor = f => f && f.fase ? (FASE_COLOR[f.fase]||'#8f9a96') : '#c2ccc8';
+const FASE_ACT = {acceso:'Caminos', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Concreto', relleno:'Relleno', pat:'PAT'};   // fase de la foto → actividad del Resumen
 let fotSel = {zona:'Todas', dia:null, fase:'Todas', cat:'Todas'};
 let fotListaActual = [];
 const fotNat = (a,b)=>{ const f=s=>{const m=String(s).match(/^([A-Z]+)(\d+)([A-Z]*)$/);return m?[m[1],+m[2],m[3]]:[s,0,''];}; const x=f(a),y=f(b); return x[0]<y[0]?-1:x[0]>y[0]?1:(x[1]-y[1])||(x[2]<y[2]?-1:x[2]>y[2]?1:0); };
@@ -9427,14 +9429,16 @@ function pintarHistorialFotos(){
   document.getElementById('fotTitulo').textContent = zona==='Todas' ? 'Fotos de obra · toda la línea' : t ? `Fotos de obra · ${zona} · ${t.tp||''} · obra civil ${Math.round(t.pct||0)} %` : `Fotos de obra · camino ${zona}`;
   document.getElementById('fotDesc').textContent = zona==='Todas'
     ? `${fil.length} fotos en ${dias.length} día(s). Cada fila es un día de captura; la galería agrupa por día, la más reciente arriba. Clic en una foto para verla grande y recorrer con ◀ ▶.`
-    : t ? `Evidencia fotográfica de ${zona} frente al % oficial del reporte vigente ese día (Excavación · Solado · Stub · Acero · Encofrado · Concreto; — = N/A). ⚠ = la fase que se ve en la foto no coincide con lo reportado; ◌ = torre tomada de la carpeta (sin GPS legible).`
+    : t ? `Evidencia fotográfica de ${zona} por día, con el avance global de la actividad según el Resumen de ese día. ⚠ = la fase que se ve en la foto no coincide con lo reportado para la torre; ◌ = torre tomada de la carpeta (sin GPS legible). Fotos repetidas, sin valor de obra y con personas no se muestran.`
     : `Fotos tomadas sobre el camino ${zona}: lejos de toda torre o etiquetadas como acceso.`;
   const filas = dias.map(d=>{ const L=porDia[d]; const fs=[...new Set(L.filter(f=>f.fase&&f.fase!=='otro').map(f=>f.fase))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
     const inco=L.filter(f=>f.coherente===false).length, conf=L.filter(f=>f.estado==='conf').length; let extra='';
-    if(t){ const r=pctReporte(zona,d); extra = r ? `<td><span class="pc">${r.vals.map(([a,v])=> v==='NA'?`<s title="${a} N/A">—</s>`:`<b title="${a}">${Math.round(+v)}</b>`).join('<s>·</s>')}</span>${r.corte&&r.corte!==d?` <small style="color:var(--ink-mut)">(${fdFoto(r.corte)})</small>`:''}</td>` : '<td>—</td>'; }
-    else { const zs={}; L.forEach(f=>{ const z=f.torre||f.camino||'sin ubicar'; zs[z]=(zs[z]||0)+1; }); extra=`<td>${Object.entries(zs).sort((a,b)=>b[1]-a[1]).map(([z,n])=>`${z} ${n}`).join(' · ')}</td>`; }
+    const AV=(window.FOTOS_AVANCE||{})[d];
+    const glob = AV ? fs.map(x=>{ const k=FASE_ACT[x]; return (k && AV[k]!=null) ? `${FASE_TXT[x]||x} <b>${(+AV[k]).toFixed(1)} %</b>` : null; }).filter(Boolean).join(' · ') : '';
+    if(t){ extra = `<td>${glob || '<span style="color:var(--ink-mut)">—</span>'}</td>`; }
+    else { const zs={}; L.forEach(f=>{ const z=f.torre||f.camino||'sin ubicar'; zs[z]=(zs[z]||0)+1; }); extra=`<td>${glob?glob+'<br>':''}<small>${Object.entries(zs).sort((a,b)=>b[1]-a[1]).map(([z,n])=>`${z} ${n}`).join(' · ')}</small></td>`; }
     return `<tr data-d="${d}" class="${fotSel.dia===d?'sel':''}"><td class="f">${fdFoto(d)}</td><td>${L.length}${conf?` <span title="${conf} con torre por confirmar">◌${conf}</span>`:''}</td><td>${fs.map(x=>`<span class="fase" style="background:${FASE_COLOR[x]}">${FASE_TXT[x]||x}</span>`).join('')||'<span style="color:var(--ink-mut)">—</span>'}</td>${extra}<td>${inco?`<span class="ft-inco">⚠ ${inco}</span>`:(L.some(f=>f.coherente===true)?'✓':(fs.length&&t?'<span title="sin reporte del mismo día o del anterior para comparar" style="color:var(--ink-mut)">s/r</span>':''))}</td></tr>`; });
-  document.getElementById('fotTabla').innerHTML = dias.length ? `<table class="fot-t"><thead><tr><th>Día</th><th>Fotos</th><th>Fases vistas</th><th>${t?'% oficial · Exc·Sol·Stub·Ace·Enc·Con':'Dónde'}</th><th>vs reporte</th></tr></thead><tbody>${filas.join('')}</tbody></table>` : '';
+  document.getElementById('fotTabla').innerHTML = dias.length ? `<table class="fot-t"><thead><tr><th>Día</th><th>Fotos</th><th>Fases vistas</th><th>${t?'Avance global de la actividad ese día (reporte)':'Avance global ese día (reporte) · dónde'}</th><th>vs reporte</th></tr></thead><tbody>${filas.join('')}</tbody></table>` : '';
   document.querySelectorAll('#fotTabla tr[data-d]').forEach(tr=>tr.onclick=()=>{ fotSel.dia = fotSel.dia===tr.dataset.d ? null : tr.dataset.d; pintarHistorialFotos(); });
   const mostrar = fotSel.dia ? [fotSel.dia] : dias;
   fotListaActual = mostrar.flatMap(d=>porDia[d]);
