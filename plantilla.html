@@ -2626,16 +2626,6 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .bb-right:fullscreen .bb-curve{height:calc(100vh - 210px)}
 .bb-right:fullscreen .bb-kpis{margin-top:14px}
 .bim-viewport:fullscreen #bimCanvasWrap{height:100%}
-.bim-navstrip{position:absolute;left:10px;right:10px;bottom:78px;z-index:4;display:flex;gap:3px;
-  justify-content:center;flex-wrap:wrap;pointer-events:auto}
-.bim-navstrip button{cursor:pointer;border:1px solid var(--line-2);background:var(--panel);
-  color:var(--ink-2);border-radius:6px;padding:3px 6px;font-size:.58rem;font-weight:700;
-  font-family:"IBM Plex Mono",monospace;line-height:1;box-shadow:var(--shadow);transition:.12s}
-.bim-navstrip button:hover{color:var(--ink);border-color:var(--sky)}
-.bim-navstrip button.on{background:var(--sky);border-color:var(--sky);color:#fff}
-.bim-navstrip button i{display:block;height:2px;border-radius:2px;margin-top:2px}
-.bim-viewport:fullscreen .bim-navstrip{bottom:86px}
-@media(max-width:860px){ .bim-navstrip{bottom:38px;gap:2px} .bim-navstrip button{padding:3px 4px;font-size:.52rem} }
 .avfis-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.64rem;color:var(--ink-2);margin:2px 0 6px}
 .avfis-leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:3px}
 #chAvFis svg{width:100%;height:100%;display:block}
@@ -2685,17 +2675,6 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .sem-badges[hidden]{display:none}
 .sb-k{color:var(--ink-mut);font-weight:800;letter-spacing:.3px;font-size:.55rem}
 .sb-v{font-weight:800;color:var(--ink);padding-right:8px}
-.bim-leyenda{position:absolute;left:10px;top:140px;z-index:5;background:var(--panel);border:1px solid var(--line-2);
-  border-radius:9px;padding:6px 9px;font-size:.58rem;color:var(--ink-2);display:grid;grid-template-columns:auto auto;gap:2px 10px;box-shadow:var(--shadow)}
-.bim-leyenda b{grid-column:1/3;color:var(--ink);font-size:.55rem;letter-spacing:.3px;text-transform:uppercase;margin-top:2px}
-.bim-leyenda span{display:flex;align-items:center;gap:5px;white-space:nowrap}
-.bim-leyenda i{display:inline-block;width:9px;height:9px;border-radius:50%}
-.bim-leyenda i.sol{border-radius:2px;background:#b4bcc2}
-.bim-leyenda i.gho{border-radius:2px;background:transparent;border:1px dashed #8fcbf2}
-.bim-dq{position:absolute;right:10px;top:46px;z-index:5;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;
-  padding:4px 9px;font-size:.6rem;font-weight:800;color:var(--ink-2);cursor:pointer;box-shadow:var(--shadow)}
-.bim-dq:hover{color:var(--ink)}
-@media(max-width:860px){ .bim-leyenda{display:none} }
 .bim-orto{position:absolute;left:10px;top:140px;z-index:5;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;
   padding:4px 9px;font-size:.56rem;color:var(--ink-2);max-width:300px;line-height:1.3;box-shadow:var(--shadow)}
 @media(max-width:860px){ .bim-orto{display:none!important} }
@@ -7291,7 +7270,6 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 
 <style id="bimx-style">
-.bim-navstrip{display:none!important}
 .bim-left .d4-route{height:104px}
 .bimx-filt{display:flex;flex-wrap:wrap;gap:3px;margin:6px 0 5px}
 .bimx-filt .chip{padding:2px 6px;font-size:.56rem}
@@ -7532,7 +7510,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .bim-stages .bb-left .d4-layers{flex-direction:row;flex-wrap:wrap;gap:6px}
 .bim-stages .bb-left .d4-lay{width:auto;min-width:150px;flex:1 1 150px}
 @media(max-width:860px){.cur-4d .bb-curve{height:220px}.cur-4d .bb-kpis{grid-template-columns:1fr 1fr}}
-.bim-minimap{position:absolute;top:44px;right:10px;z-index:3;width:232px;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;padding:5px 6px 6px;box-shadow:var(--shadow)}
+.bim-minimap{position:absolute;left:10px;bottom:10px;z-index:3;width:232px;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;padding:5px 6px 6px;box-shadow:var(--shadow)}
 .bim-minimap .mm-head{display:flex;align-items:center;justify-content:space-between;font-size:.6rem;font-weight:700;color:var(--ink-2);margin-bottom:3px}
 .bim-minimap .mm-head small{font-weight:500;color:var(--ink-mut);margin-left:4px}
 .bim-minimap .mm-head button{cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:5px;font-size:.6rem;line-height:1;padding:1px 6px;font-family:inherit}
@@ -7540,9 +7518,8 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .bim-minimap.min{width:auto;padding:4px 6px}
 .bim-minimap.min .d4-route{display:none}
 .bim-minimap.min .mm-head{margin:0}
-.bim-viewport:fullscreen .bim-minimap{top:60px}
 @media(max-width:1400px){.bim-towers-bar .d4-towerlist{grid-template-columns:repeat(12,minmax(0,1fr))}}
-@media(max-width:860px){.bim-towers-bar .d4-towerlist{grid-template-columns:repeat(6,minmax(0,1fr))!important}.bim-minimap{width:150px;top:auto;bottom:10px;right:8px}.bim-minimap .d4-route{height:100px}}
+@media(max-width:860px){.bim-towers-bar .d4-towerlist{grid-template-columns:repeat(6,minmax(0,1fr))!important}.bim-minimap{width:150px}.bim-minimap .d4-route{height:100px}}
 @media(min-width:1101px){
   #v-bim.view.on{grid-template-columns:minmax(0,1fr) 7px var(--bimR,320px)!important;grid-template-rows:auto auto auto auto 7px max-content!important;align-items:stretch}
   #v-bim > .bim-top-bar{grid-column:1/-1!important;grid-row:1!important}
@@ -7649,7 +7626,6 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .mt-win.min .mt-win-grid,.mt-win.min .mt-win-f,.mt-win.min .mt-win-s{display:none}
 .mt-win.min{width:auto}
 .bim-viewport:fullscreen .mt-win{top:250px}
-@media(min-width:861px){.bim-overlay-hud{max-width:calc(100% - 262px)}}
 #mtHud{line-height:1.35;max-width:100%}
 @media(max-width:860px){.mt-win{width:210px;top:auto;bottom:156px;right:8px;font-size:.56rem}.mt-win-s,.mt-win-f .note{display:none}.mt-win-grid{gap:3px;padding:4px 6px 0}.mt-pc{padding:3px 5px}}
 @media(max-width:860px){#mtProc .mt-kpis{grid-template-columns:1fr 1fr}}
@@ -7671,24 +7647,18 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .bim-viewcube .vc-sec.on{display:flex}
 .bim-viewcube .vc-sec input{width:60px;margin:0;accent-color:var(--lime)}
 .bim-viewcube .vc-sec b{font-family:"IBM Plex Mono",monospace;color:var(--ink-2);min-width:38px;text-align:right}
-.bim-minimap{top:206px}
-.bim-hint{display:none!important}   /* v34: los consejos van en el botón ? junto al cubo */
 .vc-help{position:absolute;top:44px;right:176px;z-index:5;width:min(300px,70vw);background:var(--panel);border:1px solid var(--line-2);border-radius:9px;box-shadow:var(--shadow);padding:8px 10px;font-size:.64rem;color:var(--ink-2);line-height:1.4}
 .vc-help b{color:var(--ink);display:block;margin-bottom:3px}.vc-help ul{margin:0;padding-left:14px}.vc-help li{margin:1px 0}.vc-help .x{display:inline-block;margin-top:5px;color:var(--sky-2);cursor:pointer;font-weight:700}
 @media(max-width:860px){.vc-help{right:10px;top:132px}}
 .bim-viewport:fullscreen .bim-viewcube{top:60px}
-.bim-viewport:fullscreen .bim-minimap{top:222px}
 @media(min-width:861px){.mt-win{left:12px;right:auto;top:210px}}
 @media(max-width:860px){
   .bim-viewcube{top:50px;right:8px;width:90px}
   .bim-viewcube canvas{width:84px;height:84px}
   .bim-viewcube .vc-tools button{font-size:.54rem;padding:3px 5px}
-  .bim-minimap{top:186px;bottom:auto;right:8px}
   .bim-minimap.min{width:auto}.bim-minimap.min .mm-head small{display:none}
-  .bim-overlay-hud{max-width:calc(100% - 100px)}
   .bim-expand{padding:5px 9px;font-size:.8rem}
   .bim-legend-box{flex-wrap:nowrap;overflow-x:auto;gap:10px;padding:5px 8px;scrollbar-width:thin;margin-top:4px}
-  .bim-cam-tools{display:none}
   .bim-viewport{height:64vh}
   .mt-win{bottom:44px}
 }
@@ -7962,28 +7932,26 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       <div class="d4-towerlist" id="d4TowerList"></div>
     </div>
 
-    <!-- Visor WebGL 3D -->
-    <div class="bim-viewport">
-      <div class="mt-win" id="mtPatasWin" style="display:none"><div class="mt-win-h"><b id="mtWinT">Cimentaciones</b><button id="mtWinMin" title="Plegar / desplegar">–</button></div><div class="mt-win-s" id="mtWinS"></div><div class="mt-win-grid" id="mtWinGrid"></div><div class="mt-win-f" id="mtWinF"></div></div>
-      <div class="bim-minimap" id="bimMinimap"><div class="mm-head"><span>Trazo<small>CC Pomayaros → SE Yumpag</small></span><button id="mmToggle" title="Plegar / desplegar el trazo">–</button></div><div id="d4Route" class="d4-route"></div></div>
+    <!-- v72.13: los datos de la selección van en una franja FUERA del 3D (pedido del usuario: «muchos textos encima») -->
+    <div class="bim-info" id="bimInfo">
       <div class="bim-overlay-hud">
-        <div class="bim-badge-chip">
-          <strong id="hudTowerName" style="color:var(--sky)">LÍNEA COMPLETA</strong>
-          <span style="color:var(--ink-mut)">|</span>
+        <div class="bim-badge-chip bi-sel">
+          <strong id="hudTowerName">LÍNEA COMPLETA</strong>
           <span id="hudTowerType">23 torres · 8.3 km</span>
-          <span style="color:var(--ink-mut)">|</span>
-          <span id="hudTowerStatus" style="color:var(--lime);font-weight:700">—</span>
+          <span id="hudTowerStatus">—</span>
         </div>
-
+        <div class="sem-badges" id="semBadgesHud" hidden></div>
         <div class="bim-badge-chip" id="hudNext" style="display:none"></div>
         <div class="bim-badge-chip" id="mtHud" style="display:none"></div>
-        <div class="sem-badges" id="semBadgesHud" hidden></div>
-        <div class="bim-hint">
-          💡 Clic izq: rotar · Clic der: desplazar · Rueda: zoom · Clic en torre: seleccionar · <b>Doble clic en torre: ver detalle</b> · En el detalle: doble clic en un elemento o en el terreno: acercar · en el cielo: volver · <b>Cubo</b>: caras / aristas / esquinas · arrastrar: orbitar · ← → torres · Esc: ruta · F: ver todo
-        </div>
       </div>
-      <div id="bimCanvasWrap"></div>
       <button class="bim-expand" id="btnFsView" title="Ampliar el modelo 3D a pantalla completa">⛶ Pantalla completa</button>
+    </div>
+    <!-- Visor WebGL 3D: solo el modelo, el cubo de navegación y la ventana móvil del trazo -->
+    <div class="bim-viewport">
+      <div class="mt-win" id="mtPatasWin" style="display:none"><div class="mt-win-h"><b id="mtWinT">Cimentaciones</b><button id="mtWinMin" title="Plegar / desplegar">–</button></div><div class="mt-win-s" id="mtWinS"></div><div class="mt-win-grid" id="mtWinGrid"></div><div class="mt-win-f" id="mtWinF"></div></div>
+      <div class="bim-minimap" id="bimMinimap"><div class="mm-head" title="Arrastra para mover la ventana del trazo"><span>Trazo<small>CC Pomayaros → SE Yumpag</small></span><button id="mmToggle" title="Plegar / desplegar el trazo">–</button></div><div id="d4Route" class="d4-route"></div></div>
+      <div id="bimCanvasWrap"></div>
+      <button class="bim-fs-salir" id="btnFsSalir" title="Salir de pantalla completa (Esc)">✕ Salir de pantalla completa</button>
 
       <div class="rp-panel" id="rpPanel" hidden>
         <div class="rp-head">
@@ -8056,20 +8024,19 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
         <span class="sb-k">MONTAJE</span><span class="sb-v" id="sbMont">—</span>
       </div>
       <div class="bim-orto" id="ortoEstado" style="display:none"></div>
-
-      <div class="bim-dq" id="bimDQ" title="Calidad de datos del BIM">—</div>
-      <div class="bim-navstrip" id="bimNavStrip"></div>
-      <div class="bim-cam-tools">
-        <span class="bim-btn" style="cursor:default;font-size:.62rem">LOD 350 · Celosía doble terna 138 kV · 47 m</span>
-      </div>
+    </div>
+    <!-- v72.13: leyenda fuera del 3D; muestra solo lo que se ve (estado en la ruta, elementos en el detalle, caminos y zonas si están activos) -->
+    <div class="bim-leyenda ruta" id="bimLeyenda">
       <div class="bim-legend-box">
-        <span><i style="background:#8f979d"></i> Fundación</span>
-        <span><i style="background:#a9c4bb"></i> Patas / Cuerpo</span>
-        <span><i style="background:#95d5c7"></i> Crucetas</span>
-        <span><i style="background:#e4e8e2"></i> Aisladores</span>
-        <span><i style="background:#8f979d"></i> Conductores · 2 ternas (6)</span>
-        <span><i style="background:#dfeae6"></i> Cables de guarda ×2 (OPGW / EHS)</span>
+        <span class="lg-mod"><i style="background:#8f979d"></i> Fundación</span>
+        <span class="lg-mod"><i style="background:#a9c4bb"></i> Patas / Cuerpo</span>
+        <span class="lg-mod"><i style="background:#95d5c7"></i> Crucetas</span>
+        <span class="lg-mod"><i style="background:#e4e8e2"></i> Aisladores</span>
+        <span class="lg-mod"><i style="background:#8f979d"></i> Conductores · 2 ternas (6)</span>
+        <span class="lg-mod"><i style="background:#dfeae6"></i> Cables de guarda ×2 (OPGW / EHS)</span>
         <span><i style="background:rgba(149,213,199,.28)"></i> Proyectado</span>
+        <span class="lg-cam"><i style="background:#e5372c"></i> Camino carrozable</span>
+        <span class="lg-cam"><i style="background:#a23fd0"></i> Camino peatonal</span>
       </div>
     </div>
 
@@ -8411,11 +8378,7 @@ function initBIM3D() {
       const rect = bimRenderer.domElement.getBoundingClientRect();
       const mo = new THREE.Vector2(((e.clientX-rect.left)/rect.width)*2-1, -((e.clientY-rect.top)/rect.height)*2+1);
       const rc = new THREE.Raycaster(); rc.setFromCamera(mo, bimCamera);
-      // marcadores de fotos de campo: se abren antes que cualquier otra cosa
-      const pines = bimGroundGroup && bimGroundGroup.getObjectByName('pinesFotos');
-      if (pines){ const hp = rc.intersectObjects(pines.children, true).find(x=>x.object.userData && x.object.userData.fotoSrc);
-        if (hp){ abrirFoto(hp.object.userData.fotoSrc); return; } }
-      const hits = rc.intersectObjects(bimTowerGroup.children, true);
+      const hits = rc.intersectObjects(towerObjs.map(o=>o.userData.hitProxy).filter(Boolean), false);   // v72.13: solo los cilindros de selección
       const h0 = hits.find(x=>x.object.userData && x.object.userData.routeHit);
       if (h0) { const k = h0.object.userData.idx; selectTower(k); try { irATorreRuta(k); } catch(err){} return; }
     }
@@ -8436,12 +8399,28 @@ function initBIM3D() {
     }
   });
 
-  window.addEventListener('resize', onBIMResize);
+  window.addEventListener('resize', bimResizeVivo);
+  bimControls.addEventListener('change', () => bimInvalidate(250));
+  // v72.13: toda interacción con la pestaña BIM (botones, barra de torres, línea de tiempo, panel) redibuja un momento
+  // (arrastrar un separador no cuenta: mientras se arrastra el lienzo solo se estira; ver bimResizeVivo)
+  const vb = $('v-bim'), enSeparador = ev => document.body.classList.contains('lay-drag') || !!(ev.target && ev.target.closest && ev.target.closest('.gut'));
+  if (vb) ['pointerdown', 'wheel', 'input', 'change', 'click', 'keydown'].forEach(n => vb.addEventListener(n, ev => { if (!enSeparador(ev)) bimInvalidate(1200); }, { capture: true, passive: true }));
+  // pasar el mouse sobre el 3D sin botón no cambia la escena (solo el cursor); sí el panel (resalta una pata) y los arrastres
+  if (vb) vb.addEventListener('pointermove', ev => { if (enSeparador(ev) || (ev.target === bimRenderer.domElement && !ev.buttons)) return; bimInvalidate(160); }, { capture: true, passive: true });
+  document.addEventListener('keydown', () => bimInvalidate(1200), { passive: true });
+  document.addEventListener('visibilitychange', () => bimInvalidate(600));
+  try { const LM = THREE.DefaultLoadingManager, _ol = LM.onLoad, _op = LM.onProgress;
+    LM.onLoad = function(){ bimInvalidate(600); if (_ol) return _ol.apply(this, arguments); };
+    LM.onProgress = function(){ bimInvalidate(300); if (_op) return _op.apply(this, arguments); }; } catch(e){}
 
   animateBIM();
 }
 
-function onBIMResize() {
+/* v72.13 · fluidez: el lienzo mide 100 % de su caja (CSS). onBIMResize solo cambia el tamaño de dibujo si la caja cambió;
+   durante un arrastre de separador o de la ventana, bimResizeVivo ajusta solo el aspecto de la cámara (barato) y el tamaño
+   real (render, composer y bloom, caro) se aplica una vez, 160 ms después del último movimiento. */
+var _bimSz = { w: 0, h: 0 }, _bimRszT = 0;   // var: se usan desde otros scripts y temporizadores
+function onBIMResize(forzar) {
   const container = $('bimCanvasWrap');
   if (!container || !bimRenderer || !bimCamera) return;
   const w = container.clientWidth;
@@ -8449,10 +8428,23 @@ function onBIMResize() {
   if (w < 20 || h < 20) return;            // pestaña oculta: no romper la proyección
   bimCamera.aspect = w / h;
   bimCamera.updateProjectionMatrix();
-  bimRenderer.setSize(w, h);
-  if (bimComposer) bimComposer.setSize(w, h);
-  if (bimBloom) bimBloom.setSize(w, h);
+  if (forzar !== true && w === _bimSz.w && h === _bimSz.h) { bimInvalidate(); return; }
+  _bimSz = { w, h };
+  bimRenderer.setSize(w, h, false);
+  if (bimComposer) bimComposer.setSize(w, h);   // el composer ajusta también el bloom
+  bimInvalidate(300);
 }
+var _bimRszUlt = 0;
+function bimResizeVivo(){
+  const c = $('bimCanvasWrap');
+  if (c && bimCamera && c.clientWidth >= 20 && c.clientHeight >= 20){
+    bimCamera.aspect = c.clientWidth / c.clientHeight; bimCamera.updateProjectionMatrix();
+    const now = performance.now(); if (now - _bimRszUlt > 120){ _bimRszUlt = now; _bimSucio = Math.max(_bimSucio, 1); }   // ~8 cuadros/s mientras se arrastra
+  }
+  clearTimeout(_bimRszT);
+  if (!document.body.classList.contains('lay-drag')) _bimRszT = setTimeout(onBIMResize, 160);   // arrastrando un separador: al soltar
+}
+window.bimResizeVivo = bimResizeVivo;
 
 let _lblTick = 0;
 /* Descongestiona el trazo: al alejarse sólo quedan los rótulos legibles */
@@ -8497,11 +8489,27 @@ function renderBIM(){
   if (bloomAplicable()) bimComposer.render();
   else if (bimRenderer && bimScene && bimCamera) bimRenderer.render(bimScene, bimCamera);
 }
+/* v72.13 · render a demanda (antes: 60 cuadros/s siempre, también con otra pestaña a la vista → toda la página se trababa).
+   Se dibuja solo con la pestaña BIM visible y mientras algo cambia (cámara, interacción, animación, carga, tamaño);
+   en reposo, un cuadro por segundo de resguardo. bimInvalidate(ms) pide cuadros durante ms. */
+var _bimSucio = 2, _bimActivoHasta = 0, _bimUltimo = 0;
+function bimInvalidate(ms){ _bimSucio = Math.max(_bimSucio, 2); if (ms) _bimActivoHasta = Math.max(_bimActivoHasta, performance.now() + ms); }
+window.bimInvalidate = bimInvalidate;
+function bimVisible(){
+  if (document.hidden || !bimRenderer) return false;
+  const v = document.getElementById('v-bim'); if (!v || !v.classList.contains('on')) return false;
+  const c = bimRenderer.domElement; return c.clientWidth > 0 && c.clientHeight > 0;
+}
 function animateBIM() {
   requestAnimationFrame(animateBIM);
-  stepCameraTween();
+  if (!bimVisible()) return;
+  const now = performance.now();
+  if (stepCameraTween()) bimInvalidate(120);
+  if (bimControls && bimControls.update()) bimInvalidate(120);
+  if (_bimSucio <= 0 && now > _bimActivoHasta && now - _bimUltimo < 1000) return;
+  if (_bimSucio > 0) _bimSucio--;
+  _bimUltimo = now;
   if ((_lblTick++ % 6) === 0) updateLabelDeclutter();
-  if (bimControls) bimControls.update();
   renderBIM();
 }
 
@@ -8616,8 +8624,7 @@ function ajustarShaderTerreno(mat){
 const VIS_DEF = { tBrillo:1.0, tContraste:1.0, tSaturacion:1.0, resalte:0.0 };
 const VIS = {
   tBrillo: 1.0, tContraste: 1.0, tSaturacion: 1.0,   // terreno en Realista
-  caminos: true,           // caminos de acceso reales (KMZ)
-  pinesFotos: true,        // marcadores de fotos de campo en la ruta
+  caminos: false,          // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (pedido del usuario); botón «Caminos»
   resalte: 0.0,            // v71: franja del eje apagada por defecto (se confundía con un camino)
   aislador: 'vidrio',      // el modelo trae cadena de discos: vidrio o porcelana
   aceroRough: 0.42,        // rugosidad del galvanizado
@@ -9252,14 +9259,13 @@ function construirCaminos(){
   });
   bimGroundGroup.add(G);
   pintarBtnCaminos();
-  if (typeof renderBIM==='function') renderBIM();
+  if (window.bimInvalidate) bimInvalidate(300);
 }
 function pintarBtnCaminos(){
   const b=document.getElementById('btnCaminos'); if(!b) return;
-  const on = VIS.caminos && !repartoActivo();
-  b.classList.toggle('active', on);
-  b.title = repartoActivo() ? 'Caminos de acceso reales (KMZ): se ven con vanos reales o en vista Realista'
-                            : 'Caminos de acceso reales del KMZ «Caminos MDIA 2_Final» · carrozables en rojo, peatonales en morado';
+  b.classList.toggle('active', !!VIS.caminos);
+  b.title = 'Caminos de acceso reales del KMZ «Caminos MDIA 2_Final» · carrozables en rojo, peatonales en morado (apagados al abrir)';
+  try{ pintarLeyenda(); }catch(e){}
 }
 
 
@@ -9278,7 +9284,7 @@ function utmAEscena(E,N){
 }
 const FOTOS_VISITA_SOLO_AVANCE = false;                             // v72.8 (27-Set-26): la visita muestra todas las fotos; las personas salen difuminadas y los documentos pixelados desde el carril de fotos
 const esVisita = () => !!document.getElementById('visitaChip');
-const FASE_TXT = {acceso:'Acceso', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Vaciado', relleno:'Relleno', pat:'PAT', personas:'Personas', otro:'Sin valor de obra'};
+const FASE_TXT = {acceso:'Acceso', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Vaciado', relleno:'Relleno', pat:'PAT', otras:'Otras fotos'};
 const faseTxt = f => f.fase ? (FASE_TXT[f.fase]||f.fase) : '';
 /* v72.8: zonas de las fotos sin torre ni camino (fotos_build.zona_de) */
 const FOT_ZONAS = ['Campamento','Charlas','Otras'];
@@ -9288,15 +9294,31 @@ const fotZona = f => f.torre || f.camino || f.zona || 'Otras';
 const fotCod = f => ((f.id||'').split('_')[1]||'').slice(0,6);   // código corto y estable de la foto (no cambia si se corrige la fecha)
 const etqTxt = f => f.etiquetador==='ppt' ? 'pie del PPT' : f.etiquetador==='humano' ? 'revisada' : f.fase_conf ? `${f.etiquetador==='yolo'?'YOLO':'visión'} ${Math.round(f.fase_conf*100)} %${f.etiquetador==='yolo'?' · por revisar':''}` : '';
 let FOT_CAMPAMENTO = null;                                           // {utm:[E,N], radio_m} desde fotos.json
-async function cargarFotosCampo(){
+/* v72.13 (pedido del usuario: «no etiquetar como personas, sin valor de obra y sin fases… crear una etiqueta Otras fotos»):
+   toda foto sin fase de obra (personas, otro, sin fase) se muestra como «Otras fotos»; la etiqueta interna queda en fase_orig
+   (YOLO la sigue usando en el carril de fotos). mini = miniatura de 320 px (~13 KB) para listas, película y ficha de torre;
+   src = copia de 800 px, solo para verla en grande. */
+const FASES_OBRA = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat'];
+function fotNormalizar(f){
+  const src = 'fotos/' + f.archivo;
+  return Object.assign({}, f, { src, mini: f.mi ? src.replace(/([^/]+)$/, 'm/$1') : src,
+    fase: FASES_OBRA.includes(f.fase) ? f.fase : 'otras', fase_orig: f.fase || null });
+}
+/* v72.13: una sola descarga a la vez (antes cada draw4D sin fotos pedía otra) y con revalidación (304 si no cambió) */
+let _fotosCarga = null;
+function cargarFotosCampo(){
+  if (!_fotosCarga) _fotosCarga = _cargarFotosCampo().finally(() => { if (!FOTOS_CAMPO.length) setTimeout(() => { _fotosCarga = null; }, 60000); });
+  return _fotosCarga;
+}
+async function _cargarFotosCampo(){
   try{
-    const r = await fetch('fotos/fotos.json', {cache:'no-store'}); if(!r.ok) return;
-    const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(f=>Object.assign({}, f, {src:'fotos/'+f.archivo})); FOT_CAMPAMENTO = j.campamento || null;
-    try{ const ra = await fetch('fotos/avance_actividad.json', {cache:'no-store'}); if (ra.ok) window.FOTOS_AVANCE = (await ra.json()).dias || {}; }catch(e){}   // % global por actividad y día (Resumen, columna EV)
+    const r = await fetch('fotos/fotos.json', {cache:'no-cache'}); if(!r.ok) return;
+    const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(fotNormalizar); FOT_CAMPAMENTO = j.campamento || null;
+    try{ const ra = await fetch('fotos/avance_actividad.json', {cache:'no-cache'}); if (ra.ok) window.FOTOS_AVANCE = (await ra.json()).dias || {}; }catch(e){}   // % global por actividad y día (Resumen, columna EV)
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
     { const corte = (DATA.tl_weeks||[])[DATA.tl_weeks.length-1]; if (corte) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.fecha<=corte); }   // v72.4: solo fotos hasta la fecha del corte
-    pintarFotosTorre(); construirPinesFotos(); pintarAlertaFotos();
-    try{ renderFotosTab(); }catch(e){ console.warn('fotos', e); }
+    pintarFotosTorre(); pintarAlertaFotos();
+    try{ const vf=document.getElementById('v-fot'); if (vf && vf.classList.contains('on')) renderFotosTab(); }catch(e){ console.warn('fotos', e); }   // v72.13: oculta, se arma al abrirla
     try{ if (typeof renderCamProc==='function') renderCamProc(); }catch(e){}
   }catch(e){ /* sin índice de fotos: el tablero funciona igual */ }
 }
@@ -9319,7 +9341,7 @@ function figFoto(f, hasta, conTorre, obs){
   const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.coherente===false?'inco':''}`;
   const tt = `${f.descripcion?f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
-      <img src="${f.src}" loading="lazy" alt="${fotZona(f)} ${f.fecha}">${f.fase?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:''}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
+      <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:''}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
       <figcaption>${obs?fotZona(f)+' · ':conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
@@ -9328,10 +9350,12 @@ function pintarFotosTorre(){
   const t = DATA.towers[idx]; if(!t){ cont.innerHTML=''; return; }
   const hasta = DATA.tl_weeks[d4i], hoy = fotosDeTorre(t.t, hasta);
   const total = fotosDeTorre(t.t).length;
-  if (!FOTOS_CAMPO.length){ cont.innerHTML=''; return; }
+  if (!FOTOS_CAMPO.length){ cont.innerHTML=''; cont.dataset.firma=''; return; }
+  // v72.13: se llama en cada draw4D y selectTower; si la torre, la fecha y las fotos son las mismas no se rehace (ni se recargan imágenes)
+  const firma = `${t.t}|${hasta}|${hoy.length}|${total}|${FOTOS_CAMPO.length}`; if (cont.dataset.firma === firma && cont.childElementCount) return; cont.dataset.firma = firma;
   if (!hoy.length){ cont.innerHTML=`<div class="tw-sec">Fotos de campo</div><div class="ft-vacio">Sin fotos de ${t.t} hasta el ${fdFoto(hasta)}${total?` · ${total} posteriores`:''}</div>`; return; }
   const dia = hoy.filter(f=>f.fecha===hasta).length, inco = hoy.filter(f=>f.coherente===false).length;
-  const fases = [...new Set(hoy.filter(f=>f.fase && f.fase!=='otro' && f.fase!=='personas').map(f=>faseTxt(f)))];
+  const fases = [...new Set(hoy.filter(f=>f.fase && f.fase!=='otras').map(f=>faseTxt(f)))];
   const N_FT = 24, vis = hoy.slice(0, N_FT);   // v72.11: más fotos a la vista, la más reciente primero
   cont.innerHTML = `<div class="tw-sec ft-h" title="De la más reciente a la más antigua${fases.length?' · fases vistas: '+fases.join(', '):''}"><span>Fotos de campo · ${hoy.length} hasta el ${ltDM(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${inco?` · <b class="ft-inco">⚠ ${inco} ≠ reporte</b>`:''}</span><button type="button" class="ft-ir" data-z="${t.t}">Línea de tiempo de ${t.t} →</button></div>
     <div class="ft-tira">${vis.map(f=>figFoto(f, hasta, false)).join('')}
@@ -9360,12 +9384,13 @@ function pintarAlertaFotos(){
    PESTAÑA FOTOS DE OBRA (v72.3) · histórico fotográfico por torre y camino
    Solo usa fotos/fotos.json (FOTOS_CAMPO), GEO/CAMINOS_KMZ (plano) y DATA.towers[].seq (% oficial por día).
    ===================================================================== */
-const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', personas:'#b5577b', otro:'#8f9a96'};
-const FASES_ORD = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat','personas','otro','sin fase'];
+const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', otras:'#8f9a96'};
+const FASES_ORD = [...FASES_OBRA, 'otras'];
 const faseColor = f => f && f.fase ? (FASE_COLOR[f.fase]||'#8f9a96') : '#c2ccc8';
 const FASE_ACT = {acceso:'Caminos', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Concreto', relleno:'Relleno', pat:'PAT'};   // fase de la foto → actividad del Resumen
 let fotSel = {zona:'Todas', sem:null, celda:null, fase:'Todas', cat:'Todas', obs:null};   // v72.7: semana y celda elegidas en la línea de tiempo · v72.8: obs = lista «Por revisar» elegida
 let fotListaActual = [];
+const fotFirma = () => JSON.stringify(fotSel) + '|' + FOTOS_CAMPO.length + '|' + (document.documentElement.getAttribute('data-theme') || '') + '|' + window.innerWidth;
 const fotNat = (a,b)=>{ const f=s=>{const m=String(s).match(/^([A-Z]+)(\d+)([A-Z]*)$/);return m?[m[1],+m[2],m[3]]:[s,0,''];}; const x=f(a),y=f(b); return x[0]<y[0]?-1:x[0]>y[0]?1:(x[1]-y[1])||(x[2]<y[2]?-1:x[2]>y[2]?1:0); };
 function utmAEN(E,N){ return { e:UTM_AFIN.e[0]*E+UTM_AFIN.e[1]*N+UTM_AFIN.e[2], n:UTM_AFIN.n[0]*E+UTM_AFIN.n[1]*N+UTM_AFIN.n[2] }; }
 /* fotos de una zona: torre = las asignadas a ella; camino = las tomadas sobre él (lejos de toda torre o etiquetadas «acceso»);
@@ -9381,7 +9406,7 @@ function ltZonasOrden(){
   const cams = [...new Set(FOTOS_CAMPO.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino))].sort(fotNat);
   return [...DATA.towers.map(t=>t.t), ...cams, ...FOT_ZONAS].filter(n);
 }
-function fotFiltrar(base){ return base.filter(f => (fotSel.fase==='Todas' || (f.fase||'sin fase')===fotSel.fase) && (fotSel.cat==='Todas' || f.categoria===fotSel.cat)); }
+function fotFiltrar(base){ return base.filter(f => (fotSel.fase==='Todas' || (f.fase||'otras')===fotSel.fase) && (fotSel.cat==='Todas' || f.categoria===fotSel.cat)); }
 /* % oficial de la torre (Exc·Sol·Stub·Ace·Enc·Con) al último corte ≤ fecha, desde la serie del tablero */
 function pctReporte(torre, fecha){
   const t = DATA.towers.find(x=>x.t===torre); if(!t) return null;
@@ -9429,7 +9454,7 @@ function pintarPlanoFotos(){
   }
   dibujarPlano();
   document.getElementById('fotLeyenda').innerHTML = Object.entries(FASE_COLOR).filter(([k])=>FOTOS_CAMPO.some(f=>f.fase===k)).map(([k,c])=>`<span><i style="background:${c}"></i>${FASE_TXT[k]||k}</span>`).join('')+
-    (FOTOS_CAMPO.some(f=>!f.fase)?`<span><i style="background:#c2ccc8"></i>sin fase</span>`:'')+`<span><i style="background:transparent;border:2px solid var(--c-civ,#2d7667)"></i>torre con fotos</span>`+(FOTOS_CAMPO.some(f=>!f.utm&&f.torre)?`<span><i style="background:transparent;border:1px dashed #1a1a1a"></i>sin GPS (carpeta)</span>`:'')+
+    `<span><i style="background:transparent;border:2px solid var(--c-civ,#2d7667)"></i>torre con fotos</span>`+(FOTOS_CAMPO.some(f=>!f.utm&&f.torre)?`<span><i style="background:transparent;border:1px dashed #1a1a1a"></i>sin GPS (carpeta)</span>`:'')+
     (hayCamp?`<span><i class="lg-camp"></i>campamento</span>`:'');
 }
 function dibujarPlano(){
@@ -9530,8 +9555,8 @@ const ltDM = f => `${f.slice(8,10)}-${MES3[+f.slice(5,7)-1]}`;
 const DIA3 = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const ltDia = f => `${DIA3[new Date(f+'T12:00:00').getDay()]} ${ltDM(f)}`;   // «Sáb 26-Set»
 const ltRango = w => `${ltDM(w)} al ${ltDM(ltMas(w,6))}`;
-const faseDe = f => f.fase || 'sin fase';
-const ltNom = k => k==='sin fase' ? 'Sin fase' : (FASE_TXT[k]||k);
+const faseDe = f => f.fase || 'otras';
+const ltNom = k => FASE_TXT[k]||k;
 const zonaFila = fotZona;   // v72.8: torre, camino o zona (Campamento · Charlas · Otras)
 const ltRgba = (hex,a) => { const n=parseInt(String(hex||'#c2ccc8').slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
 const ltOrd = L => L.slice().sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
@@ -9584,7 +9609,7 @@ function ltPelicula(fil, W){
     h += W.map(w=>{ const L=G[k+'|'+w], cs=fotSel.sem===w?' csel':'';
       if(!L){ const tramo = ws.length>1 && w>ws[0] && w<ws[ws.length-1]; return `<div class="lt-p${cs}"${tramo?` style="background:${ltRgba(col,.16)}"`:''}></div>`; }
       const m=ltMejor(L);
-      return `<button type="button" class="lt-p hay${cs}${c.fase===k&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-f="${k}" data-w="${w}" style="--fc:${col}" title="${nom} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}"><img src="${m.src}" loading="lazy" alt="${nom} ${ltDM(m.fecha)}"><span class="n">${L.length}</span></button>`; }).join('');
+      return `<button type="button" class="lt-p hay${cs}${c.fase===k&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-f="${k}" data-w="${w}" style="--fc:${col}" title="${nom} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}"><img src="${m.mini||m.src}" loading="lazy" decoding="async" alt="${nom} ${ltDM(m.fecha)}"><span class="n">${L.length}</span></button>`; }).join('');
   });
   el.innerHTML = `<div class="lt-hbar" title="Desliza para recorrer las semanas"><div></div></div><div class="lt-scroll"><div class="lt-pel" style="--n:${W.length}">${h}</div></div>`;
   el.querySelectorAll('.lt-sem, .lt-c.tot').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda={w:b.dataset.w}; pintarHistorialFotos(); ltVerFotos(); });
@@ -9747,27 +9772,13 @@ function abrirFoto(src, lista){
   ftNav.lista = (lista && lista.length>1) ? lista : null; ftNav.i = ftNav.lista ? ftNav.lista.findIndex(x=>x.src===src) : -1;
   const bp=box.querySelector('.ftb-prev'), bn=box.querySelector('.ftb-next');
   bp.style.display = bn.style.display = ftNav.lista ? '' : 'none'; bp.disabled = !ftNav.lista || ftNav.i<=0; bn.disabled = !ftNav.lista || ftNav.i>=ftNav.lista.length-1;
-  box.querySelector('img').src=f.src;
+  { const im=box.querySelector('img'); box.dataset.src=f.src; im.src=f.mini||f.src;   // v72.13: se ve al instante y se afina al llegar la de 800 px
+    if (f.mini && f.mini!==f.src){ const big=new Image(); big.onload=()=>{ if (box.dataset.src===f.src) im.src=f.src; }; big.src=f.src; }
+    if (ftNav.lista) [ftNav.i-1, ftNav.i+1].forEach(j=>{ const g=ftNav.lista[j]; if (g){ const x=new Image(); x.src=g.src; } }); }
   const vis=esVisita(), et=etqTxt(f), ORIG={'EXIF':'EXIF de la cámara', 'nombre':'nombre del archivo', 'sello':'sello de la foto', 'carpeta':'carpeta del día'};
   const priv = vis ? '' : [f.fecha_obs?`<span class="ftb-rev">fecha: ${f.fecha_obs}</span>`:'', f.origen_fecha?(f.origen_fecha==='revisada'?'fecha revisada':`fecha por ${ORIG[f.origen_fecha]||f.origen_fecha}`):'', f.origen_ubicacion?`ubicación por ${f.origen_ubicacion}`:'', `#${fotCod(f)} · ${f.id||''}`].filter(Boolean).join(' · ');
   box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:(f.zona||'Otras'))}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${et?` (${f.etiquetador==='yolo'?`<span class="ftb-rev">${et}</span>`:et})`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}${ftNav.lista?` · ${ftNav.i+1}/${ftNav.lista.length}`:''}${f.descripcion?`<br><span class="ftb-desc">«${f.descripcion}»${f.pata?` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}`:''}</span>`:''}${f.difuminada||f.documento?`<br><span class="ftb-priv">${f.documento?'Documento pixelado':`Rostro${f.difuminada>1?'s':''} difuminado${f.difuminada>1?'s':''}${f.difuminada>1?` (${f.difuminada} personas)`:''}`}${vis?' por privacidad':' para el portal · el original queda en el archivo privado'}</span>`:''}${priv?`<br><small>${priv}</small>`:''}`;
   box.style.display='flex';
-}
-/* pines de cámara en la vista de ruta, en el punto UTM del sello */
-function construirPinesFotos(){
-  if(!bimGroundGroup) return;
-  const viejo=bimGroundGroup.getObjectByName('pinesFotos'); if(viejo){ bimGroundGroup.remove(viejo); liberarGrupo(viejo); }
-  if(!bimRouteMode || repartoActivo() || !FOTOS_CAMPO.length || !VIS.pinesFotos) return;
-  const hasta=DATA.tl_weeks[d4i]; const G=new THREE.Group(); G.name='pinesFotos';
-  const cv=document.createElement('canvas'); cv.width=64; cv.height=64; const c=cv.getContext('2d');
-  c.fillStyle='#1f4e45'; c.beginPath(); c.arc(32,28,20,0,Math.PI*2); c.fill(); c.fillStyle='#fff'; c.font='bold 26px system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('📷',32,29);
-  const tex=new THREE.CanvasTexture(cv);
-  FOTOS_CAMPO.filter(f=>f.utm && f.gps && f.fecha<=hasta && f.categoria==='Avance').forEach(f=>{
-    const p=utmAEscena(f.utm[0],f.utm[1]); const y=(typeof terrainYAtScene==='function'?terrainYAtScene(p.x,p.z):0)-0.4;
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true, opacity:f.fecha===hasta?1:.75}));
-    sp.scale.set(2.2,2.2,1); sp.position.set(p.x,y+1.6,p.z); sp.renderOrder=7; sp.userData={fotoSrc:f.src}; G.add(sp);
-  });
-  bimGroundGroup.add(G); if(typeof renderBIM==='function') renderBIM();
 }
 
 function construirFranjaTrazo(){
@@ -9824,7 +9835,7 @@ function resaltarLinea(){
     const halo = o.userData.halo;
     if (halo && halo.material){ halo.material.opacity = Math.min(1, halo.material.opacity + 0.25 * k); halo.scale.setScalar(1 + 0.35 * k); }
   });
-  if (typeof renderBIM === 'function') renderBIM();
+  if (window.bimInvalidate) bimInvalidate(300);
 }
 
 function updateBIM4D(){
@@ -10330,7 +10341,7 @@ function aplicarOrto(on){
   const ov = bimGroundGroup && bimGroundGroup.getObjectByName('rtOverlay');
   if (ov && ov.material){ ov.material.opacity = (on && ORTO.tex) ? 0.45 : 1; ov.material.needsUpdate = true; }
   const b=$('btnOrto'); if(b) b.classList.toggle('active', !!(on && ORTO.tex));
-  if (typeof renderBIM==='function') renderBIM();
+  if (window.bimInvalidate) bimInvalidate(300);
 }
 /* v72.11: estado de los botones según la ortofoto: «Ortofoto» encendido y «Apoyos separados» deshabilitado
    (sobre la imagen satelital las torres van en su posición real, con los vanos del KMZ) */
@@ -10362,8 +10373,7 @@ function buildRouteBIM(){
   $('hudTowerName').textContent = 'LÍNEA COMPLETA';
   $('hudTowerType').textContent = '23 torres · ' + (GEO.total/1000).toFixed(2) +
       ' km · cotas ' + Math.round(GEO.zmin) + '–' + Math.round(GEO.zmax) + ' m s.n.m.';
-  $('hudTowerStatus').textContent = 'Trazo CC Pomayaros → SE Yumpag' +
-    (repartoActivo() ? ' · apoyos con reparto visual uniforme' : ' · vanos reales del KMZ');
+  $('hudTowerStatus').textContent = '';   // v72.13: el trazo y los vanos reales ya se leen en la barra de torres
   $('hudTowerStatus').style.color = 'var(--sky)';
 
   // ---- terreno real (cotas 4.422 – 4.662 m del KMZ, interpolación IDW) ----
@@ -10418,7 +10428,6 @@ function buildRouteBIM(){
   ajustarShaderTerreno(groundMat);
   gmesh.userData.uvOriginal = geo.attributes.uv.clone();
   setTimeout(()=>{ try{ construirCaminos(); }catch(e){ console.warn('caminos', e); } }, 60);   // el terreno ya existe
-  setTimeout(()=>{ try{ if (FOTOS_CAMPO.length) construirPinesFotos(); }catch(e){} }, 90);
   if (ORTO.on) setTimeout(()=>{ try{ cargarOrtofoto(); }catch(e){ console.warn('ortofoto',e); } }, 50);   // v72.11: también fuera de «Realista»
   else if (realista) setTimeout(()=>{ try{ aplicarOrto(false); pintarOrtoEstado(); }catch(e){} }, 50);
   else { setTimeout(()=>{ const e=$('ortoEstado'); if(e) e.style.display='none'; ortoBotones(); },0); }
@@ -10476,7 +10485,7 @@ function buildRouteBIM(){
 
     const hit = new THREE.Mesh(new THREE.CylinderGeometry(11,11,52,6),
                 new THREE.MeshBasicMaterial({visible:false}));
-    hit.position.y = 24; hit.userData = {routeHit:true, idx:i}; obj.add(hit);
+    hit.position.y = 24; hit.userData = {routeHit:true, idx:i}; obj.add(hit); obj.userData.hitProxy = hit;
 
     // viñeta con el % de la vía de acceso (sustituye a las bandas del trazo)
     const accB = makeTowerLabelSprite('Vía 0%', '#b1cc3d', 0.034, true);
@@ -10870,8 +10879,10 @@ function renderSlide(index) {
   $('deckCounter').textContent = `Lámina ${curSlide + 1} / ${SLIDES.length}`;
   $('deckBody').innerHTML = slide.render(tower);
 
-  // Mover cámara de forma suave hacia la perspectiva de la diapositiva
-  if (slide.cam && bimCamera && bimControls) {
+  // Mover cámara hacia la perspectiva de la diapositiva — v72.13: solo con la ficha de láminas a la vista (antes, cada vez que se
+  // abría la pestaña BIM la cámara saltaba a la lámina aunque la ficha está oculta)
+  const ficha = $('p-ficha');
+  if (slide.cam && bimCamera && bimControls && ficha && ficha.style.display !== 'none') {
     bimControls.target.set(slide.cam.tx, slide.cam.ty, slide.cam.tz);
     bimCamera.position.set(slide.cam.x, slide.cam.y, slide.cam.z);
     bimControls.update();
@@ -10977,7 +10988,7 @@ function setupBIMUI() {
     if (bimRenderer) bimRenderer.shadowMap.enabled = VIS.sombras;
     if (bimTowerGroup) aplicarSombras(bimTowerGroup);
     if (bimGroundGroup) bimGroundGroup.traverse(o=>{ if(o.isMesh) o.receiveShadow = VIS.sombras; });
-    if (typeof renderBIM === 'function') renderBIM();
+    if (window.bimInvalidate) bimInvalidate(300);
   }
   function bindRange(id, campo, salida, dec){
     const el=$(id), out=$(salida); if(!el) return;
@@ -11021,7 +11032,7 @@ function setupBIMUI() {
         else o.material.envMapIntensity = VIS.aceroReflejo;
         o.material.needsUpdate = true;
       });
-      if (typeof renderBIM==='function') renderBIM();
+      if (window.bimInvalidate) bimInvalidate(300);
     });
   }
   bindAcero('rpAcRug','aceroRough','rpAcRugV');
@@ -11029,7 +11040,7 @@ function setupBIMUI() {
 
 
   // ---- vista realista: terreno (brillo / contraste / saturación) y resalte de la línea ----
-  function setTerr(campo, v){ VIS[campo]=v; TERR_U[campo].value=v; if (typeof renderBIM==='function') renderBIM(); }
+  function setTerr(campo, v){ VIS[campo]=v; TERR_U[campo].value=v; if (window.bimInvalidate) bimInvalidate(300); }
   function bindTerr(id, campo, salida){
     const el=$(id), out=$(salida); if(!el) return;
     el.addEventListener('input', ()=>{ const v=parseFloat(el.value); if(out) out.textContent=v.toFixed(2); setTerr(campo, v); });
@@ -11068,6 +11079,7 @@ function setupBIMUI() {
     (elm.requestFullscreen || elm.webkitRequestFullscreen || function(){}).call(elm);
   }
   if ($('btnFsView'))  $('btnFsView').onclick  = () => fs(document.querySelector('.bim-viewport'));
+  if ($('btnFsSalir')) $('btnFsSalir').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); };
   if ($('btnFsCurve')) $('btnFsCurve').onclick = () => fs(document.querySelector('.bb-right'));
   document.addEventListener('fullscreenchange', () => {
     setTimeout(() => {
@@ -11766,19 +11778,19 @@ function pintarBadges(i){
   if (typeof bimRouteMode!=='undefined' && !bimRouteMode && typeof currentSelectedTowerIdx!=='undefined' && currentSelectedTowerIdx>=0) i=currentSelectedTowerIdx;
   const t=DATA.towers[i], el=$('semBadges'); if(!t||!el) return;
   const st=towerStatusModel(t), s=getScheduleStatus(t,'civil'), m=getScheduleStatus(t,'erection');
-  el.hidden=false;
+  el.hidden=false; el.dataset.t = t.t;   // v72.13: la franja dice de qué torre son
   $('sbCons').textContent = `${st.civil.estado}${st.civil.pct>0&&st.civil.pct<99.5?' · '+st.civil.pct.toFixed(0)+' %':''}`;
   $('sbDes').textContent = s.label; $('sbDes').style.color = SEM_CSS[s.code]; $('sbDes').title = s.motivo;
   $('sbMont').textContent = m.label; $('sbMont').title = m.motivo;
 }
-function pintarLeyenda(){ }
-function pintarDQ(){
-  try{ pintarLeyenda(); }catch(e){}
-  const el=$('bimDQ'); if(!el) return;
-  const v=validarBIM();
-  el.textContent = `BIM data quality · ${v.ok} OK | ${v.warnings.length} advertencias | ${v.conflicts.length} conflictos`;
-  el.style.color = v.conflicts.length ? SEM_CSS.red : (v.warnings.length ? SEM_CSS.amber : SEM_CSS.green);
-  el.onclick = () => alert(['CONFLICTOS:',...(v.conflicts.length?v.conflicts:['ninguno']),'','ADVERTENCIAS:',...(v.warnings.length?v.warnings:['ninguna'])].join('\n'));
+/* v72.13: la leyenda (fuera del visor) muestra solo lo que se ve: estado de las torres en la ruta, elementos del modelo en el
+   detalle, caminos y zonas cuando están encendidos */
+function pintarLeyenda(){
+  const L = $('bimLeyenda'); if (!L) return;
+  const ruta = typeof bimRouteMode === 'undefined' || !!bimRouteMode;
+  L.classList.toggle('ruta', ruta); L.classList.toggle('detalle', !ruta);
+  L.classList.toggle('caminos', ruta && !!VIS.caminos);
+  L.classList.toggle('zonas', ruta && !!(window.zonasOn && zonasOn()));
 }
 function selectTower(i){
   try{ pintarBadges(i); }catch(e){}
@@ -11792,7 +11804,8 @@ function selectTower(i){
   draw4D();
 }
 /* v72.12 · «↺ Vista inicial»: quita los filtros y vuelve a como se abre la pestaña (toda la línea, filtro «Todas», mapa «Estado»,
-   fecha del corte, sin ortofoto, proyectado y caminos visibles, pestaña «Avance torre», cámara y tamaño de paneles por defecto) */
+   fecha del corte, sin ortofoto, proyectado visible, v72.13: caminos y zonas apagados y la ventana del trazo abajo a la izquierda,
+   pestaña «Avance torre», cámara y tamaño de paneles por defecto) */
 function vistaInicialBIM(){
   try { if (d4timer) d4togglePlay(); } catch(e){}
   try { const f = document.querySelector('#bimxFilt button[data-f="all"]'); if (f && !f.classList.contains('on')) f.click(); } catch(e){}
@@ -11800,7 +11813,7 @@ function vistaInicialBIM(){
   try { d4i = DATA.tl_weeks.length - 1; const sl = $('d4Slider'); if (sl) sl.value = d4i; } catch(e){}
   try { if (ORTO.on){ ORTO.on = false; aplicarOrto(false); } } catch(e){}
   try { if (!ghostOn){ ghostOn = true; const g = $('btnGhost'); if (g) g.classList.add('active'); } } catch(e){}
-  try { VIS.caminos = true; } catch(e){}
+  try { VIS.caminos = false; if (window.zonasBIM) zonasBIM(false); if (window.mmRestablecer) mmRestablecer(); } catch(e){}
   try { const t = document.querySelector('.bpt[data-p="p-patas"]'); if (t) t.click(); } catch(e){}
   try { const rp = $('rpPanel'); if (rp && !rp.hidden){ const br = $('btnRender'); if (br) br.click(); } } catch(e){}
   try { if (window.layRestablecer) window.layRestablecer(); } catch(e){}
@@ -11878,13 +11891,14 @@ function tweenCamera(toPos, toTarget, ms){
   };
 }
 function stepCameraTween(){
-  if(!_camTween) return;
+  if(!_camTween) return false;
   const k = Math.min((performance.now() - _camTween.ini) / _camTween.dur, 1);
   const e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2)/2;      // suavizado
   bimCamera.position.lerpVectors(_camTween.p0, _camTween.p1, e);
   bimControls.target.lerpVectors(_camTween.t0, _camTween.t1, e);
   bimControls.update();
   if (k >= 1) _camTween = null;
+  return true;
 }
 /* Encuadra una torre concreta mirando a lo largo del trazo */
 function focusTowerCam(i, dist){
@@ -11965,7 +11979,7 @@ function highlightRouteTower(){
   $('hudTowerName').textContent = 'SELECCIONADA · ' + t.t;
   $('hudTowerType').textContent = t.tp + ' · km ' + ((g.km||0)/1000).toFixed(3).replace('.','+') +
       ' · cota ' + Math.round(g.z||0) + ' m';
-  $('hudTowerStatus').textContent = 'Obra civil ' + F(t.pct) + '% · otro clic en su botón (o doble clic): detalle';
+  $('hudTowerStatus').textContent = 'Obra civil ' + F(t.pct) + ' %';
   $('hudTowerStatus').style.color = t.pct>=99.5?'var(--lime)':(t.pct>0?'var(--amber)':'var(--red)');
 }
 
@@ -12168,49 +12182,22 @@ function drawLinkedCurve(){
   $('bbWeek').textContent = fmtDate(wk) + ' · sem ' + (d4i+1);
 }
 
-/* Barra de torres dentro del visor: salto directo a cualquier apoyo */
-function drawNavStrip(){
-  const el = $('bimNavStrip'); if(!el) return;
-  if (!el.dataset.built){
-    el.innerHTML = DATA.towers.map((t,i)=>
-      `<button data-k="${i}" title="Ir a ${t.t}">${t.t.replace('T','')}<i></i></button>`).join('');
-    el.querySelectorAll('button').forEach(b=>{
-      b.onclick = ()=>{ const i=+b.dataset.k; selectTower(i); if(bimRouteMode) focusTowerCam(i); };
-    });
-    el.dataset.built = '1';
-  }
-  el.style.display = bimRouteMode ? 'flex' : 'none';
-  el.querySelectorAll('button').forEach(b=>{
-    const i = +b.dataset.k, t = DATA.towers[i];
-    b.classList.toggle('on', i === d4sel);
-    const p = towerCivilAt(t, d4i);
-    b.querySelector('i').style.background =
-      p>=99.5 ? css('--lime') : (p>0 ? css('--amber') : css('--ink-mut'));
-  });
-}
 
 function draw4D(){
   setTimeout(()=>{ try{ resaltarLinea(); }catch(e){} }, 0);
-  setTimeout(()=>{ try{ pintarFotosTorre(); construirPinesFotos(); }catch(e){} }, 0);
+  setTimeout(()=>{ try{ pintarFotosTorre(); }catch(e){} }, 0);
   const corte = $('p-corte');
   if (corte && corte.style.display !== 'none') drawScene();
   drawLayerBar();
   drawTowerList();
   try{ encuadrarSombra(); }catch(e){}
-  try{ pintarDQ(); pintarBadges(d4sel); }catch(e){}
+  try{ pintarLeyenda(); pintarBadges(d4sel); }catch(e){}
   try{ construirFranjaTrazo(); }catch(e){ console.warn('franja', e); }
   try{ construirCaminos(); }catch(e){ console.warn('caminos', e); }
   if (!FOTOS_CAMPO.length) cargarFotosCampo();
   drawRoute();
   drawPataGrid();
   drawLinkedCurve();
-  drawNavStrip();
-  // el botón de detalle siempre apunta a la torre activa
-  const _bd = $('btnDetail');
-  if(_bd && DATA.towers[d4sel]){
-    _bd.disabled = false;
-    _bd.innerHTML = '<span class="ic">🔍</span> Ver detalle · ' + DATA.towers[d4sel].t;
-  }
   if (typeof updateBIM4D === 'function') updateBIM4D();
   const t = DATA.towers[d4sel];
   $('d4SceneTitle').textContent = `${t.t} (${t.tp})`;
@@ -12264,13 +12251,16 @@ document.querySelectorAll('.d4-speed button').forEach(b => b.onclick = () => {
    ========================================================================= */
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
   if (!b.dataset.v) return;            // el botón "+" no es una pestaña
+  const antes = document.querySelector('.view.on');
+  if (antes && antes.id === 'v-fot') { try { window._fotFirma = fotFirma(); } catch(e){} }   // v72.13: estado con que se dejó la pestaña Fotos
   document.querySelectorAll('#nav button[data-v]').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.view').forEach(x => x.classList.remove('on'));
   b.classList.add('active');
   const targetView = $(b.dataset.v);
   targetView.classList.add('on');
 
-  if (b.dataset.v === 'v-fot') { setTimeout(() => { try { renderFotosTab(); } catch(e){ console.warn('fotos', e); } }, 30); }
+  // v72.13: la pestaña Fotos se rearma solo si cambió algo desde que se dejó (selección, fotos, tema o ancho); si no, se muestra tal cual
+  if (b.dataset.v === 'v-fot') { setTimeout(() => { try { const f = fotFirma(); if (f !== window._fotFirma) { renderFotosTab(); window._fotFirma = f; } } catch(e){ console.warn('fotos', e); } }, 30); }
 
   if (b.dataset.v === 'v-res') {
     // la curva S de construcción vive ahora dentro del Resumen
@@ -12279,22 +12269,16 @@ document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
 
   if (b.dataset.v === 'v-bim') {
     setTimeout(() => {
+      const primera = !bimRenderer;   // v72.13: al volver a la pestaña se conserva la vista (antes se reencuadraba siempre)
       initBIM3D();
       onBIMResize();
-      frameCamera();
+      if (primera) frameCamera();
       renderSlide(curSlide);
-      // fuerza un repintado del visor al volver a la pestaña
-      let n=0; const kick=()=>{ if(n++>6) return;
-        onBIMResize();
-        if(bimRenderer&&bimScene&&bimCamera) bimRenderer.render(bimScene,bimCamera);
-        requestAnimationFrame(kick); };
-      requestAnimationFrame(kick);
+      try { bimInvalidate(800); } catch(e){}   // v72.13: el bucle a demanda redibuja al volver a la pestaña
     }, 60);
   }
 
-  setTimeout(() => {
-    Object.values(charts).forEach(c => { try { c.resize(); } catch(e){} });
-  }, 40);
+  // (v72.13: los gráficos de la pestaña abierta los ajusta bms-script; antes aquí se redimensionaban todos, también los ocultos)
 });
 
 // El Plan de Recuperación queda oculto tras un botón "+" para no cargar la barra
@@ -12607,7 +12591,6 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       g.ondblclick = () => { const k = +g.dataset.k; if (enDetalle(k)) return; selectTower(k); openTowerDetail(); };
     });
   };
-  window.drawNavStrip = function(){ const el = $('bimNavStrip'); if (el) el.style.display = 'none'; };
 
   // ---------- chip "siguiente actividad" en el visor ----------
   function updateHudNext(){
@@ -12878,7 +12861,9 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const r = cv.getBoundingClientRect();
       const mo = new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
       const rc = new THREE.Raycaster(); rc.setFromCamera(mo, bimCamera);
-      const hits = rc.intersectObjects(bimTowerGroup.children, true);
+      // v72.13: en la ruta basta con los cilindros de selección (antes se probaban todas las mallas de las torres a cada movimiento)
+      const px = bimRouteMode ? towerObjs.map(o => o.userData.hitProxy).filter(Boolean) : [];
+      const hits = px.length ? rc.intersectObjects(px, false) : rc.intersectObjects(bimTowerGroup.children, true);
       const h = hits.find(x => x.object.userData && x.object.userData.routeHit) || hits.find(x => x.object.userData && typeof x.object.userData.towerIdx === 'number');
       return h ? (h.object.userData.routeHit ? h.object.userData.idx : h.object.userData.towerIdx) : -1;
     };
@@ -13132,7 +13117,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (b) ['bimR', 'bimH'].forEach(k => st[k] ? b.style.setProperty('--' + k, st[k] + 'px') : b.style.removeProperty('--' + k));
     if (p) st.pcL ? p.style.setProperty('--pcL', st.pcL + 'px') : p.style.removeProperty('--pcL');
   }
-  const refresh = live => { try { if (typeof onBIMResize === 'function') onBIMResize(); } catch(e){}
+  // v72.13: en vivo (arrastrando) solo se ajusta el aspecto del 3D; al soltar, el tamaño real y un solo evento resize
+  const refresh = live => { try { if (live && window.bimResizeVivo) bimResizeVivo(); else if (typeof onBIMResize === 'function') onBIMResize(); } catch(e){}
     if (!live){ try { window.dispatchEvent(new Event('resize')); } catch(e){} } };
   function gutter(host, cls, before, cfg){
     if (!host || !before) return null;
@@ -13174,16 +13160,35 @@ const BRIEF = ⟦bloque:BRIEF⟧;
         const syncRoute = () => { try { rb.classList.toggle('active', !!(typeof bimRouteMode !== 'undefined' && bimRouteMode)); } catch(e){} };
         const _tnb = window.toggleNavButtons; if (_tnb) window.toggleNavButtons = function(){ const r = _tnb.apply(this, arguments); syncRoute(); return r; };
         setTimeout(syncRoute, 1500); }
-      // minimapa plegable dentro del visor
+      // v72.13 (pedido del usuario): el trazo es una ventana móvil —se arrastra por su cabecera— que nace abajo a la izquierda
+      // del visor; «–» la pliega (en celular nace plegada, v32). «↺ Vista inicial» la devuelve a su lugar.
       const mm = $('bimMinimap'), mt = $('mmToggle');
-      if (mm && mt){ const setMin = v => { mm.classList.toggle('min', !!v); mt.textContent = v ? '▢ Ver' : '–'; mt.title = v ? 'Mostrar el trazo' : 'Plegar el trazo'; st.mm = v ? 1 : 0; save(); };   /* v42 (B-09): sin repetir "Trazo" */
-        mt.onclick = () => setMin(!mm.classList.contains('min')); if (st.mm === undefined && window.innerWidth <= 860) st.mm = 1;   /* celular: nace plegado (v32) */ if (st.mm) { mm.classList.add('min'); mt.textContent = '▢ Ver'; mt.title = 'Mostrar el trazo'; } }
+      if (mm && mt){
+        let pos = null;   // {x, y} desde la esquina superior izquierda del visor · null = abajo a la izquierda (CSS)
+        const encajar = () => { if (!pos || !mm.parentElement) return; const W = mm.parentElement.clientWidth, H = mm.parentElement.clientHeight; if (!W || !H) return;
+          mm.style.left = Math.max(0, Math.min(W - mm.offsetWidth, pos.x)) + 'px'; mm.style.top = Math.max(0, Math.min(H - mm.offsetHeight, pos.y)) + 'px';
+          mm.style.bottom = 'auto'; mm.style.right = 'auto'; };
+        const setMin = v => { mm.classList.toggle('min', !!v); mt.textContent = v ? '▢ Ver' : '–'; mt.title = v ? 'Mostrar el trazo' : 'Plegar el trazo'; st.mm = v ? 1 : 0; save(); encajar(); };
+        mt.onclick = () => setMin(!mm.classList.contains('min'));
+        if (st.mm === undefined && window.innerWidth <= 860) st.mm = 1;
+        if (st.mm) { mm.classList.add('min'); mt.textContent = '▢ Ver'; mt.title = 'Mostrar el trazo'; }
+        window.mmRestablecer = () => { pos = null; ['left', 'top', 'bottom', 'right'].forEach(k => { mm.style[k] = ''; }); };
+        const hd = mm.querySelector('.mm-head');
+        if (hd) hd.addEventListener('pointerdown', ev => {
+          if (ev.button !== 0 || (ev.target.closest && ev.target.closest('button'))) return;
+          ev.preventDefault(); const vp = mm.parentElement.getBoundingClientRect(), r0 = mm.getBoundingClientRect(), x0 = ev.clientX, y0 = ev.clientY;
+          try { hd.setPointerCapture(ev.pointerId); } catch(e){}
+          mm.classList.add('arr');
+          const mv = e2 => { pos = { x: r0.left - vp.left + e2.clientX - x0, y: r0.top - vp.top + e2.clientY - y0 }; encajar(); };
+          const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); hd.removeEventListener('pointercancel', up); mm.classList.remove('arr'); };
+          hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up);
+        });
+        window.addEventListener('resize', encajar);
+      }
       // la curva S de construcción vive ahora en "Curvas S y Costos": se redibuja al abrir esa vista y al cambiar el ancho
       const nb = document.querySelector('#nav button[data-v="v-res"]');
       if (nb && !nb.__cur4d){ nb.__cur4d = true; nb.addEventListener('click', () => setTimeout(() => { try { drawLinkedCurve(); } catch(e){} }, 60)); }
       window.addEventListener('resize', () => { const v = $('v-res'); if (v && v.classList.contains('on')) { try { drawLinkedCurve(); } catch(e){} } });
-      const hint = b.querySelector('.bim-hint');
-      if (hint && !/redimensionar/.test(hint.textContent)) hint.insertAdjacentHTML('beforeend', '<span class="lay-hint"> · <b>Arrastra los separadores</b> entre paneles para redimensionarlos (doble clic: restablecer)</span>');
     }
     const p = $('v-proc');
     if (p){
@@ -14010,7 +14015,11 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     { id: 'via2', nm: 'Vía Pomayaros', col: '#e8c84a', w: 1.6, pts: [[775,0],[780,55],[800,75],[820,110],[815,150],[820,210],[830,240],[840,260],[820,280],[810,310],[800,350],[770,390],[800,420],[830,450],[860,460],[900,480],[930,500],[960,490],[990,480]] }
   ];
   const POINTS = [ { nm: 'Acceso', px: [238, 375], col: '#ffffff' }, { nm: 'Yumpag', px: [255, 45], col: '#e9f4ee' } ];
-  let show = true; try { show = localStorage.getItem('yumpag.zonas') !== '0'; } catch(e){}
+  let show = false;   // v72.13 (pedido del usuario): las zonas nacen apagadas; el botón «Zonas» las prende durante la sesión
+  const aplicar = v => { show = !!v; const b = $('btnZonas'); if (b) b.classList.toggle('active', show);
+    try { addOverlay(); } catch(e){} try { drawRoute(); } catch(e){} try { if (typeof pintarLeyenda === 'function') pintarLeyenda(); } catch(e){} };
+  window.zonasBIM = v => { if (!!v !== show) aplicar(v); };
+  window.zonasOn = () => show;
 
   // ---------- textura de zonas para la ruta 3D (misma malla que el terreno, ligeramente por encima) ----------
   function bounds(){
@@ -14081,8 +14090,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (bar && !$('btnZonas')){
       const b = document.createElement('button'); b.className = 'bim-btn' + (show ? ' active' : ''); b.id = 'btnZonas'; b.title = 'Comunidades campesinas, terreno BNV, vías y línea L-1123 sobre el terreno (referencia del trazo de ruta)';
       b.innerHTML = '<span class="ic">🗾</span> Zonas';
-      b.onclick = () => { show = !show; b.classList.toggle('active', show); try { localStorage.setItem('yumpag.zonas', show ? '1' : '0'); } catch(e){}
-        try { addOverlay(); } catch(e){} try { drawRoute(); } catch(e){} };
+      b.onclick = () => aplicar(!show);
       const anchor = $('btnOrto'); if (anchor && anchor.parentNode === bar) anchor.insertAdjacentElement('afterend', b); else bar.appendChild(b);
     }
     const leg = document.querySelector('#v-bim .bim-legend-box');
@@ -14350,8 +14358,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     const win = $('mtPatasWin');
     function posWindow(){
       if (MOB() || !win || win.style.display === 'none' || win.dataset.dragged) return;
-      const hud = document.querySelector('.bim-overlay-hud'); if (!hud) return;
-      const top = Math.round(hud.offsetTop + hud.offsetHeight + 8) + 'px';
+      const top = '12px';   // v72.13: el HUD ya no está dentro del visor
       if (win.style.top !== top){ win.style.top = top; win.style.left = '12px'; win.style.right = 'auto'; win.style.bottom = 'auto'; }
     }
     document.addEventListener('pointerdown', e => { const h = e.target && e.target.closest && e.target.closest('#mtPatasWin .mt-win-h'); if (h && win && e.target.tagName !== 'BUTTON') win.dataset.dragged = '1'; }, true);
@@ -15094,6 +15101,76 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fp-fondo{position:fixed;inset:0;z-index:9400;background:rgba(8,20,16,.55)}
 #ftBox .ftb-pie{color:#fff;font-size:.8rem;text-align:center} #ftBox .ftb-pie small{color:#9fbdb4} .ftb-rev{color:#f0c674}
 #ftBox .ftb-x{position:absolute;top:-6px;right:-6px;width:34px;height:34px;border-radius:50%;border:0;background:#fff;font-size:22px;cursor:pointer;line-height:1}
+/* ==========================================================================================================
+   v72.13 · BIM despejado (pedido del usuario, 27-Set-26): el visor 3D muestra solo el modelo, el cubo y la
+   ventana móvil del trazo. Los datos de la selección van en la franja #bimInfo (encima) y la leyenda en
+   #bimLeyenda (debajo), fuera del 3D. Un solo esquema de filas por ancho de pantalla (reemplaza a los de v63/v72.11).
+   ========================================================================================================== */
+.bim-info{display:flex;align-items:center;gap:8px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 6px 4px 10px;min-height:32px}
+.bim-info .bim-overlay-hud{position:static;flex:1;min-width:0;flex-direction:row;flex-wrap:wrap;align-items:center;gap:3px 14px;pointer-events:auto;max-width:none;top:auto;left:auto}
+.bim-info .bim-badge-chip{background:none;border:0;box-shadow:none;padding:0;border-radius:0;font-size:.64rem;gap:6px;color:var(--ink-2)}
+.bim-info .bi-sel strong{color:var(--sky);font-weight:800;letter-spacing:.2px}
+.bim-info .bi-sel span{color:var(--ink-2)}
+.bim-info .bi-sel span::before{content:'·';color:var(--ink-mut);margin-right:6px}
+.bim-info #hudTowerStatus{font-weight:700}
+.bim-info #hudNext,.bim-info #mtHud{max-width:none;line-height:1.35;flex-wrap:wrap}
+.bim-info .sem-badges.en-hud{position:static!important;background:none;border:0;box-shadow:none;padding:0;font-size:.6rem;gap:4px}
+.bim-info .sem-badges.en-hud::before{content:attr(data-t);font-weight:800;color:var(--ink);font-size:.64rem;margin-right:4px}
+.bim-info .bi-sel span:empty{display:none}
+.bim-info .bim-expand{position:static;flex:none;align-self:center;box-shadow:none;padding:4px 10px;font-size:.62rem}
+.bim-fs-salir{display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;cursor:pointer;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 12px;font-size:.66rem;font-weight:700;font-family:inherit;box-shadow:var(--shadow)}
+.bim-viewport:fullscreen .bim-fs-salir{display:block}
+.bim-viewport:fullscreen .bim-viewcube{top:10px}
+.bim-viewcube{top:10px}
+.bim-leyenda{min-width:0}
+.bim-leyenda .bim-legend-box{position:static;max-width:none;box-shadow:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:5px 10px;font-size:.58rem;gap:3px 14px;justify-content:flex-start}
+.bim-leyenda.ruta .lg-mod,.bim-leyenda.detalle .bimx-leg,.bim-leyenda:not(.caminos) .lg-cam,.bim-leyenda:not(.zonas) .rt-leg{display:none}
+.bim-minimap .mm-head{cursor:move;touch-action:none;user-select:none}
+#fotDetalle .lt-tira{content-visibility:auto;contain-intrinsic-size:auto 260px}
+.bim-minimap.arr{opacity:.92;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#bimCanvasWrap canvas{touch-action:none}
+/* PC: franja · visor · leyenda en la columna del visor; el panel derecho acompaña las tres filas */
+@media(min-width:1101px){
+  html body #v-bim.view.on{grid-template-columns:minmax(0,1fr) 7px var(--bimR,320px)!important;grid-template-rows:auto auto auto auto auto max-content 7px max-content!important}
+  html body #v-bim > .bim-top-bar{grid-column:1/-1!important;grid-row:1!important}
+  html body #v-bim > .bim-towers-bar{grid-column:1/-1!important;grid-row:2!important}
+  html body #v-bim > .bim-info{grid-column:1;grid-row:3}
+  html body #v-bim > .bim-viewport{grid-column:1!important;grid-row:4!important;height:var(--bimH,max(360px,calc(100vh - 330px)))!important;min-height:360px!important;min-width:0}
+  html body #v-bim > .bim-leyenda{grid-column:1;grid-row:5}
+  html body #v-bim > .gut.gr{grid-column:2;grid-row:3/6}
+  html body #v-bim > .slide-deck{grid-column:3!important;grid-row:3/6!important;min-width:0;min-height:0}
+  html body #v-bim > .bim-time-bar{grid-column:1/-1!important;grid-row:6!important}
+  html body #v-bim > .gut.h{grid-column:1/-1;grid-row:7!important}
+  html body #v-bim > .bim-stages{grid-column:1/-1!important;grid-row:8!important}
+}
+/* tableta: una columna (antes la barra de tiempo y el panel se pisaban en la misma fila) */
+@media(min-width:861px) and (max-width:1100px){
+  html body #v-bim.view.on{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto auto auto max-content max-content max-content!important}
+  html body #v-bim > .bim-top-bar{grid-column:1!important;grid-row:1!important}
+  html body #v-bim > .bim-towers-bar{grid-column:1!important;grid-row:2!important}
+  html body #v-bim > .bim-info{grid-column:1;grid-row:3}
+  html body #v-bim > .bim-viewport{grid-column:1!important;grid-row:4!important;height:62vh!important;min-height:420px!important}
+  html body #v-bim > .bim-leyenda{grid-column:1;grid-row:5}
+  html body #v-bim > .bim-time-bar{grid-column:1!important;grid-row:6!important}
+  html body #v-bim > .slide-deck{grid-column:1!important;grid-row:7!important;overflow:visible}
+  html body #v-bim > .bim-stages{grid-column:1!important;grid-row:8!important}
+}
+/* celular: columna flexible · barra de tiempo, torres, franja, visor, leyenda, panel de la torre, etapas */
+@media(max-width:860px){
+  html body #v-bim > .bim-top-bar{order:0}
+  html body #v-bim > .bim-time-bar{order:1}
+  html body #v-bim > .bim-towers-bar{order:2}
+  html body #v-bim > .bim-info{order:3;padding:4px 6px 4px 8px}
+  html body #v-bim > .bim-viewport{order:4}
+  html body #v-bim > .bim-leyenda{order:5}
+  html body #v-bim > .slide-deck{order:6}
+  html body #v-bim > .bim-stages{order:7}
+  .bim-info .bim-badge-chip{font-size:.58rem}
+  .bim-info #hudNext{display:none!important}
+  .bim-info .bim-expand{display:none}
+  .bim-leyenda .bim-legend-box{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;font-size:.54rem}
+}
+
 </style>
 <script id="pdr-data">window.PDR = ⟦bloque:PDR⟧;</script>
 <script id="pdr-script">
@@ -15233,6 +15310,20 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     const v = $('v-pdr'); if (v) v.classList.add('on');
     setTimeout(dibuja, 60);
   };
+})();
+</script>
+<script id="fluidez-script">
+/* v72.13 · fluidez: las funciones que cambian la escena 3D (fecha, torre, vista, ortofoto, caminos, luces…) piden cuadros al
+   bucle a demanda (animateBIM). Se envuelven aquí, al final, sobre la versión vigente de cada una (varios módulos las extienden). */
+(function(){
+  if (typeof bimInvalidate !== 'function') return;
+  ['draw4D', 'buildRouteBIM', 'buildTowerBIM', 'selectTower', 'openTowerDetail', 'backToRoute', 'highlightRouteTower', 'aplicarOrto',
+   'applyBimLighting', 'construirCaminos', 'focusTowerCam', 'resaltarLinea', 'aplicarVis', 'updateBIM4D', 'frameCamera', 'fitAllCam'].forEach(n => {
+    const f = window[n]; if (typeof f !== 'function' || f.__inv) return;
+    const g = function(){ try { return f.apply(this, arguments); } finally { bimInvalidate(500); } };
+    g.__inv = true; window[n] = g;
+  });
+  document.addEventListener('dc:theme', () => bimInvalidate(600));
 })();
 </script>
 </body>
