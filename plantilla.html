@@ -7989,11 +7989,11 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 
         <div class="rp-sec">Terreno (ortofoto) y línea</div>
         <div class="rp-row"><label>Brillo</label>
-          <input type="range" id="rpTB" min="0.4" max="1.6" step="0.02" value="1.00"><output id="rpTBV">1.00</output></div>
+          <input type="range" id="rpTB" min="0.4" max="1.6" step="0.02" value="0.90"><output id="rpTBV">0.90</output></div>
         <div class="rp-row"><label>Contraste</label>
-          <input type="range" id="rpTC" min="0.4" max="1.8" step="0.02" value="1.00"><output id="rpTCV">1.00</output></div>
+          <input type="range" id="rpTC" min="0.4" max="1.8" step="0.02" value="0.92"><output id="rpTCV">0.92</output></div>
         <div class="rp-row"><label>Saturación</label>
-          <input type="range" id="rpTS" min="0" max="1.6" step="0.02" value="1.00"><output id="rpTSV">1.00</output></div>
+          <input type="range" id="rpTS" min="0" max="1.6" step="0.02" value="0.72"><output id="rpTSV">0.72</output></div>
         <div class="rp-row"><label>Resaltar línea</label>
           <input type="range" id="rpRL" min="0" max="1" step="0.02" value="0"><output id="rpRLV">0.00</output></div>
         <div class="rp-preset">
@@ -8494,8 +8494,289 @@ function bloomAplicable(){
   return lum < 0.55;        // con cielo claro el bloom lavaría toda la escena
 }
 function renderBIM(){
+  if (contornoOrtoActivo()){
+    try { renderBIMContorno(); return; }
+    catch(e){ CONTORNO.fallo = true; console.warn('contorno de torres desactivado:', e); }   // si algo falla, el 3D sigue como antes
+  }
   if (bloomAplicable()) bimComposer.render();
   else if (bimRenderer && bimScene && bimCamera) bimRenderer.render(bimScene, bimCamera);
+}
+
+/* =====================================================================
+   v72.16 · CONTORNO DE LAS TORRES SOBRE LA ORTOFOTO (28-Set-26). El usuario: «cuando activo la ortofoto se pierden
+   visualmente las torres»; de 5 maquetas eligió «doble contorno + ortofoto atenuada suave». Con la ortofoto encendida
+   y en la vista de ruta cada torre lleva:
+   · su silueta (la celosía cerrada con un radio que crece con el tamaño de la torre en pantalla y sus huecos interiores
+     rellenos; las muescas abiertas, entre crucetas o entre las patas, se respetan),
+   · una línea oscura de 2 px pegada a la silueta y un brillo claro por fuera (7 px, difuminado).
+   Las torres tapadas por el relieve no se contornean y los rótulos van encima del contorno. Se procesa a la resolución
+   CSS del visor y solo cuando el 3D se dibuja (render a demanda, v72.13). Sin ortofoto, en el detalle de una torre o si
+   algo falla, el 3D se dibuja exactamente como antes. La atenuación suave del terreno está en TERR_U.
+   ===================================================================== */
+const CONTORNO = {
+  rCierre: 5,              // px: cierre de la celosía (maqueta aprobada) …
+  hRef: 430,               // … suficiente para una torre de hasta 430 px de alto; más grande, el radio crece
+  hPeq: 100,               // px: una torre más chica que esto (vista de todo el trazo, celular) se cierra con menos radio
+  rCierreMax: 16,          // px: tope del cierre
+  huecoMax: 16,            // px: huecos de la celosía cerrados por los 4 lados que se rellenan (no las muescas abiertas)
+  linea: 2,                // px: línea oscura
+  rBrillo: 7, sigma: 3.0,  // px: alcance del brillo claro y su difuminado
+  kBrillo: 1.4, aBrillo: 0.72, aLinea: 0.88,
+  claro: [1, 1, 1], oscuro: [26/255, 30/255, 24/255],
+  desvanece: [1300, 1800], // px de alto: una torre mucho más grande que el visor deja de contornearse
+  altoRef: 900, kMin: 0.55, kMax: 1.2,   // alto del visor de la maqueta y límites de la escala de las medidas
+  maxPx: 2.4e6,            // píxeles de proceso como máximo (en pantallas enormes se procesa a menor escala)
+  fallo: false, rt: null, gl: null
+};
+const CAPA_MASC = 2, CAPA_ROT = 3, CAPA_TERR = 4;
+function contornoOrtoActivo(){
+  return !CONTORNO.fallo && bimRouteMode && towerObjs.length > 0 && !!bimRenderer && ortoActiva();
+}
+function liberarContorno(){
+  const K = CONTORNO.rt; CONTORNO.rt = null; if (!K) return;
+  [K.masc, K.a, K.b, K.oc1, K.oc2].forEach(t => { try { t.dispose(); } catch(e){} });
+}
+function _contornoGL(){
+  if (CONTORNO.gl) return CONTORNO.gl;
+  const VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+  // cada pasada sale enseguida donde el mapa de ocupación (1/8 de resolución) dice que no hay torres cerca: ahorra ~70 % del trabajo
+  const pase = (frag, uni, libre) => new THREE.ShaderMaterial({ uniforms: libre ? uni : Object.assign(uni, { tOc: { value: null } }), vertexShader: VS,
+    fragmentShader: libre ? frag : frag.replace('void main(){', 'uniform sampler2D tOc;\nvoid main(){\n  if (texture2D(tOc, vUv).r <= 0.0){ gl_FragColor = vec4(0.0); return; }'),
+    depthTest: false, depthWrite: false });
+  const tx = () => ({ value: null }), v2 = () => ({ value: new THREE.Vector2() }), f = v => ({ value: v });
+  const G = {};
+  // máscara: por píxel, intensidad (R), radio de cierre de SU torre (G) y cobertura (B); el radio sale del alto de la torre en pantalla
+  G.masc = new THREE.ShaderMaterial({ side: THREE.DoubleSide,
+    uniforms: { uVista: v2(), uY0: f(0), uY1: f(30), uRMin: f(5), uHRef: f(430), uHPeq: f(100), uRMax: f(16), uNorm: f(16), uF0: f(1300), uF1: f(1800) },
+    vertexShader: [
+      'uniform vec2 uVista; uniform float uY0, uY1, uRMin, uHRef, uHPeq, uRMax, uNorm, uF0, uF1;',
+      'varying float vI; varying float vR;',
+      'void main(){',
+      '  mat4 pvm = projectionMatrix * viewMatrix * modelMatrix;',
+      '  vec4 a = pvm * vec4(0.0, uY0, 0.0, 1.0), b = pvm * vec4(0.0, uY1, 0.0, 1.0);',
+      '  float h = 1.0e5;',
+      '  if (a.w > 0.0 && b.w > 0.0) h = length((b.xy / b.w - a.xy / a.w) * 0.5 * uVista);',
+      '  vR = clamp(uRMin * max(1.0, h / uHRef) * clamp(h / uHPeq, 0.4, 1.0), 1.0, uRMax) / uNorm;',
+      '  vI = 1.0 - smoothstep(uF0, uF1, h);',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+      '}'].join('\n'),
+    fragmentShader: 'varying float vI; varying float vR; void main(){ gl_FragColor = vec4(vI, vR, 1.0, 1.0); }' });
+  G.terr = new THREE.MeshBasicMaterial({ colorWrite: false });      // el relieve solo tapa (profundidad)
+  // cierre de la celosía: dilatación y erosión separables, cada torre con su propio radio
+  G.morf = pase([
+    '#define RMAX 16',
+    'uniform sampler2D tSrc; uniform vec2 uPaso; uniform float uModo, uNorm, uLim, uPremult;',
+    'varying vec2 vUv;',
+    'float rad(vec4 s){ return uPremult > 0.5 ? (s.b > 0.002 ? s.g / s.b : 0.0) : s.g; }',
+    'float val(vec4 s){ return uPremult > 0.5 ? min(1.0, s.r * 2.0) : s.r; }',
+    'void main(){',
+    '  vec4 c = texture2D(tSrc, vUv); float v = val(c);',
+    '  if (uModo < 0.5){',
+    '    float r = rad(c);',
+    '    for (int i = 1; i <= RMAX; i++){',
+    '      float fi = float(i); if (fi > uLim + 0.01) break;',
+    '      vec4 s1 = texture2D(tSrc, vUv + uPaso * fi), s2 = texture2D(tSrc, vUv - uPaso * fi);',
+    '      float r1 = rad(s1), r2 = rad(s2);',
+    '      if (fi <= r1 * uNorm + 0.01){ v = max(v, val(s1)); r = max(r, r1); }',
+    '      if (fi <= r2 * uNorm + 0.01){ v = max(v, val(s2)); r = max(r, r2); }',
+    '    }',
+    '    gl_FragColor = vec4(v, r, 0.0, 1.0);',
+    '  } else {',
+    '    float rr = c.g * uNorm;',
+    '    for (int i = 1; i <= RMAX; i++){',
+    '      float fi = float(i); if (fi > uLim + 0.01 || fi > rr + 0.01) break;',
+    '      v = min(v, min(texture2D(tSrc, vUv + uPaso * fi).r, texture2D(tSrc, vUv - uPaso * fi).r));',
+    '    }',
+    '    gl_FragColor = vec4(v, c.g, 0.0, 1.0);',
+    '  }',
+    '}'].join('\n'), { tSrc: tx(), uPaso: v2(), uModo: f(0), uNorm: f(16), uLim: f(5), uPremult: f(0) });
+  // huecos de la celosía que quedaron sin cerrar: se rellenan solo si están cerrados por los 4 lados (a ≤ 16 px);
+  // las muescas abiertas hacia afuera (entre crucetas, entre las patas) no se tocan
+  G.hueco = pase([
+    '#define RMAX 16',
+    'uniform sampler2D tSrc; uniform vec2 uPaso; uniform float uL, uFase, uNorm;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec4 c = texture2D(tSrc, vUv); float a = 0.0, b = 0.0;',
+    '  for (int i = 1; i <= RMAX; i++){',
+    '    float fi = float(i); if (fi > uL + 0.01) break;',
+    '    vec4 s1 = texture2D(tSrc, vUv - uPaso * fi), s2 = texture2D(tSrc, vUv + uPaso * fi);',
+    '    float r1 = uFase < 0.5 ? s1.g : s1.b, r2 = uFase < 0.5 ? s2.g : s2.b;',
+    '    if (fi <= 2.0 * r1 * uNorm + 0.01) a = max(a, s1.r);',
+    '    if (fi <= 2.0 * r2 * uNorm + 0.01) b = max(b, s2.r);',
+    '  }',
+    '  if (uFase < 0.5) gl_FragColor = vec4(c.r, min(a, b), c.g, 1.0);',
+    '  else gl_FragColor = vec4(max(c.r, min(min(a, b), c.g)), 0.0, 0.0, 1.0);',
+    '}'].join('\n'), { tSrc: tx(), uPaso: v2(), uL: f(16), uFase: f(0), uNorm: f(16) });
+  // mapa de ocupación: máximo de la máscara por bloque de 8×8 px (16 lecturas bilineales) y luego ensanchado ±D bloques
+  G.ocup = pase([
+    'uniform sampler2D tSrc; uniform vec2 uTexel, uCSize;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec2 b = floor(vUv * uCSize) * 8.0; float m = 0.0;',
+    '  for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++) m = max(m, texture2D(tSrc, (b + vec2(2.0 * float(i) + 1.0, 2.0 * float(j) + 1.0)) * uTexel).r);',
+    '  gl_FragColor = vec4(m > 0.0 ? 1.0 : 0.0, 0.0, 0.0, 1.0);',
+    '}'].join('\n'), { tSrc: tx(), uTexel: v2(), uCSize: v2() }, true);
+  G.ocupDil = pase([
+    '#define DMAX 12',
+    'uniform sampler2D tSrc; uniform vec2 uPaso; uniform float uD;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  float m = texture2D(tSrc, vUv).r;',
+    '  for (int i = 1; i <= DMAX; i++){ float fi = float(i); if (fi > uD) break; m = max(m, max(texture2D(tSrc, vUv + uPaso * fi).r, texture2D(tSrc, vUv - uPaso * fi).r)); }',
+    '  gl_FragColor = vec4(m, 0.0, 0.0, 1.0);',
+    '}'].join('\n'), { tSrc: tx(), uPaso: v2(), uD: f(4) }, true);
+  // alcance del brillo: dilatación constante de la silueta (G); la silueta viaja en B
+  G.dil = pase([
+    '#define RMAX 16',
+    'uniform sampler2D tSrc; uniform vec2 uPaso; uniform float uR, uFuente;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec4 c = texture2D(tSrc, vUv);',
+    '  float s0 = uFuente < 0.5 ? c.r : c.b, g = uFuente < 0.5 ? c.r : c.g;',
+    '  for (int i = 1; i <= RMAX; i++){',
+    '    float fi = float(i); if (fi > uR + 0.01) break;',
+    '    vec4 s1 = texture2D(tSrc, vUv + uPaso * fi), s2 = texture2D(tSrc, vUv - uPaso * fi);',
+    '    g = max(g, uFuente < 0.5 ? max(s1.r, s2.r) : max(s1.g, s2.g));',
+    '  }',
+    '  gl_FragColor = vec4(0.0, g, s0, 1.0);',
+    '}'].join('\n'), { tSrc: tx(), uPaso: v2(), uR: f(7), uFuente: f(0) });
+  // difuminado gaussiano del brillo (G); en la pasada vertical también la franja de la línea (R, disco de 2 px)
+  G.blur = pase([
+    '#define RB 12',
+    'uniform sampler2D tSrc; uniform vec2 uPaso, uTexel; uniform float uSigma, uLinea, uBorde;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec4 c = texture2D(tSrc, vUv); float acc = c.g, w = 1.0, lim = ceil(3.0 * uSigma);',
+    '  for (int i = 1; i <= RB; i++){',
+    '    float fi = float(i); if (fi > lim) break;',
+    '    float k = exp(-fi * fi / (2.0 * uSigma * uSigma));',
+    '    acc += k * (texture2D(tSrc, vUv + uPaso * fi).g + texture2D(tSrc, vUv - uPaso * fi).g); w += 2.0 * k;',
+    '  }',
+    '  float borde = 0.0;',
+    '  if (uBorde > 0.5){',
+    '    borde = c.b;',
+    '    for (int j = -3; j <= 3; j++) for (int i = -3; i <= 3; i++){',
+    '      float d2 = float(i * i + j * j);',
+    '      if (d2 < 0.5 || d2 > uLinea * uLinea + 0.5) continue;',
+    '      borde = max(borde, texture2D(tSrc, vUv + uTexel * vec2(float(i), float(j))).b);',
+    '    }',
+    '  }',
+    '  gl_FragColor = vec4(borde, acc / w, c.b, 1.0);',
+    '}'].join('\n'), { tSrc: tx(), uPaso: v2(), uTexel: v2(), uSigma: f(3), uLinea: f(2), uBorde: f(0) });
+  // composición sobre el cuadro ya dibujado (alfa premultiplicado): brillo claro por fuera, línea oscura en el borde
+  G.comp = pase([
+    'uniform sampler2D tSrc; uniform vec3 uClaro, uOscuro; uniform float uAB, uAL, uKB;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec4 c = texture2D(tSrc, vUv);',
+    '  float sil = c.b, borde = max(c.r, sil);',
+    '  float linea = clamp(borde - sil, 0.0, 1.0), brillo = clamp(c.g * uKB, 0.0, 1.0) * (1.0 - borde);',
+    '  float ab = uAB * brillo, al = uAL * linea;',
+    '  gl_FragColor = vec4(uClaro * ab * (1.0 - al) + uOscuro * al, 1.0 - (1.0 - ab) * (1.0 - al));',
+    '}'].join('\n'), { tSrc: tx(), uClaro: { value: new THREE.Color().fromArray(CONTORNO.claro) },
+      uOscuro: { value: new THREE.Color().fromArray(CONTORNO.oscuro) }, uAB: f(CONTORNO.aBrillo), uAL: f(CONTORNO.aLinea), uKB: f(CONTORNO.kBrillo) });
+  G.comp.transparent = true; G.comp.blending = THREE.CustomBlending;
+  G.comp.blendSrc = THREE.OneFactor; G.comp.blendDst = THREE.OneMinusSrcAlphaFactor;
+  G.comp.blendSrcAlpha = THREE.OneFactor; G.comp.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
+  G.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), G.comp); G.quad.frustumCulled = false;
+  G.escena = new THREE.Scene(); G.escena.add(G.quad);
+  G.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  G.v = new THREE.Vector3(); G.w = new THREE.Vector3(); G.col = new THREE.Color();
+  CONTORNO.gl = G; return G;
+}
+function _contornoBuferes(R){
+  const sz = R.getSize(new THREE.Vector2());
+  let w = Math.max(1, Math.round(sz.x)), h = Math.max(1, Math.round(sz.y)), esc = 1;
+  if (w * h > CONTORNO.maxPx){ esc = Math.sqrt(CONTORNO.maxPx / (w * h)); w = Math.max(1, Math.round(w * esc)); h = Math.max(1, Math.round(h * esc)); }
+  let K = CONTORNO.rt;
+  if (K && (K.w !== w || K.h !== h)){ liberarContorno(); K = null; }
+  if (!K){
+    const op = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: false, stencilBuffer: false, generateMipmaps: false };
+    const opM = Object.assign({}, op, { depthBuffer: true });
+    const masc = (R.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget) ? new THREE.WebGLMultisampleRenderTarget(w, h, opM) : new THREE.WebGLRenderTarget(w, h, opM);
+    const opN = Object.assign({}, op, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter }), cw = Math.ceil(w / 8), ch = Math.ceil(h / 8);
+    K = CONTORNO.rt = { w, h, esc, cw, ch, masc, a: new THREE.WebGLRenderTarget(w, h, op), b: new THREE.WebGLRenderTarget(w, h, op),
+      oc1: new THREE.WebGLRenderTarget(cw, ch, opN), oc2: new THREE.WebGLRenderTarget(cw, ch, opN) };
+  }
+  return K;
+}
+function renderBIMContorno(){
+  const R = bimRenderer, S = bimScene, C = bimCamera, G = _contornoGL(), K = _contornoBuferes(R), X = CONTORNO;
+  // las medidas en px son las de la maqueta aprobada (visor de 900 px de alto); con otro alto de visor se escalan igual que las
+  // torres (la cámara tiene campo vertical fijo), entre 0,55 (celular) y 1,2 (pantalla completa grande)
+  const esc = K.esc * Math.min(X.kMax, Math.max(X.kMin, (K.h / K.esc) / X.altoRef));
+  const rMin = X.rCierre * esc, hRef = X.hRef * esc, rMax = Math.min(16, X.rCierreMax * esc);
+  // alto de la primera torre (el modelo proyectado): de su base a su punta, en coordenadas del modelo
+  const gh0 = towerObjs[0] && towerObjs[0].userData.parts && towerObjs[0].userData.parts.ghost;
+  if (gh0 && gh0.geometry){ if (!gh0.geometry.boundingBox) gh0.geometry.computeBoundingBox(); const bb = gh0.geometry.boundingBox; G.masc.uniforms.uY0.value = bb.min.y; G.masc.uniforms.uY1.value = bb.max.y; }
+  const y0 = G.masc.uniforms.uY0.value, y1 = G.masc.uniforms.uY1.value;
+  // radio de cierre más grande de este cuadro (para no recorrer 16 px si no hace falta)
+  let lim = rMin; C.updateMatrixWorld();
+  towerObjs.forEach(o => {
+    if (!o.visible) return;
+    G.v.set(0, y0, 0).applyMatrix4(o.matrixWorld).applyMatrix4(C.matrixWorldInverse);
+    G.w.set(0, y1, 0).applyMatrix4(o.matrixWorld).applyMatrix4(C.matrixWorldInverse);
+    if (G.v.z >= 0 || G.w.z >= 0) return;                            // detrás de la cámara
+    G.v.applyMatrix4(C.projectionMatrix); G.w.applyMatrix4(C.projectionMatrix);
+    const hp = Math.hypot((G.w.x - G.v.x) * 0.5 * K.w, (G.w.y - G.v.y) * 0.5 * K.h);
+    lim = Math.max(lim, Math.min(rMax, rMin * Math.max(1, hp / hRef)));
+  });
+  lim = Math.ceil(lim);
+  // capas: acero de las torres (máscara), relieve (oclusión), rótulos fijos en pantalla (encima del contorno)
+  towerObjs.forEach(o => { const P = o.userData.parts || {}; ['ghost', 'patas', 'cuerpo', 'crucetas', 'aisladores'].forEach(k => { if (P[k]) P[k].layers.enable(CAPA_MASC); }); });
+  const terr = terrenoActual(); if (terr) terr.layers.enable(CAPA_TERR);
+  const rot = [];
+  S.traverse(o => {
+    if (o.isLight){ o.layers.enable(CAPA_MASC); o.layers.enable(CAPA_ROT); o.layers.enable(CAPA_TERR); }   // mismas luces en todas las pasadas
+    else if (o.isSprite && o.material && o.material.depthTest === false){ rot.push([o, o.layers.mask]); o.layers.set(CAPA_ROT); }
+  });
+  const capas0 = C.layers.mask, fondo = S.background, ac = R.autoClear, su = R.shadowMap.autoUpdate, rt0 = R.getRenderTarget();
+  const cc = R.getClearColor(G.col).getHex(), ca = R.getClearAlpha();
+  const pasada = (mat, dst) => { G.quad.material = mat; mat.uniformsNeedUpdate = true; R.setRenderTarget(dst); R.render(G.escena, G.cam); };
+  try {
+    // 1) la escena de siempre, sin los rótulos fijos
+    if (bloomAplicable()) bimComposer.render(); else R.render(S, C);
+    // 2) máscara de las torres, tapada por el relieve
+    R.shadowMap.autoUpdate = false; R.autoClear = false; S.background = null;
+    R.setRenderTarget(K.masc); R.setClearColor(0x000000, 0); R.clear(true, true, false);
+    if (terr){ C.layers.set(CAPA_TERR); S.overrideMaterial = G.terr; R.render(S, C); }
+    const um = G.masc.uniforms; um.uVista.value.set(K.w, K.h); um.uRMin.value = rMin; um.uHRef.value = hRef; um.uHPeq.value = X.hPeq * esc; um.uRMax.value = rMax;
+    um.uF0.value = X.desvanece[0] * esc; um.uF1.value = X.desvanece[1] * esc;
+    C.layers.set(CAPA_MASC); S.overrideMaterial = G.masc; G.masc.uniformsNeedUpdate = true; R.render(S, C);
+    S.overrideMaterial = null;
+    // 3) cierre de la celosía (cada torre con su radio), relleno de huecos, alcance del brillo, difuminado y franja de la línea
+    const tH = G.w.set(1 / K.w, 0, 0), tV = G.v.set(0, 1 / K.h, 0);
+    // mapa de ocupación: dónde puede caer contorno (alcance = cierre + brillo + difuminado + línea)
+    const oc = G.ocup.uniforms; oc.tSrc.value = K.masc.texture; oc.uTexel.value.set(1 / K.w, 1 / K.h); oc.uCSize.value.set(K.cw, K.ch); pasada(G.ocup, K.oc1);
+    const alc = lim + X.rBrillo * esc + Math.ceil(3 * X.sigma * esc) + X.linea * esc + 2;
+    const od = G.ocupDil.uniforms; od.uD.value = Math.min(12, Math.ceil(alc / 8) + 1);
+    od.tSrc.value = K.oc1.texture; od.uPaso.value.set(1 / K.cw, 0); pasada(G.ocupDil, K.oc2);
+    od.tSrc.value = K.oc2.texture; od.uPaso.value.set(0, 1 / K.ch); pasada(G.ocupDil, K.oc1);
+    [G.morf, G.hueco, G.dil, G.blur, G.comp].forEach(m => { m.uniforms.tOc.value = K.oc1.texture; });
+    const mo = G.morf.uniforms; mo.uLim.value = lim;
+    mo.tSrc.value = K.masc.texture; mo.uPaso.value.set(tH.x, 0); mo.uModo.value = 0; mo.uPremult.value = 1; pasada(G.morf, K.a);
+    mo.tSrc.value = K.a.texture;    mo.uPaso.value.set(0, tV.y); mo.uPremult.value = 0; pasada(G.morf, K.b);
+    mo.tSrc.value = K.b.texture;    mo.uPaso.value.set(tH.x, 0); mo.uModo.value = 1; pasada(G.morf, K.a);
+    mo.tSrc.value = K.a.texture;    mo.uPaso.value.set(0, tV.y); pasada(G.morf, K.b);
+    const hu = G.hueco.uniforms; hu.uL.value = Math.min(16, X.huecoMax * esc, 2 * lim);   // huecos de hasta ~2 radios de cierre por lado
+    hu.tSrc.value = K.b.texture; hu.uPaso.value.set(tH.x, 0); hu.uFase.value = 0; pasada(G.hueco, K.a);
+    hu.tSrc.value = K.a.texture; hu.uPaso.value.set(0, tV.y); hu.uFase.value = 1; pasada(G.hueco, K.b);
+    const di = G.dil.uniforms; di.uR.value = X.rBrillo * esc;
+    di.tSrc.value = K.b.texture; di.uPaso.value.set(tH.x, 0); di.uFuente.value = 0; pasada(G.dil, K.a);
+    di.tSrc.value = K.a.texture; di.uPaso.value.set(0, tV.y); di.uFuente.value = 1; pasada(G.dil, K.b);
+    const bl = G.blur.uniforms; bl.uSigma.value = X.sigma * esc; bl.uLinea.value = X.linea * esc; bl.uTexel.value.set(1 / K.w, 1 / K.h);
+    bl.tSrc.value = K.b.texture; bl.uPaso.value.set(tH.x, 0); bl.uBorde.value = 0; pasada(G.blur, K.a);
+    bl.tSrc.value = K.a.texture; bl.uPaso.value.set(0, tV.y); bl.uBorde.value = 1; pasada(G.blur, K.b);
+    // 4) contorno sobre el cuadro y 5) los rótulos encima
+    G.comp.uniforms.tSrc.value = K.b.texture; pasada(G.comp, null);
+    if (rot.length){ C.layers.set(CAPA_ROT); R.render(S, C); }
+  } finally {
+    C.layers.mask = capas0; S.overrideMaterial = null; S.background = fondo;
+    R.autoClear = ac; R.shadowMap.autoUpdate = su; R.setRenderTarget(rt0); R.setClearColor(cc, ca);
+    G.quad.material = G.comp;
+    rot.forEach(([o, m]) => { o.layers.mask = m; });
+  }
 }
 /* v72.13b · arrastre a prueba de fallos (separadores, trazo, ventana Cimentaciones, barra de tiempo, curva, cubo, plano).
    Antes cada arrastre esperaba el pointerup en su propio elemento: si el navegador no se lo entregaba (se soltó fuera de la
@@ -8636,29 +8917,32 @@ const AISLADORES = {
 };
 
 /* Ajuste del terreno (ortofoto o textura): uniforms compartidos por todas las mallas de terreno,
-   así el deslizador actúa al instante sin recompilar shaders */
-const TERR_U = { tBrillo:{value:1.0}, tContraste:{value:1.0}, tSaturacion:{value:1.0} };
+   así el deslizador actúa al instante sin recompilar shaders.
+   v72.16 (28-Set-26, elegido por el usuario entre 5 maquetas): el ajuste actúa SOLO con la ortofoto encendida (tOrto = 1)
+   y por defecto la atenúa suave (brillo 0,90 · contraste 0,92 · saturación 0,72) para que las torres se lean sobre la
+   imagen; sin ortofoto el terreno queda como antes. */
+const TERR_U = { tBrillo:{value:0.90}, tContraste:{value:0.92}, tSaturacion:{value:0.72}, tOrto:{value:0.0} };
 function ajustarShaderTerreno(mat){
   if (!mat || mat.userData.bcs) return;
   mat.userData.bcs = true;
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, TERR_U);
-    sh.fragmentShader = 'uniform float tBrillo; uniform float tContraste; uniform float tSaturacion;\n' +
+    sh.fragmentShader = 'uniform float tBrillo; uniform float tContraste; uniform float tSaturacion; uniform float tOrto;\n' +
       sh.fragmentShader.replace('#include <map_fragment>',
         '#include <map_fragment>\n' +
-        '  { vec3 cc = diffuseColor.rgb;\n' +
+        '  { vec3 c0 = diffuseColor.rgb, cc = c0;\n' +
         '    cc = (cc - 0.5) * tContraste + 0.5;\n' +
         '    cc *= tBrillo;\n' +
         '    float ll = dot(cc, vec3(0.2126, 0.7152, 0.0722));\n' +
         '    cc = mix(vec3(ll), cc, tSaturacion);\n' +
-        '    diffuseColor.rgb = clamp(cc, 0.0, 1.0); }');
+        '    diffuseColor.rgb = mix(c0, clamp(cc, 0.0, 1.0), tOrto); }');
   };
-  mat.customProgramCacheKey = () => 'terrenoBCS';
+  mat.customProgramCacheKey = () => 'terrenoBCS2';
   mat.needsUpdate = true;
 }
-const VIS_DEF = { tBrillo:1.0, tContraste:1.0, tSaturacion:1.0, resalte:0.0 };
+const VIS_DEF = { tBrillo:0.90, tContraste:0.92, tSaturacion:0.72, resalte:0.0 };   // v72.16: «Restablecer» = ortofoto atenuada suave
 const VIS = {
-  tBrillo: 1.0, tContraste: 1.0, tSaturacion: 1.0,   // terreno en Realista
+  tBrillo: 0.90, tContraste: 0.92, tSaturacion: 0.72,   // terreno con ortofoto (v72.16: atenuado suave por defecto)
   caminos: false,          // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (pedido del usuario); botón «Caminos»
   resalte: 0.0,            // v71: franja del eje apagada por defecto (se confundía con un camino)
   aislador: 'vidrio',      // el modelo trae cadena de discos: vidrio o porcelana
@@ -10374,6 +10658,8 @@ function aplicarOrto(on){
     if (!realista){ m.transparent=true; m.opacity=.55; }
   }
   m.needsUpdate=true; ORTO.on=!!on;
+  TERR_U.tOrto.value = (on && ORTO.tex) ? 1.0 : 0.0;             // v72.16: brillo/contraste/saturación solo sobre la ortofoto
+  if (!(on && ORTO.tex)) { try { liberarContorno(); } catch(e){} }   // v72.16: sin ortofoto no hay contorno; se liberan sus búferes
   const wm = bimGroundGroup && bimGroundGroup.getObjectByName('terrenoMalla'); if (wm) wm.visible = !(on && ORTO.tex);
   ortoBotones();
   const ov = bimGroundGroup && bimGroundGroup.getObjectByName('rtOverlay');
