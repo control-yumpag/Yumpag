@@ -8401,6 +8401,14 @@ function initBIM3D() {
 
   window.addEventListener('resize', bimResizeVivo);
   bimControls.addEventListener('change', () => bimInvalidate(250));
+  // v72.13b: si el navegador no entrega el pointerup de una órbita (se soltó fuera de la ventana), la cámara seguía al puntero:
+  // con el primer movimiento sin botón, o al perder la ventana el foco, se cierra como si se hubiera soltado
+  { let orbita = false; const soltarOrbita = ev => { orbita = false;
+      try { document.dispatchEvent(new PointerEvent('pointerup', { pointerType: (ev && ev.pointerType) || 'mouse', pointerId: (ev && ev.pointerId) || 1, clientX: ev ? ev.clientX : 0, clientY: ev ? ev.clientY : 0, bubbles: true })); } catch(e){} };
+    bimControls.addEventListener('start', () => { orbita = true; });
+    bimControls.addEventListener('end', () => { orbita = false; });
+    window.addEventListener('pointermove', ev => { if (orbita && ev.pointerType !== 'touch' && !(ev.buttons & 7)) soltarOrbita(ev); }, true);
+    window.addEventListener('blur', () => { if (orbita) soltarOrbita(null); }); }
   // v72.13: toda interacción con la pestaña BIM (botones, barra de torres, línea de tiempo, panel) redibuja un momento
   // (arrastrar un separador no cuenta: mientras se arrastra el lienzo solo se estira; ver bimResizeVivo)
   const vb = $('v-bim'), enSeparador = ev => document.body.classList.contains('lay-drag') || !!(ev.target && ev.target.closest && ev.target.closest('.gut'));
@@ -8489,6 +8497,33 @@ function renderBIM(){
   if (bloomAplicable()) bimComposer.render();
   else if (bimRenderer && bimScene && bimCamera) bimRenderer.render(bimScene, bimCamera);
 }
+/* v72.13b · arrastre a prueba de fallos (separadores, trazo, ventana Cimentaciones, barra de tiempo, curva, cubo, plano).
+   Antes cada arrastre esperaba el pointerup en su propio elemento: si el navegador no se lo entregaba (se soltó fuera de la
+   ventana, otra aplicación tomó el mouse, gesto del touchpad, captura del puntero que no se concedió), la página quedaba en
+   modo arrastre — cursor ↔ en todo y el 3D sin eventos. Ahora el arrastre se sigue desde la ventana y termina SIEMPRE: con el
+   pointerup o pointercancel (del elemento o de la ventana), con el primer movimiento sin botón, al perder la ventana el foco,
+   al ocultarse la página o con Esc. mover(ev) recibe cada movimiento; soltar(ev) se llama una sola vez. Devuelve la función
+   que lo termina. */
+function arrastrar(el, e0, mover, soltar){
+  const pid = e0.pointerId; let vivo = true;
+  try { el.setPointerCapture(pid); } catch(err){}
+  const fin = ev => {
+    if (!vivo) return; vivo = false;
+    window.removeEventListener('pointermove', mv, true); window.removeEventListener('pointerup', up, true); window.removeEventListener('pointercancel', up, true);
+    window.removeEventListener('blur', fin); window.removeEventListener('keydown', tecla, true); document.removeEventListener('visibilitychange', vis);
+    try { if (el.hasPointerCapture && el.hasPointerCapture(pid)) el.releasePointerCapture(pid); } catch(err){}
+    try { if (soltar) soltar(ev); } catch(err){ console.warn('arrastre', err); }
+  };
+  const mv = ev => { if (!vivo || ev.pointerId !== pid) return; if (!(ev.buttons & 1)) { fin(ev); return; } try { mover(ev); } catch(err){ console.warn('arrastre', err); } };
+  const up = ev => { if (ev.pointerId === pid) fin(ev); };
+  const tecla = ev => { if (ev.key === 'Escape') fin(ev); };
+  const vis = () => { if (document.hidden) fin(); };
+  window.addEventListener('pointermove', mv, true); window.addEventListener('pointerup', up, true); window.addEventListener('pointercancel', up, true);
+  window.addEventListener('blur', fin); window.addEventListener('keydown', tecla, true); document.addEventListener('visibilitychange', vis);
+  return fin;
+}
+window.arrastrar = arrastrar;
+
 /* v72.13 · render a demanda (antes: 60 cuadros/s siempre, también con otra pestaña a la vista → toda la página se trababa).
    Se dibuja solo con la pestaña BIM visible y mientras algo cambia (cámara, interacción, animación, carga, tamaño);
    en reposo, un cuadro por segundo de resguardo. bimInvalidate(ms) pide cuadros durante ms. */
@@ -9507,7 +9542,9 @@ function armarZoomPlano(el){
     if (ptrs.size===2){ const [a,b]=[...ptrs.values()]; pinch={d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)), k:fotMapa.k}; try{ box.setPointerCapture(ev.pointerId); }catch(e){} }
   });
   box.addEventListener('pointermove', ev=>{
-    if (!ptrs.has(ev.pointerId)) return; ptrs.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if (!ptrs.has(ev.pointerId)) return;
+    if (!(ev.buttons & 1)) { fin(ev); return; }   // v72.13b: se soltó sin que llegara el pointerup
+    ptrs.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
     if (ptrs.size===2 && pinch){ const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y); zoomEn((a.x+b.x)/2, (a.y+b.y)/2, (pinch.k*d/pinch.d)/fotMapa.k); fotMapa.arr=Date.now(); return; }
     if (ptrs.size===1 && ini){
       const dx=ev.clientX-ini.x, dy=ev.clientY-ini.y;
@@ -9518,6 +9555,7 @@ function armarZoomPlano(el){
   });
   const fin=ev=>{ ptrs.delete(ev.pointerId); if (ptrs.size<2) pinch=null; if (!ptrs.size){ if (ini && ini.mov) fotMapa.arr=Date.now(); ini=null; box.classList.remove('arr'); } };
   box.addEventListener('pointerup', fin); box.addEventListener('pointercancel', fin);
+  window.addEventListener('blur', ()=>{ ptrs.clear(); pinch=null; ini=null; box.classList.remove('arr'); });
   el.querySelectorAll('.fp-ctl button').forEach(b=>b.onclick=()=>{
     const r=box.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, a=b.dataset.a;
     if (a==='+') zoomEn(cx, cy, 1.6); else if (a==='-') zoomEn(cx, cy, 1/1.6); else if (a==='0'){ fotMapa.k=1; redibujar(); } else if (a==='g') ampliarPlano(el);
@@ -12160,11 +12198,8 @@ function drawLinkedCurve(){
         draw4D();
       }
     };
-    let dragging = false;
-    el.addEventListener('pointerdown', e=>{ dragging = true; el.setPointerCapture && el.setPointerCapture(e.pointerId); seek(e); });
-    el.addEventListener('pointermove', e=>{ if (dragging) seek(e); });
-    el.addEventListener('pointerup',   ()=>{ dragging = false; });
-    el.addEventListener('pointercancel',()=>{ dragging = false; });
+    let dragging = false;   // v72.13b: arrastrar() termina siempre (antes, sin pointerup la fecha seguía al puntero)
+    el.addEventListener('pointerdown', e=>{ if (e.button !== 0) return; dragging = true; seek(e); arrastrar(el, e, seek, ()=>{ dragging = false; }); });
     el.addEventListener('touchmove', e=>{ if (dragging){ seek(e); e.preventDefault(); } }, {passive:false});
   }
 
@@ -12803,11 +12838,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
         for (let n = S0; n < N; n++){ const d = Math.abs(msI(n) - t); if (d < bd){ bd = d; best = n; } }
         if (best !== d4i){ d4i = best; const sl = $('d4Slider'); if (sl) sl.value = best; draw4D(); }
       };
-      let dragging = false;
-      el.addEventListener('pointerdown', e => { dragging = true; el.setPointerCapture && el.setPointerCapture(e.pointerId); seek(e); });
-      el.addEventListener('pointermove', e => { if (dragging) seek(e); });
-      el.addEventListener('pointerup', () => { dragging = false; });
-      el.addEventListener('pointercancel', () => { dragging = false; });
+      let dragging = false;   // v72.13b: arrastrar() termina siempre
+      el.addEventListener('pointerdown', e => { if (e.button !== 0) return; dragging = true; seek(e); window.arrastrar(el, e, seek, () => { dragging = false; }); });
       el.addEventListener('touchmove', e => { if (dragging){ seek(e); e.preventDefault(); } }, { passive: false });
     }
 
@@ -13120,22 +13152,26 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   // v72.13: en vivo (arrastrando) solo se ajusta el aspecto del 3D; al soltar, el tamaño real y un solo evento resize
   const refresh = live => { try { if (live && window.bimResizeVivo) bimResizeVivo(); else if (typeof onBIMResize === 'function') onBIMResize(); } catch(e){}
     if (!live){ try { window.dispatchEvent(new Event('resize')); } catch(e){} } };
+  let enCurso = null;   // función que termina el arrastre de separador en curso
+  // red de seguridad: si la página quedó marcada «arrastrando» sin arrastre vivo, el siguiente clic la libera
+  document.addEventListener('pointerdown', () => { if (!enCurso && document.body.classList.contains('lay-drag')) document.body.classList.remove('lay-drag', 'h'); }, true);
   function gutter(host, cls, before, cfg){
     if (!host || !before) return null;
     let g = q(host, '.gut.' + cls);
     if (!g){ g = document.createElement('div'); g.className = 'gut ' + cls; host.insertBefore(g, before); }
     g.title = 'Arrastra para redimensionar · doble clic: tamaño por defecto';
+    // v72.13b: el arrastre lo lleva arrastrar() (termina siempre); antes, sin el pointerup en el separador, quedaba pegado al puntero
     g.onpointerdown = e => {
       if (e.button !== 0) return; e.preventDefault();
-      try { g.setPointerCapture(e.pointerId); } catch(err){}
+      if (enCurso) enCurso();   // un arrastre anterior que no terminó
       const x0 = e.clientX, y0 = e.clientY, base = cfg.get();
       g.classList.add('drag'); document.body.classList.add('lay-drag'); if (cfg.axis === 'y') document.body.classList.add('h');
       let raf = 0;
       const mv = ev => { const d = cfg.axis === 'y' ? ev.clientY - y0 : ev.clientX - x0; let v = base + (cfg.invert ? -d : d);
         v = Math.max(cfg.min(), Math.min(cfg.max(), v)); st[cfg.key] = Math.round(v); apply();
-        if (!raf) raf = requestAnimationFrame(() => { raf = 0; refresh(true); }); };
-      const up = () => { g.onpointermove = null; g.onpointerup = null; g.onpointercancel = null; g.classList.remove('drag'); document.body.classList.remove('lay-drag', 'h'); save(); refresh(false); };
-      g.onpointermove = mv; g.onpointerup = up; g.onpointercancel = up;
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (enCurso) refresh(true); }); };
+      const fin = () => { enCurso = null; g.classList.remove('drag'); document.body.classList.remove('lay-drag', 'h'); save(); refresh(false); };
+      enCurso = window.arrastrar(g, e, mv, fin);
     };
     g.ondblclick = () => { delete st[cfg.key]; apply(); save(); refresh(false); };
     return g;
@@ -13177,11 +13213,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
         if (hd) hd.addEventListener('pointerdown', ev => {
           if (ev.button !== 0 || (ev.target.closest && ev.target.closest('button'))) return;
           ev.preventDefault(); const vp = mm.parentElement.getBoundingClientRect(), r0 = mm.getBoundingClientRect(), x0 = ev.clientX, y0 = ev.clientY;
-          try { hd.setPointerCapture(ev.pointerId); } catch(e){}
           mm.classList.add('arr');
-          const mv = e2 => { pos = { x: r0.left - vp.left + e2.clientX - x0, y: r0.top - vp.top + e2.clientY - y0 }; encajar(); };
-          const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); hd.removeEventListener('pointercancel', up); mm.classList.remove('arr'); };
-          hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up);
+          window.arrastrar(hd, ev, e2 => { pos = { x: r0.left - vp.left + e2.clientX - x0, y: r0.top - vp.top + e2.clientY - y0 }; encajar(); }, () => mm.classList.remove('arr'));
         });
         window.addEventListener('resize', encajar);
       }
@@ -13750,12 +13783,10 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     // arrastre por la cabecera
     const hd = w.querySelector('.mt-win-h');
     if (hd && !hd.__drag){ hd.__drag = true;
-      hd.onpointerdown = e => { if (e.target.tagName === 'BUTTON') return; e.preventDefault(); const vp = w.parentElement.getBoundingClientRect(), r0 = w.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY;
-        try { hd.setPointerCapture(e.pointerId); } catch(err){}
+      hd.onpointerdown = e => { if (e.target.tagName === 'BUTTON' || e.button !== 0) return; e.preventDefault(); const vp = w.parentElement.getBoundingClientRect(), r0 = w.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY;
         const mv = ev => { const nx = Math.max(0, Math.min(vp.width - r0.width, r0.left - vp.left + ev.clientX - x0)), ny = Math.max(0, Math.min(vp.height - 40, r0.top - vp.top + ev.clientY - y0));
           w.style.left = nx + 'px'; w.style.top = ny + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; };
-        const up = () => { hd.onpointermove = null; hd.onpointerup = null; hd.onpointercancel = null; };
-        hd.onpointermove = mv; hd.onpointerup = up; hd.onpointercancel = up; };
+        window.arrastrar(hd, e, mv, null); };   // v72.13b: termina siempre
     }
   }
   function hudDetalle(t){
@@ -14338,11 +14369,13 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     let pd = null;
     cv.addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); });
     cv.addEventListener('pointermove', e => {
+      if (pd && !(e.buttons & 1)) { pd = null; cv.classList.remove('drag'); }   // v72.13b: se soltó fuera (sin pointerup)
       if (pd){ const dx = e.clientX - pd.x, dy = e.clientY - pd.y; if (Math.abs(dx) + Math.abs(dy) > 3) { pd.moved = true; cv.classList.add('drag'); } if (pd.moved){ orbit(dx, dy); pd.x = e.clientX; pd.y = e.clientY; hl.visible = false; } return; }
       showHl(zoneAt(e));
     });
     cv.addEventListener('pointerup', e => { if (pd && !pd.moved){ const z = zoneAt(e); if (z) goto(z.dir); } pd = null; cv.classList.remove('drag'); });
     cv.addEventListener('pointercancel', () => { pd = null; cv.classList.remove('drag'); });
+    cv.addEventListener('lostpointercapture', e => { if (!(e.buttons & 1)) { pd = null; cv.classList.remove('drag'); } });
     cv.addEventListener('pointerleave', () => { if (!pd) hl.visible = false; });
     $('vcHome').onclick = () => NAV.home();
     const hb = $('vcHelp');   // v42 (B-08): la ayuda también se abre con clic / toque (no solo con el title al pasar el cursor)
