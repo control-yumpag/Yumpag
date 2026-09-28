@@ -7491,6 +7491,9 @@ body.lay-drag{cursor:col-resize!important;user-select:none;-webkit-user-select:n
 body.lay-drag.h{cursor:row-resize!important}
 body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .bim-btn:disabled{opacity:.45;cursor:not-allowed}
+.bim-sep{width:1px;height:20px;background:var(--line-2);margin:0 3px;flex:0 0 auto}   /* v72.12: grupos de la barra del BIM */
+.bim-btn.vista-ini,.fh-ini{border:1px solid var(--c-civ,#2d7667)!important;color:var(--c-civ,#2d7667)!important;background:var(--panel)!important;font-weight:800}
+.bim-btn.vista-ini:hover,.fh-ini:hover{background:var(--c-civ,#2d7667)!important;color:#fff!important}
 .lay-reset{cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:7px;padding:4px 9px;font-size:.62rem;font-weight:700;font-family:inherit}
 .lay-reset:hover{border-color:var(--sky);color:var(--ink)}
 @media(max-width:1100px){.gut,.lay-reset,.lay-hint{display:none!important}}
@@ -7924,29 +7927,25 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <!-- Barra de herramientas BIM -->
     <div class="bim-top-bar">
       <div class="bim-controls">
-        <button class="bim-btn active" id="btnRoute3D" title="Ruta 3D con las 23 torres (volver a la línea completa)"><span class="ic">🗺️</span> Ruta 3D · 23 torres</button>
+        <button class="bim-btn active" id="btnRoute3D" title="Toda la línea: vuelve a la ruta de las 23 torres y encuadra el trazo completo"><span class="ic">🗺️</span> Ver todo el trazo</button>
+        <span class="bim-sep"></span>
         <select id="bimTowerSelect" style="background:var(--panel-2);color:var(--ink);border:1px solid var(--line-2);border-radius:6px;padding:4px 8px;font-size:.72rem;font-family:inherit;font-weight:600"></select>
         <button class="bim-btn active" id="btnCamIso"><span class="ic">📐</span> Isométrica</button>
         <button class="bim-btn" id="btnCamFront"><span class="ic">⬒</span> Elevación</button>
         <button class="bim-btn" id="btnCamTop"><span class="ic">⬓</span> Planta</button>
+        <span class="bim-sep"></span>
         <button class="bim-btn" id="btnGhost"><span class="ic">👻</span> Proyectado</button>
-        <button class="bim-btn" id="btnRender" title="Ajustes de realismo del modelo 3D"><span class="ic">🎛️</span> Render</button>
         <button class="bim-btn" id="btnCaminos"><span class="ic">🛣️</span> Caminos</button>
         <button class="bim-btn" id="btnOrto" title="Imagen satelital (Esri World Imagery) proyectada sobre el terreno · requiere conexión"><span class="ic">🛰️</span> Ortofoto</button>
-        <button class="bim-btn active" id="btnEspaciado" title="Alterna entre vanos reales y reparto uniforme de apoyos"><span class="ic">📏</span> Reparto uniforme</button>
-        <span style="width:1px;height:20px;background:var(--line-2);margin:0 4px"></span>
-        <span style="width:1px;height:20px;background:var(--line-2);margin:0 2px"></span>
+        <button class="bim-btn" id="btnRender" title="Ajustes de realismo del modelo 3D"><span class="ic">🎛️</span> Render</button>
+        <span class="bim-sep"></span>
         <button class="bim-btn" id="btnPrevT" title="Torre anterior (←)">◀</button>
         <button class="bim-btn" id="btnFocusT" title="Centrar la cámara en la torre seleccionada">🎯 Centrar torre</button>
         <button class="bim-btn" id="btnNextT" title="Torre siguiente (→)">▶</button>
-        <button class="bim-btn" id="btnFitAll" title="Ver la línea completa">🗺️ Ver todo</button>
-        <span style="width:1px;height:20px;background:var(--line-2);margin:0 2px"></span>
-        <button class="bim-btn" id="btnDetail" disabled><span class="ic">🔍</span> Ver detalle de torre</button>
-        <button class="bim-btn" id="btnBackRoute" style="display:none"><span class="ic">↩</span> Volver a la ruta</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="bim-btn amber" id="btnPresentMode"><span class="ic">▶</span> Presentación</button>
-        <button class="bim-btn" id="btnResetView"><span class="ic">🔄</span> Centrar</button>
+        <button class="bim-btn vista-ini" id="btnVistaIni" title="Quitar filtros y volver a la vista inicial: toda la línea, filtro «Todas» y mapa «Estado», fecha del corte, sin ortofoto, cámara y paneles como al abrir">↺ Vista inicial</button>
       </div>
     </div>
 
@@ -7956,7 +7955,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <!-- Columna izquierda: trazo + estructuras -->
 
     <div class="bim-towers-bar" id="bimTowersBar">
-      <div class="btb-head"><b><span class="dot"></span>23 torres</b><span>CC Pomayaros → SE Yumpag · 8.3 km · clic: seleccionar · doble clic: detalle</span>
+      <div class="btb-head"><b><span class="dot"></span>23 torres</b><span>CC Pomayaros → SE Yumpag · 8.3 km · clic: elegir la torre · otro clic en ella: su detalle</span>
       <div class="bimx-filt" id="bimxFilt"></div>
       <div class="mt-layer" id="mtLayer"><span>Mapa:</span></div>
       </div>
@@ -8147,20 +8146,25 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   <!-- ==================== PROCESO CONSTRUCTIVO ==================== -->
   <!-- ==================== FOTOS DE OBRA (v72.3 · línea de tiempo v72.7) ==================== -->
   <section id="v-fot" class="view">
-    <div class="card fot-zona"><h3><span class="dot"></span>Zona · torre, camino u otra</h3>
-      <div class="desc">Histórico fotográfico de la obra ubicado por GPS (o por el sello de la foto) y fechado por la propia foto. Elige una torre, un camino o una zona con los botones de la línea de tiempo o en el plano, que muestra dónde se tomó cada foto, coloreada por la fase que se reconoce en ella. Las personas salen con el rostro difuminado.</div>
-      <div class="fot-obs" id="fotObs"></div>
-      <div class="fot-plano" id="fotPlano"></div>
-      <div class="fot-leyenda" id="fotLeyenda"></div>
-      <div class="fot-nota" id="fotKpis"></div>
-    </div>
-    <div class="card fot-hist"><h3><span class="dot"></span><span id="fotTitulo">Línea de tiempo</span></h3>
+    <div class="card fot-hist"><h3 class="fh-tit"><span class="dot"></span><span id="fotTitulo">Línea de tiempo</span><span class="fh-acc" id="fotAcc"></span></h3>
       <div class="desc" id="fotDesc"></div>
       <div class="fot-filtros" id="fotFiltros"></div>
       <div class="fot-linea" id="fotLinea"></div>
     </div>
     <div class="card fot-fotos"><h3><span class="dot"></span><span id="fotFotosTit">Fotos de la selección</span></h3>
       <div class="fot-detalle" id="fotDetalle"></div>
+    </div>
+    <!-- v72.12: el plano va abajo y a todo el ancho (consulta ocasional); arriba quedan la línea de tiempo y las fotos -->
+    <div class="card fot-zona"><h3><span class="dot"></span>Plano · dónde se tomó cada foto</h3>
+      <div class="fz-grid">
+        <div class="fz-plano"><div class="fot-plano" id="fotPlano"></div></div>
+        <div class="fz-info">
+          <div class="desc">Histórico fotográfico de la obra ubicado por GPS (o por el sello de la foto) y fechado por la propia foto; cada punto, coloreado por la fase que se reconoce en la foto. Clic en una torre del plano para ver su película. Las personas salen con el rostro difuminado.</div>
+          <div class="fot-leyenda" id="fotLeyenda"></div>
+          <div class="fot-obs" id="fotObs"></div>
+          <div class="fot-nota" id="fotKpis"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -8185,7 +8189,6 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
         <div class="cam-chips" id="camChips"></div>
         <div class="cam-kpis" id="camKpis"></div>
         <div class="cam-tw" id="camTabla"></div>
-        <div id="camFotos" class="ft-cont cam"></div>
       </div>
         <div class="card" id="mtProc" style="display:none"><h3><span class="dot"></span><span id="mtProcTitle">Metrado de excavación por torre</span></h3>
       <div class="desc" id="mtProcDesc"></div>
@@ -8565,7 +8568,7 @@ const CURVAS = ⟦bloque:CURVAS⟧;
   const civ = DATA.towers.reduce((a,t)=>a+(t.ph?t.ph.civil:0),0)/n;
   DATA.phaseRollup = { acceso:+acc.toFixed(1), civil:+civ.toFixed(1), elm:0 };
 }catch(e){} })();
-let espaciadoUniforme = true;          // reparto visual de apoyos
+let espaciadoUniforme = false;         // v72.12: vanos reales del KMZ siempre (se quitó «Apoyos separados», reparto visual de v29)
 /* Sobre la imagen satelital las torres deben caer en su ubicación real (KMZ): con la
    ortofoto activa se anula el reparto visual, que desplaza las intermedias hasta ~210 m. */
 function ortoActiva(){ try { return !!(ORTO.on && ORTO.tex); } catch(e){ return false; } }
@@ -9336,17 +9339,6 @@ function pintarFotosTorre(){
   cont.querySelectorAll('.ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src, vis));
   cont.querySelectorAll('.ft-ir').forEach(ir=>ir.onclick=()=>{ ltParar(); fotSel.zona=ir.dataset.z; fotSel.celda=null; fotSel.sem=null; const nb=document.querySelector('#nav button[data-v="v-fot"]'); if(nb) nb.click(); });
 }
-/* fotos tomadas sobre un camino de acceso (panel Caminos del Proceso Constructivo) */
-function pintarFotosCamino(cont, cam){
-  if(!cont) return;
-  if(!FOTOS_CAMPO.length){ cont.innerHTML=''; return; }
-  const sel = FOTOS_CAMPO.filter(f=>f.camino && (!f.torre || f.fase==='acceso') && (cam==='Todos' || f.camino===cam)).sort((a,b)=>(b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')));
-  if(!sel.length){ cont.innerHTML=`<div class="ft-vacio">Sin fotos ubicadas sobre ${cam==='Todos'?'los caminos':cam}</div>`; return; }
-  const porCam = {}; sel.forEach(f=>{ porCam[f.camino]=(porCam[f.camino]||0)+1; });
-  cont.innerHTML = `<div class="tw-sec">Fotos sobre ${cam==='Todos'?'los caminos':cam} · ${sel.length}${cam==='Todos'?' · '+Object.entries(porCam).map(([c,n])=>`${c} ${n}`).join(' · '):''}</div>
-    <div class="ft-tira cam">${sel.slice(0,12).map(f=>figFoto(f, null, true)).join('')}${sel.length>12?`<div class="ft-mas">+${sel.length-12} más</div>`:''}</div>`;
-  cont.querySelectorAll('.ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src));
-}
 /* aviso en ¿Dónde intervenir?: fotos cuya fase reconocida no coincide con el % del reporte, y torres por confirmar */
 function pintarAlertaFotos(){
   const el=document.getElementById('dcAlr'); if(!el) return;
@@ -9361,7 +9353,7 @@ function pintarAlertaFotos(){
   const div=document.createElement('div'); div.id='alFotos'; div.className='al '+(inco.length?'':'info');
   div.innerHTML=`<div class="af">Fotos de obra · visión por computadora</div>
     <div class="at">${FOTOS_CAMPO.length} fotos indexadas (${fdFoto(fechas[0])}${fechas[0]!==fechas[fechas.length-1]?' – '+fdFoto(fechas[fechas.length-1]):''}) · ${nT} torres · ${nC} caminos${inco.length?` · <span class="ft-inco">⚠ ${inco.length} fotos en ${G.length} torre-día con fase distinta a la reportada</span>`:' · fases coherentes con el reporte'}</div>
-    <div class="ax">${inco.length?lin+(G.length>6?` · +${G.length-6} torre-día más`:''):'La fase reconocida en cada foto de avance coincide con el % oficial de su torre ese día.'}${conf.length?` · ${conf.length} foto(s) con torre por confirmar (sin GPS legible: se usó la carpeta).`:''}${(()=>{ const n=FOTOS_CAMPO.filter(f=>(f.obs||[]).length).length; return n?` · ${n} fotos con observación por revisar (pestaña Fotos de obra · Por revisar).`:''; })()} Fotos en la ficha de cada torre (BIM 4D) y en el panel Caminos.</div>`;
+    <div class="ax">${inco.length?lin+(G.length>6?` · +${G.length-6} torre-día más`:''):'La fase reconocida en cada foto de avance coincide con el % oficial de su torre ese día.'}${conf.length?` · ${conf.length} foto(s) con torre por confirmar (sin GPS legible: se usó la carpeta).`:''}${(()=>{ const n=FOTOS_CAMPO.filter(f=>(f.obs||[]).length).length; return n?` · ${n} fotos con observación por revisar (pestaña Fotos de obra · Por revisar).`:''; })()} Fotos en la ficha de cada torre (BIM 4D) y en la pestaña Fotos de obra.</div>`;
   el.prepend(div);
 }
 /* =====================================================================
@@ -9445,7 +9437,8 @@ function dibujarPlano(){
   const box=el.querySelector('.fp-svg'); if(!box) return;
   const {T, pts, cp, hayCamp, ext}=D, grande=el.classList.contains('grande'), k=fotMapa.k;
   const ew=ext.x1-ext.x0, eh=ext.y1-ext.y0, W=Math.max(200, Math.round(box.clientWidth||290));
-  const H=grande ? Math.max(200, Math.round(box.clientHeight||500)) : Math.max(150, Math.round(eh*W/ew));
+  const Hfijo=parseInt(getComputedStyle(box).getPropertyValue('--alto'))||0;   // v72.12: abajo y a todo el ancho, con alto fijo
+  const H=grande ? Math.max(200, Math.round(box.clientHeight||500)) : Hfijo ? Hfijo : Math.max(150, Math.round(eh*W/ew));
   const S=Math.min(W/ew, H/eh)*k, vw=W/S, vh=H/S;
   const lim=(c,a,b,v)=> v>=b-a ? (a+b)/2 : Math.min(Math.max(c, a+v/2), b-v/2);
   fotMapa.cx=lim(fotMapa.cx, ext.x0, ext.x1, vw); fotMapa.cy=lim(fotMapa.cy, ext.y0, ext.y1, vh);
@@ -9464,8 +9457,8 @@ function dibujarPlano(){
   box.classList.toggle('zoom', k>1);
   box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plano de la línea con la ubicación de las fotos">${cams}${linea}${se}${camp}${dots}${torres}</svg>`;
   const clic = fn => function(){ if (Date.now()-fotMapa.arr < 350) return; fn(this); };   // un arrastre no abre fotos ni cambia la zona
-  box.querySelectorAll('.tw').forEach(c=>c.onclick=clic(c=>{ ltParar(); fotSel.zona=c.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); }));
-  box.querySelectorAll('.camp.con').forEach(c=>c.onclick=clic(()=>{ ltParar(); fotSel.zona='Campamento'; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); }));
+  box.querySelectorAll('.tw').forEach(c=>c.onclick=clic(c=>{ ltParar(); fotSel.zona=c.dataset.z; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); fotSubir(); }));
+  box.querySelectorAll('.camp.con').forEach(c=>c.onclick=clic(()=>{ ltParar(); fotSel.zona='Campamento'; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); fotSubir(); }));
   box.querySelectorAll('.pt').forEach(c=>c.onclick=clic(c=>abrirFoto(c.dataset.src, fotListaActual.some(x=>x.src===c.dataset.src)?fotListaActual:null)));
   const kt=el.querySelector('.fp-k'); if (kt) kt.textContent = k>1 ? `zoom ×${k<10?k.toFixed(1).replace('.',','):Math.round(k)}` : '';
   el.querySelectorAll('.fp-ctl button[data-a="-"], .fp-ctl button[data-a="0"]').forEach(b=>b.disabled = k<=1);
@@ -9659,14 +9652,16 @@ function ltDetalle(fil){
 let ltTimer=null, ltW=[];
 /* v72.9: en celular las fotos van debajo de la línea de tiempo: al elegir una semana o celda se baja a ellas */
 function ltVerFotos(){ if (window.innerWidth>860) return; setTimeout(()=>{ const c=document.querySelector('#v-fot .fot-fotos'); if (!c) return; const se=document.scrollingElement||document.documentElement; se.scrollTo({top: se.scrollTop + c.getBoundingClientRect().top - 6, behavior:'smooth'}); }, 80); }
-function ltParar(){ if(ltTimer){ clearInterval(ltTimer); ltTimer=null; } const b=document.getElementById('ltPlay'); if(b){ b.classList.remove('on'); b.textContent='▶ Recorrer semanas'; } }
-function ltPlay(){
-  if (ltTimer){ ltParar(); return; }
-  const con=new Set(fotFiltrar(fotDeZona(fotSel.zona)).map(f=>ltLunes(f.fecha))), W=ltW.filter(w=>con.has(w)); if(!W.length) return;
-  let i=0; const paso=()=>{ fotSel.sem=W[i]; fotSel.celda = fotSel.zona==='Todas' ? null : {w:W[i]}; pintarHistorialFotos(true); };
-  paso(); ltTimer=setInterval(()=>{ i++; if(i>=W.length){ ltParar(); return; } paso(); }, 1800);
-  const b=document.getElementById('ltPlay'); if(b){ b.classList.add('on'); b.textContent='⏸ Pausa'; }
+/* v72.12: el plano y «Por revisar» están abajo: al usarlos se sube a la línea de tiempo (en PC la vista es la que se desplaza) */
+function fotSubir(){ const v=document.getElementById('v-fot'); if (!v) return; if (window.innerWidth>860){ v.scrollTo({top:0, behavior:'smooth'}); return; }
+  setTimeout(()=>{ const c=document.querySelector('#v-fot .fot-hist'); if (!c) return; const se=document.scrollingElement||document.documentElement; se.scrollTo({top: se.scrollTop + c.getBoundingClientRect().top - 6, behavior:'smooth'}); }, 80); }
+/* v72.12 · «↺ Vista inicial»: quita filtros, zona, semana, «Por revisar» y el zoom del plano */
+function vistaInicialFotos(){
+  ltParar(); fotSel = {zona:'Todas', sem:null, celda:null, fase:'Todas', cat:'Todas', obs:null};
+  try { fotMapa.k=1; fotMapa.cx=null; fotMapa.cy=null; } catch(e){}
+  renderFotosTab(); const d=document.getElementById('fotDetalle'); if (d) d.scrollTop=0; fotSubir();
 }
+function ltParar(){ if(ltTimer){ clearInterval(ltTimer); ltTimer=null; } const b=document.getElementById('ltPlay'); if(b){ b.classList.remove('on'); b.textContent='▶ Recorrer semanas'; } }
 /* v72.8 · «Por revisar»: fechas distintas a la carpeta, torres por confirmar, fases ≠ reporte y etiquetas de YOLO.
    Solo en modo completo. Un clic muestra esas fotos (de la zona y filtros elegidos) con su código #xxxxxx y el motivo. */
 function pintarObsFotos(fil){
@@ -9678,7 +9673,7 @@ function pintarObsFotos(fil){
   el.innerHTML = `<div class="fo-t">Por revisar <small>· ${tot?`${tot} foto${tot>1?'s':''}${donde}`:`nada${donde}`}</small></div>`+
     OBS_TIPOS.filter(([k])=>n[k]).map(([k,nom,ayuda])=>`<button type="button" data-o="${k}" class="${fotSel.obs===k?'on':''}" title="${ayuda}">${nom}<b>${n[k]}</b></button>`).join('');
   el.querySelectorAll('button[data-o]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.obs = fotSel.obs===b.dataset.o ? null : b.dataset.o; fotSel.celda=null; pintarHistorialFotos();
-    if (fotSel.obs) ltVerFotos(); });
+    if (fotSel.obs) fotSubir(); });
 }
 function ltObservaciones(fil){
   const k=fotSel.obs, tipo=OBS_TIPOS.find(x=>x[0]===k)||[k,k,''];
@@ -9711,13 +9706,16 @@ function pintarHistorialFotos(enPlay){
   const $f=document.getElementById('fotFiltros');
   const Zs=zona==='Todas'?[]:ltZonasOrden(), iz=Zs.indexOf(zona), zAnt=iz>0?Zs[iz-1]:null, zSig=iz>=0&&iz<Zs.length-1?Zs[iz+1]:null;
   const nav = (zona==='Todas' || fotSel.obs) ? '' : `<span class="lt-nav"><button type="button" class="lt-volver" data-ir="Todas" title="Volver a la matriz de toda la línea">← Toda la línea</button>${zAnt?`<button type="button" data-ir="${zAnt}" title="Película de ${zAnt}">◀ ${FOT_ZONA_CORTA[zAnt]||zAnt}</button>`:''}${zSig?`<button type="button" data-ir="${zSig}" title="Película de ${zSig}">${FOT_ZONA_CORTA[zSig]||zSig} ▶</button>`:''}</span>`;
-  $f.innerHTML = nav + (fases.length>1?`<span class="sep">Fase</span><button data-k="fase" data-v="Todas" class="${fotSel.fase==='Todas'?'on':''}">Todas</button>`+fases.map(x=>`<button data-k="fase" data-v="${x}" class="${fotSel.fase===x?'on':''}"><i style="background:${FASE_COLOR[x]||'#c2ccc8'}"></i>${ltNom(x)}</button>`).join(''):'')+
-    (cats.length>1?`<span class="sep">Categoría</span><button data-k="cat" data-v="Todas" class="${fotSel.cat==='Todas'?'on':''}">Todas</button>`+cats.map(x=>`<button data-k="cat" data-v="${x}" class="${fotSel.cat===x?'on':''}">${x}</button>`).join(''):'')+
-    (fotSel.obs ? '' : `<span class="lt-pasos"><button type="button" class="lt-paso" data-d="-1" title="Semana anterior con fotos">‹</button><button type="button" id="ltPlay" class="lt-play${ltTimer?' on':''}" title="Avanza sola por las semanas con fotos">${ltTimer?'⏸ Pausa':'▶ Recorrer semanas'}</button><button type="button" class="lt-paso" data-d="1" title="Semana siguiente con fotos">›</button></span>`);
+  const $a=document.getElementById('fotAcc');   // v72.12: en el título: navegación entre zonas y «↺ Vista inicial»
+  if ($a){ $a.innerHTML = nav + `<button type="button" class="fh-ini" title="Quitar filtros y volver a la vista inicial (toda la línea, última semana)">↺ Vista inicial</button>`;
+    $a.querySelectorAll('button[data-ir]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.zona=b.dataset.ir; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
+    $a.querySelector('.fh-ini').onclick=vistaInicialFotos; }
+  const chip=(k,v,txt,col)=>`<button data-k="${k}" data-v="${v}" class="${fotSel[k]===v?'on':''}">${col?`<i style="background:${col}"></i>`:''}${txt}</button>`;
+  $f.innerHTML = (fases.length>1?`<div class="ff-fila"><span class="sep">Fase</span>${chip('fase','Todas','Todas')}${fases.map(x=>chip('fase',x,ltNom(x),FASE_COLOR[x]||'#c2ccc8')).join('')}</div>`:'')+
+    `<div class="ff-fila">${cats.length>1?`<span class="sep">Categoría</span>${chip('cat','Todas','Todas')}${cats.map(x=>chip('cat',x,x)).join('')}`:''}`+
+    (fotSel.obs ? '' : `<span class="lt-pasos" title="Semana anterior o siguiente con fotos"><button type="button" class="lt-paso" data-d="-1">‹</button><span>semana</span><button type="button" class="lt-paso" data-d="1">›</button></span>`)+`</div>`;
   $f.querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel[b.dataset.k]=b.dataset.v; fotSel.celda=null; pintarHistorialFotos(); });
-  $f.querySelectorAll('button[data-ir]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.zona=b.dataset.ir; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
   $f.querySelectorAll('.lt-paso').forEach(b=>b.onclick=()=>ltPaso(+b.dataset.d));
-  const $p=document.getElementById('ltPlay'); if($p) $p.onclick=ltPlay;
   const nomObs = fotSel.obs ? (OBS_TIPOS.find(x=>x[0]===fotSel.obs)||[0,fotSel.obs])[1] : '';
   document.getElementById('fotTitulo').textContent = fotSel.obs ? `Por revisar · ${nomObs}${zona==='Todas'?'':' · '+zona}`
     : zona==='Todas' ? 'Línea de tiempo · toda la línea' : t ? `Línea de tiempo · ${zona}${t.tp?' · '+t.tp:''}` : zn ? `Línea de tiempo · ${zona}` : `Línea de tiempo · camino ${zona}`;
@@ -9728,8 +9726,9 @@ function pintarHistorialFotos(enPlay){
   const con=new Set(fil.map(f=>ltLunes(f.fecha)));
   if(!fotSel.sem || !ltW.includes(fotSel.sem)) fotSel.sem=[...ltW].reverse().find(w=>con.has(w)) || ltW[ltW.length-1];
   document.getElementById('fotDesc').textContent = zona==='Todas'
-    ? `${fil.length} fotos en ${new Set(fechas).size} días, del ${ltDM(fechas[0])} al ${ltDM(ult)}. Cada columna es una semana (lunes a domingo, «21–27»): el número son las fotos y los puntos, las fases que se ven (colores de la leyenda). Clic en una semana o en una celda para ver sus fotos; clic en el botón de una torre, camino o zona para ver su película por fases. Para recorrer las fechas: rueda del mouse sobre las semanas, la barra de arriba o ‹ ›.`
-    : `Película ${t?'de la torre '+zona:zn?'de '+zona+' ('+FOT_ZONA_TXT[zona]+')':'del camino '+zona}: un carril por fase y una columna por semana, con la foto más representativa (primero la del pie del PPT). Clic en una celda o en una fase para ver sus fotos. ⚠ = la fase de la foto no coincide con la del reporte; ◌ = torre tomada de la carpeta.`;
+    ? `${fil.length} fotos en ${new Set(fechas).size} días (${ltDM(fechas[0])} → ${ltDM(ult)}) · cada columna es una semana; el número son las fotos y los puntos, las fases · clic en una semana, una celda o el botón de una torre`
+    : `Película ${t?'de la torre '+zona:zn?'de '+zona:'del camino '+zona}: un carril por fase y una columna por semana (primero la foto del pie del PPT) · clic en una celda o en una fase · ⚠ fase ≠ reporte · ◌ torre de la carpeta`;
+  { const d=document.getElementById('fotDesc'); d.title = d.textContent + ' · Para recorrer las fechas: rueda del mouse sobre las semanas, la barra de desplazamiento de arriba o ‹ semana ›.'; }
   if(zona==='Todas') ltMatriz(fil, ltW); else ltPelicula(fil, ltW);
   ltDetalle(fil);
   const sc=document.querySelector('#fotLinea .lt-scroll'), bs=document.querySelector('#fotLinea .lt-sem.sel');   // la semana elegida a la vista, sin mover la página
@@ -10912,7 +10911,7 @@ function setupBIMUI() {
     else { bimControls.target.set(0,0,0); bimCamera.position.set(0,70,0.1); }
     bimControls.update();
   };
-  $('btnResetView').onclick = () => {
+  if ($('btnResetView')) $('btnResetView').onclick = () => {
     bimControls.target.set(0, 12, 0);
     bimCamera.position.set(32, 24, 40);
     bimControls.update();
@@ -11088,6 +11087,7 @@ function setupBIMUI() {
 
   // Navegación explícita al detalle
   if ($('btnDetail')) $('btnDetail').onclick = openTowerDetail;
+  if ($('btnVistaIni')) $('btnVistaIni').onclick = vistaInicialBIM;
   if ($('btnBackRoute')) $('btnBackRoute').onclick = backToRoute;
 
   // Pestañas del panel derecho
@@ -11413,7 +11413,7 @@ function renderCamProc(){
         <td>${bar(t.real)}</td><td><div style="display:flex;align-items:center;gap:6px">${bar(o)}${d?`<span class="dif" title="diferencia con la hoja PORCENTAJE POR TORRE">⚠ ${Math.abs(t.real-o).toFixed(0)}</span>`:''}</div></td></tr>`; }).join('')+
     `</tbody></table>`+
     (difs.length ? `<div class="cam-nota">⚠ En ${difs.length} torre(s) el «Avance real de acceso» de la hoja PORCENTAJE POR TORRE no coincide con la fila Caminos de acceso de la hoja Avance Acumulado LT del mismo resumen: la hoja no registra metros avanzados para esas torres.</div>` : '');
-  try{ pintarFotosCamino($$('camFotos'), camSel); }catch(e){}
+  /* v72.12: las fotos sobre los caminos ya no van en el Proceso Constructivo (se ven en la pestaña Fotos de obra) */
   $$('camTabla').querySelectorAll('.tw').forEach(td=>td.onclick=()=>{ const k=DATA.towers.findIndex(x=>x.t===td.dataset.t);
     if(k>=0){ try{ const b=document.querySelector('#nav button[data-v="v-bim"]'); if(b) b.click(); setTimeout(()=>{ selectTower(k); if(bimRouteMode) irATorreRuta(k); },300);}catch(e){} } });
 }
@@ -11791,6 +11791,24 @@ function selectTower(i){
   if (bimRouteMode) highlightRouteTower();
   draw4D();
 }
+/* v72.12 · «↺ Vista inicial»: quita los filtros y vuelve a como se abre la pestaña (toda la línea, filtro «Todas», mapa «Estado»,
+   fecha del corte, sin ortofoto, proyectado y caminos visibles, pestaña «Avance torre», cámara y tamaño de paneles por defecto) */
+function vistaInicialBIM(){
+  try { if (d4timer) d4togglePlay(); } catch(e){}
+  try { const f = document.querySelector('#bimxFilt button[data-f="all"]'); if (f && !f.classList.contains('on')) f.click(); } catch(e){}
+  try { const l = document.querySelector('#mtLayer button[data-l="estado"]'); if (l && !l.classList.contains('on')) l.click(); } catch(e){}
+  try { d4i = DATA.tl_weeks.length - 1; const sl = $('d4Slider'); if (sl) sl.value = d4i; } catch(e){}
+  try { if (ORTO.on){ ORTO.on = false; aplicarOrto(false); } } catch(e){}
+  try { if (!ghostOn){ ghostOn = true; const g = $('btnGhost'); if (g) g.classList.add('active'); } } catch(e){}
+  try { VIS.caminos = true; } catch(e){}
+  try { const t = document.querySelector('.bpt[data-p="p-patas"]'); if (t) t.click(); } catch(e){}
+  try { const rp = $('rpPanel'); if (rp && !rp.hidden){ const br = $('btnRender'); if (br) br.click(); } } catch(e){}
+  try { if (window.layRestablecer) window.layRestablecer(); } catch(e){}
+  d4sel = 1;
+  if (typeof bimRouteMode !== 'undefined' && !bimRouteMode) backToRoute(); else { try { buildRouteBIM(); draw4D(); } catch(e){} }
+  try { selectTower(1); } catch(e){}
+  setTimeout(() => { try { const iso = $('btnCamIso'); if (iso) iso.click(); else if (window.NAV3D && NAV3D.home) NAV3D.home(); else fitAllCam(); } catch(e){} }, 120);   // isométrica: encuadre y botón activo
+}
 function openTowerDetail(){
   if (!GLB_READY) return;
   const sel = $('bimTowerSelect'); if (sel) sel.value = String(d4sel);
@@ -11947,7 +11965,7 @@ function highlightRouteTower(){
   $('hudTowerName').textContent = 'SELECCIONADA · ' + t.t;
   $('hudTowerType').textContent = t.tp + ' · km ' + ((g.km||0)/1000).toFixed(3).replace('.','+') +
       ' · cota ' + Math.round(g.z||0) + ' m';
-  $('hudTowerStatus').textContent = 'Obra civil ' + F(t.pct) + '% · doble clic para ver detalle';
+  $('hudTowerStatus').textContent = 'Obra civil ' + F(t.pct) + '% · otro clic en su botón (o doble clic): detalle';
   $('hudTowerStatus').style.color = t.pct>=99.5?'var(--lime)':(t.pct>0?'var(--amber)':'var(--red)');
 }
 
@@ -12581,8 +12599,12 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       el.querySelector('.d4-reset').onclick = () => { filt = 'all'; renderFilters(); drawTowerList(); };
     }
     el.querySelectorAll('.d4-tw:not(.d4-reset)').forEach(g => {
-      g.onclick = () => { selectTower(+g.dataset.k); if (bimRouteMode) { try { focusTowerCam(+g.dataset.k); } catch(e){} } };
-      g.ondblclick = () => { selectTower(+g.dataset.k); openTowerDetail(); };
+      // v72.12: sin botón «Ver detalle»: clic en la torre ya elegida (o doble clic) abre su detalle; en el detalle, el botón de otra torre abre el de ella
+      const enDetalle = k => typeof bimRouteMode !== 'undefined' && !bimRouteMode && typeof currentSelectedTowerIdx !== 'undefined' && currentSelectedTowerIdx === k;
+      g.onclick = () => { const k = +g.dataset.k; if (enDetalle(k)) return;
+        if (!bimRouteMode || k === d4sel){ selectTower(k); openTowerDetail(); return; }
+        selectTower(k); try { focusTowerCam(k); } catch(e){} };
+      g.ondblclick = () => { const k = +g.dataset.k; if (enDetalle(k)) return; selectTower(k); openTowerDetail(); };
     });
   };
   window.drawNavStrip = function(){ const el = $('bimNavStrip'); if (el) el.style.display = 'none'; };
@@ -13144,13 +13166,11 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const vp = q(b, '.bim-viewport'), deck = q(b, '.slide-deck'), stages = q(b, '.bim-stages');
       gutter(b, 'v gr', deck, { key: 'bimR', axis: 'x', invert: true, get: () => W(deck), min: () => 220, max: () => Math.max(220, W(b) - 480) });
       gutter(b, 'h gb', stages, { key: 'bimH', axis: 'y', get: () => H(vp), min: () => 360, max: () => Math.max(360, window.innerHeight * 1.3) });
-      // botón "paneles" en la barra de herramientas: restablece los tamaños
-      const bar = b.querySelector('.bim-top-bar > div:last-child') || b.querySelector('.bim-top-bar');
-      if (bar && !bar.querySelector('.lay-reset')){ const r = document.createElement('button'); r.className = 'lay-reset'; r.textContent = '⟲ Paneles'; r.title = 'Restablecer el tamaño de los paneles (también: doble clic en un separador)';
-        r.onclick = () => { ['bimL', 'bimR', 'bimH'].forEach(k => delete st[k]); apply(); save(); refresh(false); }; bar.appendChild(r); }
+      // v72.12: el tamaño de los paneles se restablece con «↺ Vista inicial» (antes, botón «⟲ Paneles»; también doble clic en un separador)
+      window.layRestablecer = () => { ['bimL', 'bimR', 'bimH'].forEach(k => delete st[k]); apply(); save(); refresh(false); };
       // botón "Ruta 3D · 23 torres": vuelve a la ruta (o encuadra la línea completa si ya está en ella); sustituye a la lista desplegable
       const rb = $('btnRoute3D');
-      if (rb){ rb.onclick = () => { if (typeof bimRouteMode !== 'undefined' && !bimRouteMode && typeof backToRoute === 'function') backToRoute(); else { const f = $('btnFitAll'); if (f) f.click(); } };
+      if (rb){ rb.onclick = () => { if (typeof bimRouteMode !== 'undefined' && !bimRouteMode && typeof backToRoute === 'function') backToRoute(); else { try { ['btnCamFront', 'btnCamTop'].forEach(i => { const x = $(i); if (x) x.classList.remove('active'); }); const iso = $('btnCamIso'); if (iso) iso.classList.add('active'); if (window.NAV3D && NAV3D.home) NAV3D.home(); else fitAllCam(); } catch(e){} } };
         const syncRoute = () => { try { rb.classList.toggle('active', !!(typeof bimRouteMode !== 'undefined' && bimRouteMode)); } catch(e){} };
         const _tnb = window.toggleNavButtons; if (_tnb) window.toggleNavButtons = function(){ const r = _tnb.apply(this, arguments); syncRoute(); return r; };
         setTimeout(syncRoute, 1500); }
@@ -14928,7 +14948,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .ft-fase.inco{background:var(--amber);color:#1a1a1a} .ft.inco{border-color:var(--amber)} .ft-inco{color:var(--amber)} .ft-fases{font-style:normal;color:var(--ink-mut);font-weight:500}
 .ft-cont.cam{margin-top:10px} .ft-tira.cam{grid-template-columns:repeat(6,minmax(0,1fr))} @media(max-width:860px){.ft-tira.cam{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* ===== Fotos de obra (v72.3) ===== */
-#v-fot{grid-template-columns:300px minmax(0,1.35fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}   /* v72.9: zona y plano · línea de tiempo · fotos, en tres columnas */
+#v-fot{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:100% max-content}   /* v72.12: línea de tiempo · fotos (alto de la pantalla); abajo, el plano a todo el ancho */
+#v-fot > .fot-hist{grid-column:1;grid-row:1} #v-fot > .fot-fotos{grid-column:2;grid-row:1} #v-fot > .fot-zona{grid-column:1 / -1;grid-row:2}
 #v-fot .card{min-height:0}
 #v-fot .fot-zona{overflow:auto}
 #v-fot .fot-hist,#v-fot .fot-fotos{display:flex;flex-direction:column;min-height:0}
@@ -14950,7 +14971,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-plano .se{fill:var(--sky);opacity:.85}
 .fot-leyenda{display:flex;flex-wrap:wrap;gap:4px 9px;font-size:.56rem;color:var(--ink-2);margin-top:6px}
 .fot-leyenda i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;vertical-align:-1px}
-.fot-filtros{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:2px 0 4px}
+.fot-filtros{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:2px 0 6px}
 .fot-filtros .sep{font-size:.55rem;color:var(--ink-mut);font-weight:800;letter-spacing:.4px;margin:0 4px 0 6px;text-transform:uppercase}
 .fot-filtros button{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:999px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2)}
 .fot-filtros button.on{background:var(--c-civ,#2d7667);border-color:var(--c-civ,#2d7667);color:#fff}
@@ -14972,12 +14993,23 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .lt-pasos{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
 .lt-paso{font:800 .8rem/1 "IBM Plex Sans",system-ui,sans-serif!important;padding:1px 9px!important;border-radius:999px;cursor:pointer;border:1px solid var(--c-civ,#2d7667)!important;background:var(--panel)!important;color:var(--c-civ,#2d7667)!important}
 .lt-paso:hover{background:var(--c-civ,#2d7667)!important;color:#fff!important}
-#v-fot .fot-zona{display:flex;flex-direction:column}
+#v-fot .fot-zona{display:block;overflow:visible;min-height:auto!important}
+.fz-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:14px;align-items:start}
+.fz-info{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fz-info .fot-nota{margin-top:4px}
+@media(min-width:861px){ .fz-plano .fp-svg{--alto:380} }
+@media(max-width:860px){ .fz-grid{grid-template-columns:1fr} }
+/* v72.12: título con navegación y «↺ Vista inicial»; filtros en dos filas cortas */
+.fh-tit{display:flex;align-items:center;gap:6px;flex-wrap:wrap} .fh-acc{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fh-acc .lt-nav{margin:0} .fh-acc button{font-size:.6rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);font-family:inherit}
+.fot-filtros{flex-direction:column;align-items:stretch;gap:4px} .ff-fila{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.lt-pasos span{font-size:.56rem;font-weight:700;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.3px}
+#fotDesc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:0 0 auto} #v-fot .fot-hist > .fot-filtros,#v-fot .fot-hist > h3{flex:0 0 auto}
 .fot-nota{margin-top:auto;padding-top:6px;border-top:1px solid var(--line);font-size:.52rem;line-height:1.35;color:var(--ink-mut)}
 .fot-nota:empty{display:none}
 .lt-scroll::-webkit-scrollbar{height:7px;width:7px} .lt-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
 .lt-mx,.lt-pel{position:relative;display:grid;align-items:center}
-.lt-mx{grid-template-columns:58px repeat(var(--n),minmax(28px,76px));gap:2px;min-width:calc(58px + var(--n) * 30px)}
+.lt-mx{grid-template-columns:66px repeat(var(--n),minmax(30px,84px));gap:3px 3px;min-width:calc(66px + var(--n) * 33px)}   /* v72.12: más holgada */
 .lt-pel{grid-template-columns:136px repeat(var(--n),minmax(64px,220px));gap:4px 3px;min-width:calc(136px + var(--n) * 67px)}
 .lt-esq{position:sticky;left:0;top:0;z-index:5;background:var(--panel);align-self:stretch;min-height:14px}
 .lt-esq2{top:15px;font-size:.5rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
@@ -14986,7 +15018,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .lt-sem{position:sticky;top:15px;z-index:3;font:600 .56rem "IBM Plex Mono",monospace;color:var(--ink-mut);background:var(--panel);border:0;border-radius:5px;padding:2px 0;cursor:pointer;height:20px;white-space:nowrap}
 .lt-sem small{font-size:.92em;font-weight:500;opacity:.8}
 .lt-sem:hover{background:var(--panel-2);color:var(--ink)} .lt-sem.sel{background:var(--sky);color:#fff}
-.lt-fila{position:sticky;left:0;z-index:2;background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;text-align:center;padding:0 4px;font:700 .6rem "IBM Plex Mono",monospace;color:var(--ink);cursor:pointer;height:23px;white-space:nowrap;box-shadow:0 1px 0 var(--line-2),-3px 0 0 var(--panel),3px 0 0 var(--panel)}
+.lt-fila{position:sticky;left:0;z-index:2;background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;text-align:center;padding:0 4px;font:700 .62rem "IBM Plex Mono",monospace;color:var(--ink);cursor:pointer;height:26px;white-space:nowrap;box-shadow:0 1px 0 var(--line-2),-3px 0 0 var(--panel),3px 0 0 var(--panel)}
 .lt-fila:hover{background:var(--c-civ,#2d7667);border-color:var(--c-civ,#2d7667);color:#fff} .lt-fila.vacia{background:var(--panel);border-style:dashed;color:var(--ink-mut);font-weight:500;cursor:default;box-shadow:-3px 0 0 var(--panel),3px 0 0 var(--panel)}   /* v72.11: botones (reemplazan a los chips de zona) */
 .lt-grupo{grid-column:1 / -1;font-size:.55rem;font-weight:800;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.4px;padding:7px 0 2px}
 .lt-v{height:25px;border-radius:4px} .lt-vt{height:22px}
@@ -15019,7 +15051,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-vacio{padding:18px 10px;text-align:center;color:var(--ink-mut);font-size:.68rem;line-height:1.5}
 #ftBox .ftb-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:56px;border:0;border-radius:8px;background:rgba(255,255,255,.85);font-size:24px;cursor:pointer;color:#1f4e45}
 #ftBox .ftb-prev{left:-46px} #ftBox .ftb-next{right:-46px} #ftBox .ftb-nav:disabled{opacity:.25;cursor:default}
-@media(max-width:1200px){ #v-fot{grid-template-columns:260px minmax(0,1.25fr) minmax(0,1fr)} }
+@media(max-width:1200px){ #v-fot{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)} }
 @media(max-width:860px){ #v-fot.view.on{display:flex!important;flex-direction:column;gap:10px} #v-fot .fot-hist{order:-2;height:auto} #v-fot .fot-fotos{order:-1;height:auto} #fotDetalle{overflow:auto;max-height:78vh} #fotLinea .lt-scroll{max-height:64vh} .lt-mx .lt-sem{height:auto;line-height:1.05;white-space:normal} .lt-mx .lt-sem small{display:block} .lt-hbar{display:none!important} .lt-mx{grid-template-columns:46px repeat(var(--n),minmax(26px,1fr));min-width:calc(46px + var(--n) * 28px)} .lt-pel{grid-template-columns:98px repeat(var(--n),minmax(56px,1fr));min-width:calc(98px + var(--n) * 59px)} .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))} .lt-play{margin-left:0} .fot-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} #ftBox .ftb-prev{left:4px} #ftBox .ftb-next{right:4px} }
 #ftBox{position:fixed;inset:0;z-index:99999;background:rgba(8,20,16,.86);display:none;align-items:center;justify-content:center;padding:24px}
 #ftBox .ftb-in{position:relative;max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:8px}
