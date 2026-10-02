@@ -484,6 +484,17 @@
 "Concreto": 30.13,
 "Relleno": 0,
 "PAT": 0
+},
+"2026-10-01": {
+"Caminos": 84.42,
+"Excavación": 51.55,
+"Solado": 51.37,
+"Stub": 43.21,
+"Acero": 42.44,
+"Encofrado": 39.99,
+"Concreto": 32.77,
+"Relleno": 0.05,
+"PAT": 1.5
 }
 }
 }
