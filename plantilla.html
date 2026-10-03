@@ -8136,16 +8136,21 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     </div>
   </section>
 
-  <!-- ==================== HITOS DEL PROYECTO (v72.19) ==================== -->
+  <!-- ==================== HITOS DEL PROYECTO (v72.19 · dos columnas v72.20) ==================== -->
   <section id="v-hit" class="view">
-    <div class="card hi-top"><h3><span class="dot"></span>Hitos del proyecto · junio de 2026 al corte</h3>
-      <div class="desc">Hechos críticos de la obra tomados de los reportes diarios de supervisión: avances clave, paralizaciones, clima, línea base y plan de recuperación, comunidades, incumplimientos graves del contratista y eventos de seguridad y ambiente. Clic en un punto para ir al hecho; clic en una torre para verla en el BIM; clic en la foto para ampliarla.</div>
+    <div class="card hi-izq"><h3><span class="dot"></span>Hitos del proyecto · junio de 2026 al corte</h3>
+      <div class="desc">Hechos críticos tomados de los reportes diarios de supervisión. Clic en un hito para ver su detalle y la foto a la derecha.</div>
       <div class="hi-kpis" id="hiKpis"></div>
       <div class="hi-fil" id="hiFil"></div>
+      <div class="hi-lista" id="hiLista"></div>
+      <div class="hi-fuente" id="hiFuente"></div>
+    </div>
+    <div class="card hi-der">
       <div class="hi-tira" id="hiTira"></div>
       <div class="hi-ley"><span><em style="background:var(--red);opacity:.4"></em>paralización total</span><span><em style="background:var(--red);opacity:.18"></em>paralización parcial</span><span><em style="background:repeating-linear-gradient(45deg,transparent 0 3px,var(--ink-mut) 3px 4px);opacity:.5"></em>sin informe diario</span><span>● tamaño = gravedad</span></div>
+      <div class="hi-det" id="hiDet"></div>
+      <div class="hi-graf" id="hiGraf"></div>
     </div>
-    <div class="card hi-lista"><div id="hiLista"></div><div class="hi-fuente" id="hiFuente"></div></div>
   </section>
 
   <section id="v-proc" class="view">
@@ -15409,64 +15414,83 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   document.addEventListener('dc:theme', () => bimInvalidate(600));
 })();
 </script>
-<!-- ==================== HITOS DEL PROYECTO (v72.19) ====================
+<!-- ==================== HITOS DEL PROYECTO (v72.19 · dos columnas v72.20) ====================
      Solo usa window.HITOS (hitos_build.py ← campo/hitos.json: hechos críticos de los reportes diarios de supervisión),
-     FOTOS_CAMPO (foto de evidencia, ya publicada por el carril de fotos) y DATA.towers (ir a la torre en el BIM). -->
+     FOTOS_CAMPO (foto de evidencia, ya publicada por el carril de fotos) y DATA.towers (ir a la torre en el BIM).
+     v72.20 (pedido del usuario): dos columnas con scroll propio — izquierda lista de hitos, derecha tira, detalle con la foto ampliada y gráficas. -->
 <style>
-#v-hit.view.on{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
-#v-hit .card{min-height:0}
-.hi-top .desc{margin-bottom:6px}
-.hi-kpis{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.72rem;color:var(--ink-2);margin:2px 0 6px}
-.hi-kpis b{color:var(--ink);font-size:.86rem}
-.hi-fil{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:6px}
-.hi-fil button{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:999px;padding:3px 9px;font:inherit;font-size:.7rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+#v-hit.view.on{grid-template-columns:minmax(340px,38fr) minmax(0,62fr);grid-template-rows:minmax(0,1fr)}
+#v-hit .card{min-height:0;overflow:auto;overscroll-behavior:contain}
+#v-hit .card > *{flex-shrink:0}
+.hi-izq .desc{margin-bottom:6px}
+.hi-kpis{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.7rem;color:var(--ink-2);margin:2px 0 6px}
+.hi-kpis b{color:var(--ink);font-size:.84rem}
+.hi-fil{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:8px;position:sticky;top:-10px;background:var(--panel);padding:6px 0;z-index:2}
+.hi-fil button{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:999px;padding:3px 8px;font:inherit;font-size:.67rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .hi-fil button i{width:9px;height:9px;border-radius:50%;background:var(--c);display:inline-block}
 .hi-fil button.on{background:var(--panel-3);color:var(--ink);border-color:var(--c,var(--sky))}
 .hi-fil button.off{opacity:.45}
-.hi-fil select{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink);border-radius:7px;padding:3px 6px;font:inherit;font-size:.7rem}
-.hi-fil .sep{flex:1}
+.hi-fil select{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink);border-radius:7px;padding:3px 6px;font:inherit;font-size:.68rem}
+.hi-mes{font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mut);margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--line)}
+.hi-mes:first-child{margin-top:0}
+.hi-it{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 6px;border-radius:8px;border-left:3px solid var(--c);margin-bottom:4px;background:var(--panel-2);cursor:pointer}
+.hi-it:hover{background:var(--panel-3)}
+.hi-it.sel{background:var(--sky-soft);outline:1px solid var(--c)}
+.hi-it.flash{animation:hiFlash 1.6s ease}
+@keyframes hiFlash{0%,40%{background:var(--sky-soft)}100%{background:var(--panel-2)}}
+.hi-fe{font-size:.72rem;font-weight:700;color:var(--ink);line-height:1.2}
+.hi-fe small{display:block;font-weight:400;font-size:.6rem;color:var(--ink-mut)}
+.hi-tx b{display:block;font-size:.76rem;color:var(--ink);margin-top:1px;line-height:1.3}
+.hi-cat{display:inline-block;font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--c)}
+.hi-sev{font-size:.6rem;color:var(--red);margin-left:5px;font-weight:700}
+.hi-par{font-size:.58rem;margin-left:5px;padding:1px 6px;border-radius:999px;background:var(--red-soft);color:var(--red);font-weight:700}
+.hi-mini{width:54px;height:40px;object-fit:cover;border-radius:5px;border:1px solid var(--line);display:block}
+.hi-nada{font-size:.76rem;color:var(--ink-mut);padding:16px 4px}
+.hi-fuente{font-size:.62rem;color:var(--ink-mut);margin-top:8px;line-height:1.4}
 .hi-tira{overflow-x:auto;overflow-y:hidden}
-.hi-tira svg{display:block;min-width:720px;width:100%}
-.hi-tira text{font-family:inherit;fill:var(--ink-2);font-size:10px}
+.hi-tira svg{display:block;min-width:620px;width:100%}
+.hi-tira text{font-family:inherit;fill:var(--ink-2);font-size:11px}
 .hi-tira .lane{fill:var(--panel-2)}
 .hi-tira .mes{stroke:var(--line-2);stroke-width:1}
 .hi-tira .pt{cursor:pointer;stroke:var(--panel);stroke-width:1.5}
-.hi-tira .pt:hover,.hi-tira .pt.sel{stroke:var(--ink);stroke-width:2}
+.hi-tira .pt:hover,.hi-tira .pt.sel{stroke:var(--ink);stroke-width:2.5}
 .hi-tira .par-t{fill:var(--red);opacity:.22}
 .hi-tira .par-p{fill:var(--red);opacity:.10}
 .hi-tira .vac{fill:url(#hiRay)}
 .hi-tira .corte{stroke:var(--sky);stroke-width:1.5;stroke-dasharray:3 3}
-.hi-ley{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.66rem;color:var(--ink-mut);margin-top:4px}
+.hi-ley{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.64rem;color:var(--ink-mut);margin:4px 0 10px}
 .hi-ley span{display:inline-flex;align-items:center;gap:5px}
 .hi-ley em{display:inline-block;width:14px;height:10px;border-radius:2px}
-.hi-lista{overflow:auto;min-height:0}
-.hi-mes{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mut);margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--line)}
-.hi-mes:first-child{margin-top:0}
-.hi-it{display:grid;grid-template-columns:74px minmax(0,1fr) auto;gap:10px;padding:8px 6px;border-radius:9px;border-left:3px solid var(--c);margin-bottom:4px;background:var(--panel-2)}
-.hi-it.flash{animation:hiFlash 1.6s ease}
-@keyframes hiFlash{0%,40%{background:var(--sky-soft)}100%{background:var(--panel-2)}}
-.hi-fe{font-size:.78rem;font-weight:700;color:var(--ink);line-height:1.25}
-.hi-fe small{display:block;font-weight:400;font-size:.64rem;color:var(--ink-mut)}
-.hi-tx b{display:block;font-size:.82rem;color:var(--ink);margin:2px 0 3px;line-height:1.3}
-.hi-tx p{font-size:.74rem;color:var(--ink-2);line-height:1.42}
-.hi-cat{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--c)}
-.hi-sev{font-size:.62rem;color:var(--red);margin-left:6px;font-weight:700}
-.hi-par{font-size:.6rem;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--red-soft);color:var(--red);font-weight:700}
-.hi-tor{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.hi-tor button{border:1px solid var(--line-2);background:var(--panel);color:var(--sky);border-radius:6px;padding:1px 6px;font:inherit;font-size:.66rem;font-weight:700;cursor:pointer}
+.hi-det{border:1px solid var(--line);border-left:4px solid var(--c,var(--sky));border-radius:10px;padding:10px 12px;background:var(--panel-2)}
+.hi-det .cab{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:.72rem;color:var(--ink-mut)}
+.hi-det h4{font-size:1rem;color:var(--ink);margin:4px 0 6px;line-height:1.3}
+.hi-det p{font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.hi-det .nav2{margin-left:auto;display:flex;gap:4px}
+.hi-det .nav2 button{border:1px solid var(--line-2);background:var(--panel);color:var(--ink);border-radius:6px;padding:2px 9px;font:inherit;font-size:.72rem;cursor:pointer}
+.hi-det .nav2 button:disabled{opacity:.35;cursor:default}
+.hi-tor{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.hi-tor button{border:1px solid var(--line-2);background:var(--panel);color:var(--sky);border-radius:6px;padding:1px 7px;font:inherit;font-size:.68rem;font-weight:700;cursor:pointer}
 .hi-tor button:hover{border-color:var(--sky)}
-.hi-foto{width:132px;margin:0;cursor:zoom-in}
-.hi-foto img{width:132px;height:96px;object-fit:cover;border-radius:7px;display:block;border:1px solid var(--line)}
-.hi-foto figcaption{font-size:.6rem;color:var(--ink-mut);margin-top:2px;text-align:right}
-.hi-nada{font-size:.76rem;color:var(--ink-mut);padding:16px 4px}
-.hi-fuente{font-size:.64rem;color:var(--ink-mut);margin-top:8px;line-height:1.4}
+.hi-foto{margin:10px 0 0;cursor:zoom-in}
+.hi-foto img{width:100%;max-height:440px;object-fit:contain;background:var(--panel-3);border-radius:8px;display:block;border:1px solid var(--line)}
+.hi-foto figcaption{font-size:.64rem;color:var(--ink-mut);margin-top:4px}
+.hi-sinfoto{margin-top:10px;padding:18px;border:1px dashed var(--line-2);border-radius:8px;font-size:.72rem;color:var(--ink-mut);text-align:center}
+.hi-graf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;margin-top:10px}
+.hi-g{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel-2)}
+.hi-g h5{font-size:.7rem;color:var(--ink-2);margin-bottom:6px;font-weight:700}
+.hi-g svg{display:block;width:100%;height:auto}
+.hi-g text{font-family:inherit;fill:var(--ink-2);font-size:10px}
+.hi-g .seg{cursor:pointer}
+.hi-g .seg:hover{opacity:.8}
+.hi-dl{display:grid;grid-template-columns:auto 1fr auto;gap:2px 6px;font-size:.66rem;color:var(--ink-2);align-items:center}
+.hi-dl i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.hi-dl b{color:var(--ink)}
+@media (max-width:1100px){ .hi-graf{grid-template-columns:1fr} }
 @media (max-width:860px){
-  .hi-lista{overflow:visible}
-  .hi-it{grid-template-columns:58px minmax(0,1fr)}
-  .hi-tira svg{min-width:960px}
-  .hi-foto{grid-column:2;width:100%;max-width:240px}
-  .hi-foto img{width:100%;height:auto;aspect-ratio:4/3}
-  .hi-foto figcaption{text-align:left}
+  #v-hit .card{overflow:visible}
+  .hi-fil{position:static}
+  .hi-tira svg{min-width:900px}
+  .hi-foto img{max-height:none}
 }
 </style>
 <script id="hitos-data">window.HITOS = ⟦bloque:HITOS⟧;</script>
@@ -15489,57 +15513,51 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   const sel = { cats:new Set(HI_CATS.map(c=>c[0])), torre:'', solo3:false, id:null };
   const H = () => (window.HITOS && window.HITOS.hitos) || [];
   const visibles = () => H().filter(h => sel.cats.has(h.cat) && (!sel.torre || (h.torres||[]).includes(sel.torre)) && (!sel.solo3 || h.sev===3));
-  const fotoDe = h => (h.foto && typeof FOTOS_CAMPO!=='undefined') ? FOTOS_CAMPO.find(f=>f.id===h.foto) : null;
+  const fotoDe = h => (h && h.foto && typeof FOTOS_CAMPO!=='undefined') ? FOTOS_CAMPO.find(f=>f.id===h.foto) : null;
+  const angosto = () => window.matchMedia('(max-width:860px)').matches;
+  function diasPar(){ const pd={}; H().forEach(h=>{ if(h.paraliza) diasDe(h).forEach(d=>{ if(pd[d]!=='total') pd[d]=h.paraliza; }); }); return pd; }
 
   function kpis(){
-    const hs=H(), tot=new Set(), par=new Set();
-    hs.forEach(h=>{ if(h.paraliza) diasDe(h).forEach(d=>(h.paraliza==='total'?tot:par).add(d)); });
-    tot.forEach(d=>par.delete(d));
-    const n=k=>hs.filter(h=>h.cat===k).length;
-    return `<span><b>${hs.length}</b> hitos críticos</span><span><b>${tot.size}</b> días con paralización total</span><span><b>${par.size}</b> con paralización parcial</span><span><b>${n('comunidad')}</b> de comunidades</span><span><b>${n('megasil')}</b> incumplimientos graves de MEGASIL</span>`;
+    const pd=Object.values(diasPar()), n=k=>H().filter(h=>h.cat===k).length;
+    return `<span><b>${H().length}</b> hitos críticos</span><span><b>${pd.filter(x=>x==='total').length}</b> días con paralización total</span><span><b>${pd.filter(x=>x!=='total').length}</b> con paralización parcial</span><span><b>${n('comunidad')}</b> de comunidades</span><span><b>${n('megasil')}</b> graves de MEGASIL</span>`;
   }
   function filtros(){
     const torres = [...new Set(H().flatMap(h=>h.torres||[]))].sort();
     return HI_CATS.map(([k,t,c])=>{ const n=H().filter(h=>h.cat===k).length; if(!n) return '';
       return `<button data-c="${k}" class="${sel.cats.has(k)?'on':'off'}" style="--c:${c}"><i></i>${t} · ${n}</button>`; }).join('') +
-      `<button data-x="todos" style="--c:var(--sky)">Todas</button>` +
-      `<button data-x="solo3" class="${sel.solo3?'on':''}" style="--c:var(--red)">Solo ★★★</button><span class="sep"></span>` +
+      `<button data-x="todos" style="--c:var(--sky)">Todas</button><button data-x="solo3" class="${sel.solo3?'on':''}" style="--c:var(--red)">Solo ★★★</button>` +
       `<select id="hiTorre" aria-label="Filtrar por torre"><option value="">Todas las torres</option>${torres.map(t=>`<option ${t===sel.torre?'selected':''}>${t}</option>`).join('')}</select>`;
   }
   function tira(){
     const hs=H(); if(!hs.length) return '';
     const corte = (window.HITOS.corte) || hs[hs.length-1].fecha;
     const x0 = dd('2026-06-01').getTime(), x1 = dd(corte).getTime()+3*864e5;
-    const W=1000, L=118, R=10, lh=20, top=16, lanes=HI_CATS.filter(([k])=>hs.some(h=>h.cat===k));
+    const W=1000, L=150, R=10, lh=24, top=18, lanes=HI_CATS.filter(([k])=>hs.some(h=>h.cat===k));
     const Hh = top + lanes.length*lh + 6;
     const X = s => L + 8 + (dd(s).getTime()-x0)/(x1-x0)*(W-L-R-8);
     const dw = (W-L-R)/((x1-x0)/864e5);
-    let g = `<defs><pattern id="hiRay" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="transparent"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--ink-mut)" stroke-width="1.2" opacity=".35"/></pattern></defs>`;
-    lanes.forEach(([k,t],i)=>{ const y=top+i*lh; g+=`<rect class="lane" x="${L}" y="${y+2}" width="${W-L-R}" height="${lh-4}" rx="3"/><text x="${L-6}" y="${y+lh/2+3.5}" text-anchor="end">${t}</text>`; });
+    let g = `<defs><pattern id="hiRay" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--ink-mut)" stroke-width="1.2" opacity=".35"/></pattern></defs>`;
+    lanes.forEach(([k,t],i)=>{ const y=top+i*lh; g+=`<rect class="lane" x="${L}" y="${y+2}" width="${W-L-R}" height="${lh-4}" rx="3"/><text x="${L-6}" y="${y+lh/2+4}" text-anchor="end">${t}</text>`; });
     (window.HITOS.vacios||[]).forEach(v=>{ g+=`<rect class="vac" x="${X(v.desde)-dw/2}" y="${top}" width="${X(v.hasta)-X(v.desde)+dw}" height="${lanes.length*lh}"><title>${esc(fc(v.desde))} a ${esc(fc(v.hasta))}: ${esc(v.nota)}</title></rect>`; });
-    const pd={}; hs.forEach(h=>{ if(h.paraliza) diasDe(h).forEach(d=>{ if(pd[d]!=='total') pd[d]=h.paraliza; }); });
-    Object.entries(pd).forEach(([d,t])=>{ g+=`<rect class="${t==='total'?'par-t':'par-p'}" x="${X(d)-dw/2}" y="${top}" width="${Math.max(dw,3)}" height="${lanes.length*lh}"><title>${fc(d)}: paralización ${t}</title></rect>`; });
+    Object.entries(diasPar()).forEach(([d,t])=>{ g+=`<rect class="${t==='total'?'par-t':'par-p'}" x="${X(d)-dw/2}" y="${top}" width="${Math.max(dw,3)}" height="${lanes.length*lh}"><title>${fc(d)}: paralización ${t}</title></rect>`; });
     for(let m=5; m<=11; m++){ const s=`2026-${String(m+1).padStart(2,'0')}-01`; if(dd(s).getTime()>x1) break;
-      const lejos = Math.abs(X(s)-X(corte)) > 90 || X(s) < X(corte)-90;
-      g+=`<line class="mes" x1="${X(s)}" x2="${X(s)}" y1="${top-4}" y2="${top+lanes.length*lh}"/>${lejos?`<text x="${X(s)+3}" y="${top-5}">${MES_L[m]}</text>`:''}`; }
-    g+=`<line class="corte" x1="${X(corte)}" x2="${X(corte)}" y1="${top-4}" y2="${top+lanes.length*lh}"/><text x="${X(corte)-3}" y="${top-5}" text-anchor="end" style="fill:var(--sky)">corte ${fc(corte)}</text>`;
+      const lejos = X(s) < X(corte)-110;
+      g+=`<line class="mes" x1="${X(s)}" x2="${X(s)}" y1="${top-4}" y2="${top+lanes.length*lh}"/>${lejos?`<text x="${X(s)+3}" y="${top-6}">${MES_L[m]}</text>`:''}`; }
+    g+=`<line class="corte" x1="${X(corte)}" x2="${X(corte)}" y1="${top-4}" y2="${top+lanes.length*lh}"/><text x="${X(corte)-3}" y="${top-6}" text-anchor="end" style="fill:var(--sky)">corte ${fc(corte)}</text>`;
     const vis=new Set(visibles().map(h=>h.id));
-    hs.forEach(h=>{ const i=lanes.findIndex(([k])=>k===h.cat); const y=top+i*lh+lh/2, x=X(h.fecha), r=2.5+h.sev*1.5;
-      const w = h.fecha_fin ? X(h.fecha_fin)-x : 0;
-      const op = vis.has(h.id) ? 1 : .18;
-      g += w>0 ? `<rect class="pt ${sel.id===h.id?'sel':''}" data-id="${h.id}" x="${x-r}" y="${y-r}" width="${w+2*r}" height="${2*r}" rx="${r}" fill="${CAT[h.cat].c}" opacity="${op}"><title>${esc(rango(h))} · ${esc(h.titulo)}</title></rect>`
-               : `<circle class="pt ${sel.id===h.id?'sel':''}" data-id="${h.id}" cx="${x}" cy="${y}" r="${r}" fill="${CAT[h.cat].c}" opacity="${op}"><title>${esc(rango(h))} · ${esc(h.titulo)}</title></circle>`; });
-    return `<svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Línea de tiempo de hitos">${g}</svg>`;
+    hs.forEach(h=>{ const i=lanes.findIndex(([k])=>k===h.cat); const y=top+i*lh+lh/2, x=X(h.fecha), r=3+h.sev*1.6;
+      const w = h.fecha_fin ? X(h.fecha_fin)-x : 0, op = vis.has(h.id) ? 1 : .18, cl=`pt ${sel.id===h.id?'sel':''}`;
+      const tt=`<title>${esc(rango(h))} · ${esc(h.titulo)}</title>`;
+      g += w>0 ? `<rect class="${cl}" data-id="${h.id}" x="${x-r}" y="${y-r}" width="${w+2*r}" height="${2*r}" rx="${r}" fill="${CAT[h.cat].c}" opacity="${op}">${tt}</rect>`
+               : `<circle class="${cl}" data-id="${h.id}" cx="${x}" cy="${y}" r="${r}" fill="${CAT[h.cat].c}" opacity="${op}">${tt}</circle>`; });
+    return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Línea de tiempo de hitos">${g}</svg>`;
   }
   function item(h){
     const c=CAT[h.cat], f=fotoDe(h);
-    return `<article class="hi-it" id="hi-${h.id}" style="--c:${c.c}">
-      <div class="hi-fe">${rango(h)}<small>Reporte ${h.reporte}</small></div>
-      <div class="hi-tx"><span class="hi-cat">${c.t}</span>${h.sev===3?'<span class="hi-sev" title="crítico">★★★</span>':''}${h.paraliza?`<span class="hi-par">paralización ${h.paraliza}</span>`:''}
-        <b>${esc(h.titulo)}</b><p>${esc(h.detalle)}</p>
-        ${(h.torres||[]).length?`<div class="hi-tor">${h.torres.map(t=>`<button data-t="${t}" title="Ver ${t} en el BIM">${t}</button>`).join('')}</div>`:''}</div>
-      ${f?`<figure class="hi-foto" data-src="${f.src}" title="Evidencia: foto del ${f.fecha}${f.hora?' '+f.hora.slice(0,5):''}${f.difuminada?' · rostros difuminados':''}"><img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="Evidencia ${esc(h.titulo)}"><figcaption>📷 ${fc(f.fecha)}${f.torre?' · '+f.torre:''}</figcaption></figure>`:''}
-    </article>`;
+    return `<div class="hi-it ${sel.id===h.id?'sel':''}" id="hi-${h.id}" data-id="${h.id}" style="--c:${c.c}">
+      <div class="hi-fe">${rango(h)}<small>Rep. ${h.reporte}</small></div>
+      <div class="hi-tx"><span class="hi-cat">${c.t}</span>${h.sev===3?'<span class="hi-sev" title="crítico">★★★</span>':''}${h.paraliza?`<span class="hi-par">${h.paraliza}</span>`:''}<b>${esc(h.titulo)}</b></div>
+      ${f?`<img class="hi-mini" src="${f.mini||f.src}" loading="lazy" decoding="async" alt="">`:'<span></span>'}</div>`;
   }
   function lista(){
     const hs=visibles().slice().reverse(); if(!hs.length) return '<div class="hi-nada">Ningún hito con estos filtros.</div>';
@@ -15547,35 +15565,89 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     hs.forEach(h=>{ const d=dd(h.fecha), m=`${MES_L[d.getMonth()]} ${d.getFullYear()}`; if(m!==mes){ out+=`<div class="hi-mes">${m}</div>`; mes=m; } out+=item(h); });
     return out;
   }
+  function detalle(){
+    const v=visibles().slice().reverse(); let h=H().find(x=>x.id===sel.id);
+    if(!h){ h=v[0]; sel.id=h?h.id:null; }
+    if(!h) return '<div class="hi-nada">Sin hitos.</div>';
+    const c=CAT[h.cat], f=fotoDe(h), i=v.findIndex(x=>x.id===h.id);
+    const fot = f ? `<figure class="hi-foto" data-src="${f.src}" title="Ampliar"><img src="${f.mini||f.src}" data-big="${f.src}" alt="Evidencia: ${esc(h.titulo)}"><figcaption>📷 Evidencia · foto del ${fc(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}${f.torre?' · '+f.torre:(f.zona?' · '+f.zona:'')}${f.difuminada?' · rostros difuminados':''} · clic para ver en grande</figcaption></figure>`
+      : (h.foto ? '<div class="hi-sinfoto">Cargando la foto de evidencia…</div>' : '<div class="hi-sinfoto">Sin foto de evidencia para este hecho.</div>');
+    return `<div class="cab"><span class="hi-cat" style="--c:${c.c}">${c.t}</span>${h.sev===3?'<span class="hi-sev">★★★ crítico</span>':''}${h.paraliza?`<span class="hi-par">paralización ${h.paraliza}</span>`:''}
+        <span>· ${rango(h)} · Reporte diario ${h.reporte}</span>
+        <span class="nav2"><button data-n="-1" ${i<=0?'disabled':''} title="Más reciente">‹</button><button data-n="1" ${i<0||i>=v.length-1?'disabled':''} title="Anterior en el tiempo">›</button></span></div>
+      <h4>${esc(h.titulo)}</h4><p>${esc(h.detalle)}</p>
+      ${(h.torres||[]).length?`<div class="hi-tor">${h.torres.map(t=>`<button data-t="${t}" title="Ver ${t} en el BIM">${t}</button>`).join('')}</div>`:''}${fot}`;
+  }
+  function donut(){
+    const hs=H(), tot=hs.length||1, R=46, r=28, cx=56, cy=56; let a=-Math.PI/2, g='';
+    const filas=HI_CATS.map(([k,t,c])=>({k,t,c,n:hs.filter(h=>h.cat===k).length})).filter(x=>x.n);
+    filas.forEach(x=>{ const b=a+2*Math.PI*x.n/tot, la=(b-a)>Math.PI?1:0;
+      const p=(an,rr)=>`${cx+rr*Math.cos(an)},${cy+rr*Math.sin(an)}`;
+      g+=`<path class="seg" data-c="${x.k}" d="M${p(a,R)} A${R},${R} 0 ${la} 1 ${p(b,R)} L${p(b,r)} A${r},${r} 0 ${la} 0 ${p(a,r)} Z" fill="${x.c}" opacity="${sel.cats.has(x.k)?1:.25}"><title>${x.t}: ${x.n}</title></path>`; a=b; });
+    g+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" style="font-size:18px;font-weight:700;fill:var(--ink)">${hs.length}</text><text x="${cx}" y="${cy+15}" text-anchor="middle">hitos</text>`;
+    return `<div class="hi-g"><h5>Hitos por categoría</h5><div style="display:grid;grid-template-columns:112px 1fr;gap:8px;align-items:center"><svg viewBox="0 0 112 112">${g}</svg>
+      <div class="hi-dl">${filas.map(x=>`<i style="background:${x.c}"></i><span>${x.t}</span><b>${x.n}</b>`).join('')}</div></div></div>`;
+  }
+  function barras(){
+    const pd=diasPar(), hs=H(); if(!hs.length) return '';
+    const corte=(window.HITOS.corte)||hs[hs.length-1].fecha, m1=dd(corte).getMonth();
+    const meses=[]; for(let m=5;m<=m1;m++) meses.push(m);
+    const dat=meses.map(m=>{ const ds=Object.entries(pd).filter(([d])=>dd(d).getMonth()===m);
+      return {m, t:ds.filter(([,x])=>x==='total').length, p:ds.filter(([,x])=>x!=='total').length, n:hs.filter(h=>dd(h.fecha).getMonth()===m).length}; });
+    const mx=Math.max(4,...dat.map(d=>d.t+d.p)), W=420, Hh=130, b0=18, bh=Hh-b0-16, bw=(W-30)/dat.length;
+    let g=`<line x1="24" x2="${W}" y1="${Hh-b0}" y2="${Hh-b0}" stroke="var(--line-2)"/>`;
+    dat.forEach((d,i)=>{ const x=26+i*bw+bw*.2, w=bw*.6, ht=d.t/mx*bh, hp=d.p/mx*bh, y0=Hh-b0;
+      g+=`<rect x="${x}" y="${y0-ht}" width="${w}" height="${ht}" fill="var(--red)" opacity=".85"><title>${MES_L[d.m]}: ${d.t} días con paralización total</title></rect>`;
+      g+=`<rect x="${x}" y="${y0-ht-hp}" width="${w}" height="${hp}" fill="var(--red)" opacity=".35"><title>${MES_L[d.m]}: ${d.p} días con paralización parcial</title></rect>`;
+      if(d.t+d.p) g+=`<text x="${x+w/2}" y="${y0-ht-hp-3}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${d.t+d.p}</text>`;
+      g+=`<text x="${x+w/2}" y="${Hh-5}" text-anchor="middle">${MESES[d.m]} · ${d.n} h.</text>`; });
+    return `<div class="hi-g"><h5>Días con paralización por mes <span style="font-weight:400;color:var(--ink-mut)">(oscuro total · claro parcial · «h.» = hitos del mes)</span></h5><svg viewBox="0 0 ${W} ${Hh}">${g}</svg></div>`;
+  }
+  function pintarDet(){
+    const h=H().find(x=>x.id===sel.id), det=document.getElementById('hiDet');
+    det.innerHTML=detalle(); const h2=H().find(x=>x.id===sel.id); det.style.setProperty('--c', h2?CAT[h2.cat].c:'var(--sky)');
+    const im=det.querySelector('.hi-foto img'); if(im && im.dataset.big && im.dataset.big!==im.src){ const big=new Image(); big.onload=()=>{ if(im.isConnected) im.src=big.src; }; big.src=im.dataset.big; }
+    document.querySelectorAll('#hiLista .hi-it').forEach(e=>e.classList.toggle('sel', e.dataset.id===sel.id));
+    document.querySelectorAll('#hiTira .pt').forEach(e=>e.classList.toggle('sel', e.dataset.id===sel.id));
+  }
   function pintar(){
-    const v=document.getElementById('v-hit'); if(!v) return;
+    if(!document.getElementById('v-hit')) return;
+    if(sel.id && !visibles().some(h=>h.id===sel.id)) sel.id=null;
     document.getElementById('hiKpis').innerHTML = kpis();
     document.getElementById('hiFil').innerHTML = filtros();
-    const ti=document.getElementById('hiTira'); ti.innerHTML = tira(); ti.scrollLeft = ti.scrollWidth;   // en celular la tira se desliza: abre en lo más reciente
+    const ti=document.getElementById('hiTira'); ti.innerHTML = tira(); ti.scrollLeft = ti.scrollWidth;
     document.getElementById('hiLista').innerHTML = lista();
+    pintarDet();
+    document.getElementById('hiGraf').innerHTML = donut() + barras();
     const vac=(window.HITOS.vacios||[]).map(x=>`${fc(x.desde)} a ${fc(x.hasta)} ${x.nota}`).join('; ');
     document.getElementById('hiFuente').textContent = `${(window.HITOS.fuente||'')}${vac?' Días sin informe: '+vac+'.':''}`;
   }
   function irTorre(t){ const k=DATA.towers.findIndex(x=>x.t===t); if(k<0) return;
     const b=document.querySelector('#nav button[data-v="v-bim"]'); if(b) b.click();
     setTimeout(()=>{ try{ selectTower(k); if(typeof bimRouteMode!=='undefined' && bimRouteMode) irATorreRuta(k); }catch(e){} },300); }
-  function enfocar(id){ sel.id=id; const h=H().find(x=>x.id===id); if(!h) return;
-    if(!visibles().some(x=>x.id===id)){ sel.cats.add(h.cat); sel.torre=''; sel.solo3=false; }
-    pintar(); const el=document.getElementById('hi-'+id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } }
+  function elegir(id, desdeLista){
+    const h=H().find(x=>x.id===id); if(!h) return;
+    if(!visibles().some(x=>x.id===id)){ sel.cats.add(h.cat); sel.torre=''; sel.solo3=false; sel.id=id; pintar(); } else { sel.id=id; pintarDet(); }
+    const der=document.querySelector('#v-hit .hi-der'), det=document.getElementById('hiDet');
+    if(angosto()) det.scrollIntoView({behavior:'smooth',block:'start'}); else if(der) der.scrollTo({top:Math.max(0,det.offsetTop-der.offsetTop-8),behavior:'smooth'});
+    if(!desdeLista){ const el=document.getElementById('hi-'+id); if(el && !angosto()){ el.scrollIntoView({behavior:'smooth',block:'nearest'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } }
+  }
   window.renderHitosTab = function(){
     try{ pintar(); }catch(e){ console.warn('hitos', e); }
     if (H().some(h=>h.foto) && typeof cargarFotosCampo==='function' && (typeof FOTOS_CAMPO==='undefined' || !FOTOS_CAMPO.length))
-      cargarFotosCampo().then(()=>{ try{ document.getElementById('hiLista').innerHTML = lista(); }catch(e){} });
+      cargarFotosCampo().then(()=>{ try{ document.getElementById('hiLista').innerHTML = lista(); pintarDet(); }catch(e){} });
   };
   document.addEventListener('click', e=>{
     const v=document.getElementById('v-hit'); if(!v || !v.contains(e.target)) return;
-    const c=e.target.closest('.hi-fil button[data-c]'); if(c){ const k=c.dataset.c;
+    const c=e.target.closest('.hi-fil button[data-c], .hi-g .seg'); if(c){ const k=c.dataset.c;
       if(sel.cats.size===HI_CATS.length){ sel.cats=new Set([k]); } else if(sel.cats.has(k)){ sel.cats.delete(k); if(!sel.cats.size) sel.cats=new Set(HI_CATS.map(x=>x[0])); } else sel.cats.add(k);
       pintar(); return; }
     const x=e.target.closest('.hi-fil button[data-x]'); if(x){ if(x.dataset.x==='todos'){ sel.cats=new Set(HI_CATS.map(c=>c[0])); sel.torre=''; sel.solo3=false; } else sel.solo3=!sel.solo3; pintar(); return; }
-    const p=e.target.closest('.hi-tira .pt'); if(p){ enfocar(p.dataset.id); return; }
+    const p=e.target.closest('.hi-tira .pt'); if(p){ elegir(p.dataset.id, false); return; }
+    const it=e.target.closest('.hi-it'); if(it){ elegir(it.dataset.id, true); return; }
+    const n=e.target.closest('.hi-det .nav2 button'); if(n){ const vv=visibles().slice().reverse(), i=vv.findIndex(h=>h.id===sel.id), j=i+(+n.dataset.n); if(vv[j]) elegir(vv[j].id, false); return; }
     const t=e.target.closest('.hi-tor button'); if(t){ irTorre(t.dataset.t); return; }
-    const f=e.target.closest('.hi-foto'); if(f && typeof abrirFoto==='function'){ const fs=visibles().map(fotoDe).filter(Boolean); abrirFoto(f.dataset.src, fs.length>1?fs:null); }
+    const f=e.target.closest('.hi-foto'); if(f && typeof abrirFoto==='function'){ const fs=visibles().slice().reverse().map(fotoDe).filter(Boolean); abrirFoto(f.dataset.src, fs.length>1?fs:null); }
   });
   document.addEventListener('change', e=>{ if(e.target && e.target.id==='hiTorre'){ sel.torre=e.target.value; pintar(); } });
   const nb=document.querySelector('#nav button[data-v="v-hit"]');
