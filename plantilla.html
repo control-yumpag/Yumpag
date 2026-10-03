@@ -15521,7 +15521,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     while(d<=fin){ out.push(d.toISOString().slice(0,10)); d=new Date(d.getTime()+864e5); } return out; };
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const sel = { cats:new Set(HI_CATS.map(c=>c[0])), torre:'', solo3:false, id:null };
-  const H = () => (window.HITOS && window.HITOS.hitos) || [];
+  const H = () => ((window.HITOS && window.HITOS.hitos) || []).filter(h => CAT[h.cat]);   // v72.22: una categoría que la plantilla no conoce (p. ej. «obra» en datos viejos en caché) no rompe la pestaña
   const visibles = () => H().filter(h => sel.cats.has(h.cat) && (!sel.torre || (h.torres||[]).includes(sel.torre)) && (!sel.solo3 || h.sev===3));
   const fotoDe = h => (h && h.foto && typeof FOTOS_CAMPO!=='undefined') ? FOTOS_CAMPO.find(f=>f.id===h.foto) : null;
   const angosto = () => window.matchMedia('(max-width:860px)').matches;
