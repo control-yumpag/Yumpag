@@ -7808,7 +7808,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   <button data-v="v-bim" class="bim-badge"><span class="ic">🏛️</span> BIM 4D · Construcción</button>
   <button data-v="v-proc"><span class="ic">🏗️</span> Proceso Constructivo</button>
   <button data-v="v-fot"><span class="ic">📷</span> Fotos de obra</button>
-  <button data-v="v-hit"><span class="ic">📌</span> Hitos del proyecto</button>
+  <button data-v="v-hit"><span class="ic">⚠️</span> Eventos del proyecto</button>
 </div>
 
 <div class="views">
@@ -8136,20 +8136,22 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     </div>
   </section>
 
-  <!-- ==================== HITOS DEL PROYECTO (v72.19 · dos columnas v72.20) ==================== -->
+  <!-- ==================== EVENTOS DEL PROYECTO (v72.19 · dos columnas v72.20 · «Eventos» v72.21) ==================== -->
   <section id="v-hit" class="view">
-    <div class="card hi-izq"><h3><span class="dot"></span>Hitos del proyecto · junio de 2026 al corte</h3>
-      <div class="desc">Hechos críticos tomados de los reportes diarios de supervisión. Clic en un hito para ver su detalle y la foto a la derecha.</div>
+    <div class="card hi-izq"><h3><span class="dot"></span>Eventos del proyecto · junio de 2026 al corte</h3>
+      <div class="desc">Qué pasa con el contratista y por qué la obra se atrasa: paralizaciones, clima, línea base y plan, comunidades, incumplimientos de MEGASIL, seguridad y ambiente, según los reportes diarios de supervisión. Clic en un evento para ver su detalle y la foto a la derecha.</div>
       <div class="hi-kpis" id="hiKpis"></div>
+      <div class="hi-graf" id="hiGraf"></div>
       <div class="hi-fil" id="hiFil"></div>
       <div class="hi-lista" id="hiLista"></div>
       <div class="hi-fuente" id="hiFuente"></div>
     </div>
     <div class="card hi-der">
-      <div class="hi-tira" id="hiTira"></div>
-      <div class="hi-ley"><span><em style="background:var(--red);opacity:.4"></em>paralización total</span><span><em style="background:var(--red);opacity:.18"></em>paralización parcial</span><span><em style="background:repeating-linear-gradient(45deg,transparent 0 3px,var(--ink-mut) 3px 4px);opacity:.5"></em>sin informe diario</span><span>● tamaño = gravedad</span></div>
+      <div class="hi-fijo">
+        <div class="hi-tira" id="hiTira"></div>
+        <div class="hi-ley"><span><em style="background:var(--red);opacity:.4"></em>paralización total</span><span><em style="background:var(--red);opacity:.18"></em>paralización parcial</span><span><em style="background:repeating-linear-gradient(45deg,transparent 0 3px,var(--ink-mut) 3px 4px);opacity:.5"></em>sin informe diario</span><span>● tamaño = gravedad · barra = duración</span></div>
+      </div>
       <div class="hi-det" id="hiDet"></div>
-      <div class="hi-graf" id="hiGraf"></div>
     </div>
   </section>
 
@@ -15414,17 +15416,16 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   document.addEventListener('dc:theme', () => bimInvalidate(600));
 })();
 </script>
-<!-- ==================== HITOS DEL PROYECTO (v72.19 · dos columnas v72.20) ====================
+<!-- ==================== EVENTOS DEL PROYECTO (v72.19 · dos columnas v72.20 · «Eventos» v72.21) ====================
      Solo usa window.HITOS (hitos_build.py ← campo/hitos.json: hechos críticos de los reportes diarios de supervisión),
      FOTOS_CAMPO (foto de evidencia, ya publicada por el carril de fotos) y DATA.towers (ir a la torre en el BIM).
-     v72.20 (pedido del usuario): dos columnas con scroll propio — izquierda lista de hitos, derecha tira, detalle con la foto ampliada y gráficas. -->
+     v72.20 (pedido del usuario): dos columnas con scroll propio. v72.21: se llaman «Eventos» (no son hitos esperados), sin avances de obra,
+     duraciones en días (indicadores, gráficas y cada evento), gráficas arriba a la izquierda y tira fija arriba a la derecha. -->
 <style>
-#v-hit.view.on{grid-template-columns:minmax(340px,38fr) minmax(0,62fr);grid-template-rows:minmax(0,1fr)}
+#v-hit.view.on{grid-template-columns:minmax(360px,42fr) minmax(0,58fr);grid-template-rows:minmax(0,1fr)}
 #v-hit .card{min-height:0;overflow:auto;overscroll-behavior:contain}
 #v-hit .card > *{flex-shrink:0}
 .hi-izq .desc{margin-bottom:6px}
-.hi-kpis{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.7rem;color:var(--ink-2);margin:2px 0 6px}
-.hi-kpis b{color:var(--ink);font-size:.84rem}
 .hi-fil{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:8px;position:sticky;top:-10px;background:var(--panel);padding:6px 0;z-index:2}
 .hi-fil button{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:999px;padding:3px 8px;font:inherit;font-size:.67rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .hi-fil button i{width:9px;height:9px;border-radius:50%;background:var(--c);display:inline-block}
@@ -15475,20 +15476,29 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .hi-foto img{width:100%;max-height:440px;object-fit:contain;background:var(--panel-3);border-radius:8px;display:block;border:1px solid var(--line)}
 .hi-foto figcaption{font-size:.64rem;color:var(--ink-mut);margin-top:4px}
 .hi-sinfoto{margin-top:10px;padding:18px;border:1px dashed var(--line-2);border-radius:8px;font-size:.72rem;color:var(--ink-mut);text-align:center}
-.hi-graf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;margin-top:10px}
+.hi-graf{display:grid;grid-template-columns:1fr;gap:8px;margin:2px 0 6px}
 .hi-g{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel-2)}
 .hi-g h5{font-size:.7rem;color:var(--ink-2);margin-bottom:6px;font-weight:700}
-.hi-g svg{display:block;width:100%;height:auto}
+.hi-g svg{display:block;width:100%;height:auto;max-height:170px}
 .hi-g text{font-family:inherit;fill:var(--ink-2);font-size:10px}
 .hi-g .seg{cursor:pointer}
 .hi-g .seg:hover{opacity:.8}
 .hi-dl{display:grid;grid-template-columns:auto 1fr auto;gap:2px 6px;font-size:.66rem;color:var(--ink-2);align-items:center}
 .hi-dl i{width:9px;height:9px;border-radius:2px;display:inline-block}
 .hi-dl b{color:var(--ink)}
-@media (max-width:1100px){ .hi-graf{grid-template-columns:1fr} }
+.hi-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:6px 0 8px}
+.hi-k{border:1px solid var(--line);border-top:3px solid var(--c);border-radius:8px;padding:6px 8px;background:var(--panel-2)}
+.hi-k b{display:block;font-size:1.25rem;line-height:1.1;color:var(--ink)}
+.hi-k span{font-size:.62rem;color:var(--ink-2);line-height:1.25;display:block;margin-top:2px}
+.hi-dur{display:inline-block;font-size:.62rem;font-weight:700;color:var(--ink-2);background:var(--panel-3);border-radius:999px;padding:1px 7px;margin-top:3px}
+.hi-dl{grid-template-columns:auto 1fr auto auto !important}
+.hi-dl small{font-size:.58rem;color:var(--ink-mut);text-align:right}
+.hi-fijo{position:sticky;top:-10px;z-index:3;background:var(--panel);margin:-10px -12px 10px;padding:10px 12px 2px;border-bottom:1px solid var(--line)}
+.hi-fijo .hi-ley{margin-bottom:6px}
 @media (max-width:860px){
   #v-hit .card{overflow:visible}
   .hi-fil{position:static}
+  .hi-fijo{position:static;margin:0 0 10px;padding:0}
   .hi-tira svg{min-width:900px}
   .hi-foto img{max-height:none}
 }
@@ -15497,7 +15507,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 <script>
 (function(){
   const HI_CATS = [
-    ['obra','Obra','#2f8f7b'], ['paralizacion','Paralizaciones','#d9714f'], ['clima','Clima','#5b9bd5'],
+    ['paralizacion','Paralizaciones','#d9714f'], ['clima','Clima','#5b9bd5'],
     ['linea_base','Línea base y plan','#a3b32f'], ['comunidad','Comunidades','#a77bc9'],
     ['megasil','Contratista MEGASIL','#e09a3a'], ['seguridad_ambiente','Seguridad y ambiente','#4fae7a']];
   const CAT = Object.fromEntries(HI_CATS.map(([k,t,c])=>[k,{t,c}]));
@@ -15517,9 +15527,14 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   const angosto = () => window.matchMedia('(max-width:860px)').matches;
   function diasPar(){ const pd={}; H().forEach(h=>{ if(h.paraliza) diasDe(h).forEach(d=>{ if(pd[d]!=='total') pd[d]=h.paraliza; }); }); return pd; }
 
+  const dur = h => (h.duracion!=null ? h.duracion : diasDe(h).length);
+  const conDur = h => h.duracion!=null || h.fecha_fin || h.dias || h.paraliza;   // un evento de un día sin paralización (una carta, un dato) no suma días
+  const diasCat = k => { const s=new Set(); H().filter(h=>h.cat===k && h.duracion==null && conDur(h)).forEach(h=>diasDe(h).forEach(d=>s.add(d))); return s.size + H().filter(h=>h.cat===k && h.duracion!=null).reduce((a,h)=>a+h.duracion,0); };
   function kpis(){
-    const pd=Object.values(diasPar()), n=k=>H().filter(h=>h.cat===k).length;
-    return `<span><b>${H().length}</b> hitos críticos</span><span><b>${pd.filter(x=>x==='total').length}</b> días con paralización total</span><span><b>${pd.filter(x=>x!=='total').length}</b> con paralización parcial</span><span><b>${n('comunidad')}</b> de comunidades</span><span><b>${n('megasil')}</b> graves de MEGASIL</span>`;
+    const pd=Object.values(diasPar()), tot=pd.filter(x=>x==='total').length, par=pd.length-tot;
+    const t=(v,l,c)=>`<div class="hi-k" style="--c:${c||'var(--red)'}"><b>${v}</b><span>${l}</span></div>`;
+    return t(tot+par,'días con paralización ('+tot+' total · '+par+' parcial)') + t(diasCat('clima'),'días parados por clima','#5b9bd5') + t(diasCat('comunidad'),'días con conflicto o paro comunal','#a77bc9') +
+      H().filter(h=>h.duracion!=null).map(h=>t(h.duracion, h.duracion_nota||'días', CAT[h.cat].c)).join('') + t(H().length,'eventos críticos','var(--sky)');
   }
   function filtros(){
     const torres = [...new Set(H().flatMap(h=>h.torres||[]))].sort();
@@ -15532,7 +15547,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     const hs=H(); if(!hs.length) return '';
     const corte = (window.HITOS.corte) || hs[hs.length-1].fecha;
     const x0 = dd('2026-06-01').getTime(), x1 = dd(corte).getTime()+3*864e5;
-    const W=1000, L=150, R=10, lh=24, top=18, lanes=HI_CATS.filter(([k])=>hs.some(h=>h.cat===k));
+    const W=1000, L=150, R=10, lh=26, top=18, lanes=HI_CATS.filter(([k])=>hs.some(h=>h.cat===k));
     const Hh = top + lanes.length*lh + 6;
     const X = s => L + 8 + (dd(s).getTime()-x0)/(x1-x0)*(W-L-R-8);
     const dw = (W-L-R)/((x1-x0)/864e5);
@@ -15550,17 +15565,17 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const tt=`<title>${esc(rango(h))} · ${esc(h.titulo)}</title>`;
       g += w>0 ? `<rect class="${cl}" data-id="${h.id}" x="${x-r}" y="${y-r}" width="${w+2*r}" height="${2*r}" rx="${r}" fill="${CAT[h.cat].c}" opacity="${op}">${tt}</rect>`
                : `<circle class="${cl}" data-id="${h.id}" cx="${x}" cy="${y}" r="${r}" fill="${CAT[h.cat].c}" opacity="${op}">${tt}</circle>`; });
-    return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Línea de tiempo de hitos">${g}</svg>`;
+    return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Línea de tiempo de eventos">${g}</svg>`;
   }
   function item(h){
     const c=CAT[h.cat], f=fotoDe(h);
     return `<div class="hi-it ${sel.id===h.id?'sel':''}" id="hi-${h.id}" data-id="${h.id}" style="--c:${c.c}">
       <div class="hi-fe">${rango(h)}<small>Rep. ${h.reporte}</small></div>
-      <div class="hi-tx"><span class="hi-cat">${c.t}</span>${h.sev===3?'<span class="hi-sev" title="crítico">★★★</span>':''}${h.paraliza?`<span class="hi-par">${h.paraliza}</span>`:''}<b>${esc(h.titulo)}</b></div>
+      <div class="hi-tx"><span class="hi-cat">${c.t}</span>${h.sev===3?'<span class="hi-sev" title="crítico">★★★</span>':''}${h.paraliza?`<span class="hi-par">${h.paraliza}</span>`:''}<b>${esc(h.titulo)}</b>${dur(h)>1?`<span class="hi-dur">⏱ ${dur(h)} días</span>`:''}</div>
       ${f?`<img class="hi-mini" src="${f.mini||f.src}" loading="lazy" decoding="async" alt="">`:'<span></span>'}</div>`;
   }
   function lista(){
-    const hs=visibles().slice().reverse(); if(!hs.length) return '<div class="hi-nada">Ningún hito con estos filtros.</div>';
+    const hs=visibles().slice().reverse(); if(!hs.length) return '<div class="hi-nada">Ningún evento con estos filtros.</div>';
     let out='', mes='';
     hs.forEach(h=>{ const d=dd(h.fecha), m=`${MES_L[d.getMonth()]} ${d.getFullYear()}`; if(m!==mes){ out+=`<div class="hi-mes">${m}</div>`; mes=m; } out+=item(h); });
     return out;
@@ -15568,13 +15583,13 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   function detalle(){
     const v=visibles().slice().reverse(); let h=H().find(x=>x.id===sel.id);
     if(!h){ h=v[0]; sel.id=h?h.id:null; }
-    if(!h) return '<div class="hi-nada">Sin hitos.</div>';
+    if(!h) return '<div class="hi-nada">Sin eventos.</div>';
     const c=CAT[h.cat], f=fotoDe(h), i=v.findIndex(x=>x.id===h.id);
     const fot = f ? `<figure class="hi-foto" data-src="${f.src}" title="Ampliar"><img src="${f.mini||f.src}" data-big="${f.src}" alt="Evidencia: ${esc(h.titulo)}"><figcaption>📷 Evidencia · foto del ${fc(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}${f.torre?' · '+f.torre:(f.zona?' · '+f.zona:'')}${f.difuminada?' · rostros difuminados':''} · clic para ver en grande</figcaption></figure>`
-      : (h.foto ? '<div class="hi-sinfoto">Cargando la foto de evidencia…</div>' : '<div class="hi-sinfoto">Sin foto de evidencia para este hecho.</div>');
+      : (h.foto ? '<div class="hi-sinfoto">Cargando la foto de evidencia…</div>' : '<div class="hi-sinfoto">Sin foto de evidencia para este evento.</div>');
     return `<div class="cab"><span class="hi-cat" style="--c:${c.c}">${c.t}</span>${h.sev===3?'<span class="hi-sev">★★★ crítico</span>':''}${h.paraliza?`<span class="hi-par">paralización ${h.paraliza}</span>`:''}
-        <span>· ${rango(h)} · Reporte diario ${h.reporte}</span>
-        <span class="nav2"><button data-n="-1" ${i<=0?'disabled':''} title="Más reciente">‹</button><button data-n="1" ${i<0||i>=v.length-1?'disabled':''} title="Anterior en el tiempo">›</button></span></div>
+        <span>· ${rango(h)} · Reporte diario ${h.reporte}</span>${dur(h)>1?`<span class="hi-dur">⏱ ${dur(h)} días${h.duracion_nota?' · '+esc(h.duracion_nota):''}</span>`:''}
+        <span class="nav2"><button data-n="-1" ${i<=0?'disabled':''} title="Evento más reciente">‹</button><button data-n="1" ${i<0||i>=v.length-1?'disabled':''} title="Anterior en el tiempo">›</button></span></div>
       <h4>${esc(h.titulo)}</h4><p>${esc(h.detalle)}</p>
       ${(h.torres||[]).length?`<div class="hi-tor">${h.torres.map(t=>`<button data-t="${t}" title="Ver ${t} en el BIM">${t}</button>`).join('')}</div>`:''}${fot}`;
   }
@@ -15584,9 +15599,9 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     filas.forEach(x=>{ const b=a+2*Math.PI*x.n/tot, la=(b-a)>Math.PI?1:0;
       const p=(an,rr)=>`${cx+rr*Math.cos(an)},${cy+rr*Math.sin(an)}`;
       g+=`<path class="seg" data-c="${x.k}" d="M${p(a,R)} A${R},${R} 0 ${la} 1 ${p(b,R)} L${p(b,r)} A${r},${r} 0 ${la} 0 ${p(a,r)} Z" fill="${x.c}" opacity="${sel.cats.has(x.k)?1:.25}"><title>${x.t}: ${x.n}</title></path>`; a=b; });
-    g+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" style="font-size:18px;font-weight:700;fill:var(--ink)">${hs.length}</text><text x="${cx}" y="${cy+15}" text-anchor="middle">hitos</text>`;
-    return `<div class="hi-g"><h5>Hitos por categoría</h5><div style="display:grid;grid-template-columns:112px 1fr;gap:8px;align-items:center"><svg viewBox="0 0 112 112">${g}</svg>
-      <div class="hi-dl">${filas.map(x=>`<i style="background:${x.c}"></i><span>${x.t}</span><b>${x.n}</b>`).join('')}</div></div></div>`;
+    g+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" style="font-size:18px;font-weight:700;fill:var(--ink)">${hs.length}</text><text x="${cx}" y="${cy+15}" text-anchor="middle">eventos</text>`;
+    return `<div class="hi-g"><h5>Eventos y días de afectación por categoría <span style="font-weight:400;color:var(--ink-mut)">(días = paralizaciones, conflictos y atrasos con duración)</span></h5><div style="display:grid;grid-template-columns:112px 1fr;gap:8px;align-items:center"><svg viewBox="0 0 112 112">${g}</svg>
+      <div class="hi-dl"><span></span><span></span><small>eventos</small><small>días</small>${filas.map(x=>`<i style="background:${x.c}"></i><span>${x.t}</span><b>${x.n}</b><b>${diasCat(x.k)}</b>`).join('')}</div></div></div>`;
   }
   function barras(){
     const pd=diasPar(), hs=H(); if(!hs.length) return '';
@@ -15600,8 +15615,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       g+=`<rect x="${x}" y="${y0-ht}" width="${w}" height="${ht}" fill="var(--red)" opacity=".85"><title>${MES_L[d.m]}: ${d.t} días con paralización total</title></rect>`;
       g+=`<rect x="${x}" y="${y0-ht-hp}" width="${w}" height="${hp}" fill="var(--red)" opacity=".35"><title>${MES_L[d.m]}: ${d.p} días con paralización parcial</title></rect>`;
       if(d.t+d.p) g+=`<text x="${x+w/2}" y="${y0-ht-hp-3}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${d.t+d.p}</text>`;
-      g+=`<text x="${x+w/2}" y="${Hh-5}" text-anchor="middle">${MESES[d.m]} · ${d.n} h.</text>`; });
-    return `<div class="hi-g"><h5>Días con paralización por mes <span style="font-weight:400;color:var(--ink-mut)">(oscuro total · claro parcial · «h.» = hitos del mes)</span></h5><svg viewBox="0 0 ${W} ${Hh}">${g}</svg></div>`;
+      g+=`<text x="${x+w/2}" y="${Hh-5}" text-anchor="middle">${MESES[d.m]} · ${d.n} ev.</text>`; });
+    return `<div class="hi-g"><h5>Días con paralización por mes <span style="font-weight:400;color:var(--ink-mut)">(oscuro total · claro parcial · «ev.» = eventos del mes)</span></h5><svg viewBox="0 0 ${W} ${Hh}">${g}</svg></div>`;
   }
   function pintarDet(){
     const h=H().find(x=>x.id===sel.id), det=document.getElementById('hiDet');
