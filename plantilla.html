@@ -15529,7 +15529,9 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 
   const dur = h => (h.duracion!=null ? h.duracion : diasDe(h).length);
   const conDur = h => h.duracion!=null || h.fecha_fin || h.dias || h.paraliza;   // un evento de un día sin paralización (una carta, un dato) no suma días
-  const diasCat = k => { const s=new Set(); H().filter(h=>h.cat===k && h.duracion==null && conDur(h)).forEach(h=>diasDe(h).forEach(d=>s.add(d))); return s.size + H().filter(h=>h.cat===k && h.duracion!=null).reduce((a,h)=>a+h.duracion,0); };
+  // v72.23: días de calendario afectados (unión): dos eventos que corren a la vez no suman dos veces; un evento con «duracion» cuenta esos días desde su fecha
+  const diasEv = h => { if (h.duracion==null) return diasDe(h); const out=[]; let d=dd(h.fecha); for(let i=0;i<h.duracion;i++){ out.push(d.toISOString().slice(0,10)); d=new Date(d.getTime()+864e5); } return out; };
+  const diasCat = k => { const s=new Set(); H().filter(h=>h.cat===k && conDur(h)).forEach(h=>diasEv(h).forEach(d=>s.add(d))); return s.size; };
   function kpis(){
     const pd=Object.values(diasPar()), tot=pd.filter(x=>x==='total').length, par=pd.length-tot;
     const t=(v,l,c)=>`<div class="hi-k" style="--c:${c||'var(--red)'}"><b>${v}</b><span>${l}</span></div>`;
@@ -15600,7 +15602,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const p=(an,rr)=>`${cx+rr*Math.cos(an)},${cy+rr*Math.sin(an)}`;
       g+=`<path class="seg" data-c="${x.k}" d="M${p(a,R)} A${R},${R} 0 ${la} 1 ${p(b,R)} L${p(b,r)} A${r},${r} 0 ${la} 0 ${p(a,r)} Z" fill="${x.c}" opacity="${sel.cats.has(x.k)?1:.25}"><title>${x.t}: ${x.n}</title></path>`; a=b; });
     g+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" style="font-size:18px;font-weight:700;fill:var(--ink)">${hs.length}</text><text x="${cx}" y="${cy+15}" text-anchor="middle">eventos</text>`;
-    return `<div class="hi-g"><h5>Eventos y días de afectación por categoría <span style="font-weight:400;color:var(--ink-mut)">(días = paralizaciones, conflictos y atrasos con duración)</span></h5><div style="display:grid;grid-template-columns:112px 1fr;gap:8px;align-items:center"><svg viewBox="0 0 112 112">${g}</svg>
+    return `<div class="hi-g"><h5>Eventos y días de afectación por categoría <span style="font-weight:400;color:var(--ink-mut)">(días de calendario afectados: paralizaciones, conflictos y atrasos con duración; los que coinciden se cuentan una vez)</span></h5><div style="display:grid;grid-template-columns:112px 1fr;gap:8px;align-items:center"><svg viewBox="0 0 112 112">${g}</svg>
       <div class="hi-dl"><span></span><span></span><small>eventos</small><small>días</small>${filas.map(x=>`<i style="background:${x.c}"></i><span>${x.t}</span><b>${x.n}</b><b>${diasCat(x.k)}</b>`).join('')}</div></div></div>`;
   }
   function barras(){
