@@ -7297,6 +7297,10 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .d4-tw .hoy{position:absolute;top:-7px;right:-3px;background:#e4572e;color:#fff;font:700 .5rem/1 "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:2px 4px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
 .chip.hoy{border-color:#e4572e!important;color:#e4572e}
 .chip.hoy.on{background:#e4572e!important;color:#fff!important}
+/* v72.26: la marca dice la fecha del corte («04-Oct»), no «hoy»; la franja de la torre (#bimInfo) crece con su contenido y ya no se monta sobre los botones de torre */
+.d4-tw .hoy{text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+html body #v-bim > .bim-info{min-height:auto}
+html body #v-bim > .bim-info .bim-overlay-hud{min-height:22px}
 .tw-hoy{margin:4px 0 6px;padding:5px 8px;border:1px dashed #e4572e;border-radius:7px;font-size:.7rem;color:var(--ink);background:rgba(228,87,46,.07)}
 @media(min-width:1101px){#v-bim{grid-template-columns:236px 1fr 320px}}
 .bim-panel#p-patas{overflow-y:auto}
@@ -10591,8 +10595,8 @@ function buildRouteBIM(){
     const lbl = makeTowerLabelSprite(t.t, '#a9c4bb', 0.046, true);
     lbl.position.set(0, 27, 0); obj.add(lbl);
     obj.userData.nameLbl = lbl;
-    // v72.25: viñeta naranja «HOY · DD-Mes» sobre la torre intervenida el día del corte (solo se ve en el corte)
-    if (typeof intervDe === 'function' && intervDe(t.t)){ const hb = makeTowerLabelSprite('HOY · ' + intervFecha(), '#e4572e', 0.034, true);
+    // v72.25/v72.26: viñeta naranja «DD-Mes» (fecha del corte, no «hoy»; la leyenda dice «Intervenida el DD-Mes») sobre la torre intervenida el día del corte (solo se ve en el corte)
+    if (typeof intervDe === 'function' && intervDe(t.t)){ const hb = makeTowerLabelSprite(intervFecha(), '#e4572e', 0.034, true);
       hb.position.set(0, 34, 0); hb.visible = (typeof d4i === 'undefined') || d4i === DATA.tl_weeks.length - 1; obj.add(hb); obj.userData.hoyLbl = hb; }
 
     const hit = new THREE.Mesh(new THREE.CylinderGeometry(11,11,52,6),
@@ -12682,7 +12686,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       // v44: el tile ya no lleva marco rojo/ámbar ni distintivo de alerta (23 tiles alarmados saturaban el panel);
       // la restricción se consulta con los filtros "Bloqueadas" / "Esperan recurso", el tooltip y el anillo rojo del 3D.
       const rsn = rest ? 'bloqueada' : (lvl === 'amber' ? 'espera recurso' : '');
-      return `<div class="d4-tw ${k===d4sel?'sel':''}${iv?' iv':''}" data-k="${k}" title="${(t.t + ' · ' + t.tp + ' · ' + STN[st] + (iv ? ' · ' + intervTxt(t.t) : '') + (rsn ? ' · ' + rsn : '') + (tip ? ' · ' + tip : '')).replace(/"/g,'&quot;')}">${iv ? '<span class="hoy">hoy</span>' : ''}
+      return `<div class="d4-tw ${k===d4sel?'sel':''}${iv?' iv':''}" data-k="${k}" title="${(t.t + ' · ' + t.tp + ' · ' + STN[st] + (iv ? ' · ' + intervTxt(t.t) : '') + (rsn ? ' · ' + rsn : '') + (tip ? ' · ' + tip : '')).replace(/"/g,'&quot;')}">${iv ? '<span class="hoy">' + intervFecha() + '</span>' : ''}
         <div class="tn"><i style="background:${colSt[st]}"></i>${t.t}</div>
         <div class="tb"><i style="width:${t.pct}%;background:${colSt[st]}"></i></div>
         <div class="tf">${F(t.pct)}%</div>
