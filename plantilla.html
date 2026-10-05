@@ -8138,7 +8138,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 
   <!-- ==================== EVENTOS DEL PROYECTO (v72.19 · dos columnas v72.20 · «Eventos» v72.21) ==================== -->
   <section id="v-hit" class="view">
-    <div class="card hi-izq"><h3><span class="dot"></span>Eventos del proyecto · junio de 2026 al corte</h3>
+    <div class="card hi-izq"><h3><span class="dot"></span><span id="hiTitulo">Eventos del proyecto</span></h3>
       <div class="desc">Qué pasa con el contratista y por qué la obra se atrasa: paralizaciones, clima, línea base y plan, comunidades, incumplimientos de MEGASIL, seguridad y ambiente, según los reportes diarios de supervisión. Clic en un evento para ver su detalle y la foto a la derecha.</div>
       <div class="hi-kpis" id="hiKpis"></div>
       <div class="hi-graf" id="hiGraf"></div>
@@ -15630,6 +15630,9 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   function pintar(){
     if(!document.getElementById('v-hit')) return;
     if(sel.id && !visibles().some(h=>h.id===sel.id)) sel.id=null;
+    { const fl = x => { const d=dd(x); return `${String(d.getDate()).padStart(2,'0')}-${MESES[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`; };   // v72.24: periodo con fechas (antes «junio de 2026 al corte»)
+      const hs=H(), c=(window.HITOS&&window.HITOS.corte)||(hs.length?hs[hs.length-1].fecha:null);
+      document.getElementById('hiTitulo').textContent = c ? `Eventos del proyecto · del ${fl('2026-06-01')} (inicio de obra) al ${fl(c)} (corte)` : 'Eventos del proyecto'; }
     document.getElementById('hiKpis').innerHTML = kpis();
     document.getElementById('hiFil').innerHTML = filtros();
     const ti=document.getElementById('hiTira'); ti.innerHTML = tira(); ti.scrollLeft = ti.scrollWidth;
