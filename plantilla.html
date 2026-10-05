@@ -7290,6 +7290,14 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .bimx-leg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--ink-2)}
 .bimx-leg i{width:10px;height:10px;border-radius:50%!important;display:inline-block}
 .bimx-leg i.ring{background:transparent!important;border:2px solid var(--red)!important}
+/* v72.25: torre intervenida el día del corte */
+.bimx-leg i.hoy{background:transparent!important;border:2px dashed #e4572e!important}
+.d4-tw{position:relative}
+.d4-tw.iv{outline:1.6px dashed #e4572e;outline-offset:1px}
+.d4-tw .hoy{position:absolute;top:-7px;right:-3px;background:#e4572e;color:#fff;font:700 .5rem/1 "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:2px 4px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none}
+.chip.hoy{border-color:#e4572e!important;color:#e4572e}
+.chip.hoy.on{background:#e4572e!important;color:#fff!important}
+.tw-hoy{margin:4px 0 6px;padding:5px 8px;border:1px dashed #e4572e;border-radius:7px;font-size:.7rem;color:var(--ink);background:rgba(228,87,46,.07)}
 @media(min-width:1101px){#v-bim{grid-template-columns:236px 1fr 320px}}
 .bim-panel#p-patas{overflow-y:auto}
 .bb-curve{height:190px}
@@ -8214,6 +8222,12 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
    1. BASE DE DATOS MAESTRA (Reportes Semanales y Diarios de Obra Civil)
    ========================================================================= */
 const DATA = ⟦bloque:DATA⟧
+/* v72.25: torres intervenidas el día del corte — celdas marcadas (negrita de color) en la hoja Avance Acumulado LT del Resumen
+   (build_dashboard.py → DATA.corte_diario.intervenidas; si el Resumen no trae marcas, actividades cuyo % cambió frente al corte anterior) */
+const INTERV = (DATA.corte_diario && DATA.corte_diario.intervenidas) || null;
+function intervDe(tt){ const L = INTERV && INTERV.torres && INTERV.torres[tt]; return (L && L.length) ? L : null; }
+function intervFecha(){ if (!INTERV) return ''; const d = new Date(INTERV.fecha + 'T12:00:00'), M = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic']; return String(d.getDate()).padStart(2,'0') + '-' + M[d.getMonth()]; }
+function intervTxt(tt){ const L = intervDe(tt); if (!L) return ''; return 'Intervenida el ' + intervFecha() + ': ' + L.map(x => x.act + ' ' + (typeof x.pct === 'number' ? String(x.pct).replace('.', ',') + ' %' : x.pct)).join(', '); }
 
 const BAC = 4087246, EV_TOT = 2404173;
 const costs = [
@@ -10577,6 +10591,9 @@ function buildRouteBIM(){
     const lbl = makeTowerLabelSprite(t.t, '#a9c4bb', 0.046, true);
     lbl.position.set(0, 27, 0); obj.add(lbl);
     obj.userData.nameLbl = lbl;
+    // v72.25: viñeta naranja «HOY · DD-Mes» sobre la torre intervenida el día del corte (solo se ve en el corte)
+    if (typeof intervDe === 'function' && intervDe(t.t)){ const hb = makeTowerLabelSprite('HOY · ' + intervFecha(), '#e4572e', 0.034, true);
+      hb.position.set(0, 34, 0); hb.visible = (typeof d4i === 'undefined') || d4i === DATA.tl_weeks.length - 1; obj.add(hb); obj.userData.hoyLbl = hb; }
 
     const hit = new THREE.Mesh(new THREE.CylinderGeometry(11,11,52,6),
                 new THREE.MeshBasicMaterial({visible:false}));
@@ -11788,6 +11805,7 @@ function drawRoute(){
     s+=`<g class="rt-t" data-k="${i}" style="cursor:pointer">`;
     if(sel) s+=`<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="${css('--sky')}" stroke-width="1.8"/>`;
     s+=`<circle cx="${cx}" cy="${cy}" r="3.6" fill="${col}" stroke="${css('--panel')}" stroke-width="1"/>`;
+    if (DATA.towers[i] && intervDe(DATA.towers[i].t)) s+=`<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="#e4572e" stroke-width="1.6" stroke-dasharray="2.2 1.8"><title>${intervTxt(DATA.towers[i].t)}</title></circle>`;   // v72.25
     s+=`</g>`;
   });
   // escala
@@ -11826,6 +11844,7 @@ function drawPataGrid(){
   }
   const gi = GEO.towers[d4sel]||{};
   let s = `<div class="tw-head">${t.t} · ${t.tp}<span>km ${((gi.km||0)/1000).toFixed(3).replace('.','+')} · cota ${Math.round(gi.z||0)} m</span></div>`;
+  if (intervDe(t.t)) s += `<div class="tw-hoy" title="${INTERV.fuente}">🛠 ${intervTxt(t.t)}</div>`;   // v72.25
   const _via = bigBar('Vía de acceso', acc, css('--c-acc'), (t.long||0) + ' m', 'Longitud carrozable ' + (t.long||0) + ' m');
   // v68: en la ficha de torre las zapatas A–D ya están en el panel «Cimentaciones» (izquierda del visor):
   // aquí no se repiten ni la obra civil ni la grilla de patas
@@ -12646,23 +12665,24 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     const el = $('bimxFilt'); if (!el) return;
     const T = DATA.towers;
     const n = { all: T.length, done: T.filter(t => stOf(t)==='done').length, prog: T.filter(t => stOf(t)==='prog').length,
-                none: T.filter(t => stOf(t)==='none').length, rest: T.filter(t => restLevel(t)==='red').length, wait: T.filter(t => restLevel(t)==='amber').length };
-    const opts = [['all','Todas'],['prog','En ejecución'],['done','Cimentación lista'],['none','Sin iniciar'],['rest','Bloqueadas'],['wait','Esperan recurso']];   // v33: 'done' = 4 zapatas al 100 % (el % del tile incluye caminos y remediación)
+                none: T.filter(t => stOf(t)==='none').length, rest: T.filter(t => restLevel(t)==='red').length, wait: T.filter(t => restLevel(t)==='amber').length, hoy: T.filter(t => intervDe(t.t)).length };
+    const opts = [['all','Todas'],['hoy','Intervenidas el ' + intervFecha()],['prog','En ejecución'],['done','Cimentación lista'],['none','Sin iniciar'],['rest','Bloqueadas'],['wait','Esperan recurso']].filter(o => o[0] !== 'hoy' || n.hoy);   // v72.25: «Intervenidas el DD-Mes» · v33: 'done' = 4 zapatas al 100 % (el % del tile incluye caminos y remediación)
     const cEl = $('bimxCnt'); if (cEl) cEl.remove();
-    el.innerHTML = `<span class="fl">Filtro:</span>` + opts.map(([k, lab]) => `<button class="chip${filt===k?' on':''}${k==='rest'?' d':k==='done'?' g':k==='prog'||k==='wait'?' w':''}" data-f="${k}" title="${k==='all' ? 'Mostrar las 23 torres' : (k==='done' ? 'Mostrar solo las torres con la cimentación (4 zapatas) concluida' : 'Mostrar solo las torres ' + lab.toLowerCase())}">${lab} · ${n[k]}</button>`).join('');
+    el.innerHTML = `<span class="fl">Filtro:</span>` + opts.map(([k, lab]) => `<button class="chip${filt===k?' on':''}${k==='rest'?' d':k==='done'?' g':k==='prog'||k==='wait'?' w':k==='hoy'?' hoy':''}" data-f="${k}" title="${k==='hoy' ? 'Mostrar las torres trabajadas el día del corte (celdas marcadas en el Resumen del reporte diario)' : k==='all' ? 'Mostrar las 23 torres' : (k==='done' ? 'Mostrar solo las torres con la cimentación (4 zapatas) concluida' : 'Mostrar solo las torres ' + lab.toLowerCase())}">${lab} · ${n[k]}</button>`).join('');
     el.querySelectorAll('button').forEach(b => b.onclick = () => { filt = b.dataset.f; renderFilters(); drawTowerList(); });
   }
   window.drawTowerList = function(){
     const el = $('d4TowerList'); if (!el) return;
     el.innerHTML = DATA.towers.map((t, k) => {
       const st = stOf(t), lvl = restLevel(t), rest = lvl === 'red', l = LA[t.t];
-      const show = filt==='all' || filt===st || (filt==='rest' && rest) || (filt==='wait' && lvl === 'amber');
+      const iv = intervDe(t.t);
+      const show = filt==='all' || filt===st || (filt==='rest' && rest) || (filt==='wait' && lvl === 'amber') || (filt==='hoy' && iv);
       if (!show) return '';
       const tip = l ? `Siguiente: ${l.siguiente_wbs}${l.motivos && l.motivos.length ? ' · ' + l.motivos.join(' · ') : (l.listo ? ' · lista para ejecutar' : '')}` : '';
       // v44: el tile ya no lleva marco rojo/ámbar ni distintivo de alerta (23 tiles alarmados saturaban el panel);
       // la restricción se consulta con los filtros "Bloqueadas" / "Esperan recurso", el tooltip y el anillo rojo del 3D.
       const rsn = rest ? 'bloqueada' : (lvl === 'amber' ? 'espera recurso' : '');
-      return `<div class="d4-tw ${k===d4sel?'sel':''}" data-k="${k}" title="${(t.t + ' · ' + t.tp + ' · ' + STN[st] + (rsn ? ' · ' + rsn : '') + (tip ? ' · ' + tip : '')).replace(/"/g,'&quot;')}">
+      return `<div class="d4-tw ${k===d4sel?'sel':''}${iv?' iv':''}" data-k="${k}" title="${(t.t + ' · ' + t.tp + ' · ' + STN[st] + (iv ? ' · ' + intervTxt(t.t) : '') + (rsn ? ' · ' + rsn : '') + (tip ? ' · ' + tip : '')).replace(/"/g,'&quot;')}">${iv ? '<span class="hoy">hoy</span>' : ''}
         <div class="tn"><i style="background:${colSt[st]}"></i>${t.t}</div>
         <div class="tb"><i style="width:${t.pct}%;background:${colSt[st]}"></i></div>
         <div class="tf">${F(t.pct)}%</div>
@@ -12670,7 +12690,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     }).join('');
     if (filt !== 'all'){
       const n = el.querySelectorAll('.d4-tw').length;
-      const flab = { prog: 'en ejecución', done: 'cimentación lista', none: 'sin iniciar', rest: 'bloqueadas', wait: 'esperan recurso' }[filt] || filt;
+      const flab = { hoy: 'intervenidas el ' + intervFecha(), prog: 'en ejecución', done: 'cimentación lista', none: 'sin iniciar', rest: 'bloqueadas', wait: 'esperan recurso' }[filt] || filt;
       el.insertAdjacentHTML('beforeend', `<div class="d4-tw d4-reset" title="Quitar el filtro y mostrar las 23 torres"><div class="tn">✕ ${flab}</div><div class="tf">${n} de ${DATA.towers.length} · ver todas</div></div>`);
       el.querySelector('.d4-reset').onclick = () => { filt = 'all'; renderFilters(); drawTowerList(); };
     }
@@ -12709,12 +12729,14 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       ring.rotation.x = -Math.PI/2; ring.position.copy(p); ring.position.y += 0.55; ring.visible = false;
       bimGroundGroup.add(disc); bimGroundGroup.add(ring);
       obj.userData.statusDisc = disc; obj.userData.restRing = ring;
+
     });
   }
   function updateStatusDiscs(){
     if (!towerObjs) return;
     const last = DATA.tl_weeks.length - 1;
     towerObjs.forEach(obj => {
+      if (obj.userData.hoyLbl) obj.userData.hoyLbl.visible = d4i === last;   // v72.25
       const d = obj.userData.statusDisc; if (!d) return;
       const t = DATA.towers[obj.userData.towerIdx]; if (!t) return;
       const fund = (typeof towerFundAt === 'function') ? towerFundAt(t, d4i) : towerCivilAt(t, d4i), p = towerCivilAt(t, d4i);
@@ -13002,7 +13024,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   if (leg && !leg.querySelector('.bimx-leg')) leg.insertAdjacentHTML('beforeend', `<span class="bimx-leg"><i style="background:#7fc99a"></i> Obra civil concluida</span>
         <span class="bimx-leg"><i style="background:#b1cc3d"></i> En ejecución</span>
         <span class="bimx-leg"><i style="background:#8b9490"></i> Sin iniciar</span>
-        <span class="bimx-leg"><i class="ring"></i> Bloqueada (look-ahead)</span>`);
+        <span class="bimx-leg"><i class="ring"></i> Bloqueada (look-ahead)</span>${INTERV && Object.keys(INTERV.torres||{}).length ? `
+        <span class="bimx-leg" title="${INTERV.fuente}"><i class="hoy"></i> Intervenida el ${intervFecha()}</span>` : ''}`);
   try { renderFilters(); drawTowerList(); } catch(e){}
 })();
 </script>
