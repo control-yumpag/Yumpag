@@ -7815,8 +7815,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 </div>
 
 <div class="nav" id="nav">
-  <button data-v="v-dec" class="active dec-badge" data-n="0"><span class="ic">🎯</span> ¿Dónde intervenir?</button>
-  <button data-v="v-res"><span class="ic">◈</span> Resumen</button>
+  <button data-v="v-res" class="active"><span class="ic">◈</span> Resumen</button>
   <button data-v="v-bim" class="bim-badge"><span class="ic">🏛️</span> BIM 4D · Construcción</button>
   <button data-v="v-proc"><span class="ic">🏗️</span> Proceso Constructivo</button>
   <button data-v="v-fot"><span class="ic">📷</span> Fotos de obra</button>
@@ -7825,48 +7824,9 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 
 <div class="views">
 
-  <!-- ==================== CENTRO DE DECISIÓN ==================== -->
-  <section id="v-dec" class="view on">
-    <div class="dc-head">
-      <div><h2>¿Dónde debo intervenir hoy?</h2><div class="sub" id="dcSub"></div></div>
-      <div class="dc-cnt" id="dcCnt"></div>
-    </div>
-    <div class="card dc-sint" id="dcSint"><h3><span class="dot"></span>Síntesis ejecutiva · <span id="sxDate"></span></h3>
-      <div class="desc">Estado del proyecto en una mirada y las decisiones del día, generadas por reglas a partir del reporte diario, la Base de seguimiento MS (LB0 / LB1 / ejecutado por partida) y el lookahead 3W. Clic en una torre para abrirla en el BIM.</div>
-      <div class="sx" id="sxBody"></div>
-      <div class="sx-foot" id="sxFoot"></div></div>
-
-    <div class="kpi accent"><div class="lab">Desfase vs Línea Base 1</div><div class="val" id="dk1">—</div><div class="foot" id="dk1f"></div><svg id="ds1" width="120" height="30" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
-    <div class="kpi"><div class="lab">Ritmo diario · obs / requerido</div><div class="val" id="dk2">—</div><div class="foot" id="dk2f"></div><svg id="ds2" width="120" height="30" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
-    <div class="kpi"><div class="lab">SPI integral (forecast)</div><div class="val" id="dk3">—</div><div class="foot" id="dk3f"></div><svg id="ds3" width="120" height="30" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
-    <div class="kpi"><div class="lab">Operativos en campo</div><div class="val" id="dk4">—</div><div class="foot" id="dk4f"></div><svg id="ds4" width="120" height="30" viewBox="0 0 120 30" preserveAspectRatio="none"></svg></div>
-    <div class="kpi"><div class="lab">SSOMA · alto riesgo abiertas</div><div class="val" id="dk5">—</div><div class="foot" id="dk5f"></div></div>
-    <div class="kpi"><div class="lab">Torres con siguiente actividad lista</div><div class="val" id="dk6">—</div><div class="foot" id="dk6f"></div></div>
-
-    <div class="card dc-main"><h3><span class="dot"></span>Asuntos que requieren atención · Hecho → Análisis → Riesgo → Recomendación → Fuente</h3>
-      <div class="desc">Generados por reglas de gestión por excepción (equipo digital). Los críticos se muestran desplegados; alertas e informativos, plegados. Clic en un asunto para ver hecho, análisis, riesgo y recomendación.</div>
-      <div class="dc-filters" id="dcFilters"></div>
-      <div class="body scroll" id="dcList"></div></div>
-    <div class="card dc-side"><h3><span class="dot"></span>Look-ahead · ¿está lista la siguiente actividad?</h3>
-      <div class="desc">Readiness por torre: acceso, excavación, topografía, equipos, materiales y restricciones. Clic en la fila para la ficha 360 de la torre.</div>
-      <div class="body scroll"><table class="la" id="dcLA"><thead><tr><th>Torre</th><th>Obra civil</th><th>Siguiente</th><th>Chequeos</th><th></th></tr></thead><tbody></tbody></table></div></div>
-
-    <div class="card dc-bottom-l"><h3><span class="dot"></span>Restricciones abiertas (matriz de supervisión)</h3>
-      <div class="desc">Regla: alerta si una restricción sigue abierta más de 14 días después de su fecha límite.</div>
-      <div class="body scroll"><table class="rs" id="dcRes"><thead><tr><th>#</th><th>Actividad / restricción</th><th>Resp.</th><th>Límite</th><th class="num">Días vencida</th></tr></thead><tbody></tbody></table></div></div>
-    <div class="card dc-bottom-m"><h3><span class="dot"></span>Hitos regulatorios y de construcción</h3>
-      <div class="desc">Fecha prevista (forecast) por hito; ✓ cumplido · ! pendiente. Fuente: hoja Dashboard del reporte semanal.</div>
-      <div class="body scroll"><div class="miles" id="dcMiles"></div></div></div>
-    <div class="card dc-bottom-a"><h3><span class="dot"></span>Alertas y comentarios de control</h3>
-      <div class="desc" id="dcAlrDesc">Comentarios de control (hoja Dashboard del semanal / reporte diario), editados cada semana en textos_semNN.json.</div>
-      <div class="body scroll"><div class="alr" id="dcAlr"></div></div></div>
-    <div class="card dc-bottom-r"><h3><span class="dot"></span>Expediente · busca en los hechos del proyecto</h3>
-      <div class="desc">Índice de hechos con fuente y fecha (reporte semanal, reporte diario, datos de campo, registro fotográfico). Escribe una torre, un acceso, una palabra clave.</div>
-      <div class="body scroll" id="dcExp"></div>
-      <div class="dc-note" id="dcExpNote"></div></div>
-  </section>
+  <!-- v72.27 (06-Oct-26, pedido del usuario): se retiró la pestaña «¿Dónde intervenir?» (Centro de decisión); el tablero completo abre en Resumen -->
   <!-- ==================== RESUMEN ==================== -->
-  <section id="v-res" class="view">
+  <section id="v-res" class="view on">
     <!-- La tarjeta de personal operativo se retiró de la vista; estos contenedores
          ocultos evitan tocar la lógica que la rellenaba. -->
     <div id="persOculto" hidden><div id="persDesc"></div><div id="persK"></div><div id="persT"></div></div>
@@ -12452,6 +12412,7 @@ function initApp(){
 }
 
 window.addEventListener('load', initApp);
+window.addEventListener('load', () => setTimeout(() => { try { const v = document.getElementById('v-res'); if (v && v.classList.contains('on') && typeof drawAvanceFisico === 'function') drawAvanceFisico(); } catch(e){} }, 400));   // v72.27: Resumen es la vista inicial
 window.addEventListener('resize', () => {
   draw4D();
   onBIMResize();
@@ -12644,7 +12605,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     const d = $('dcAlrDesc'); if (d) d.textContent = BRIEF.corte_diario ? `${comentarios.length} comentarios de control de la semana ${BRIEF.semana} (editados del reporte diario del ${fd(BRIEF.fecha_campo)} en textos_semNN.json); el último informe semanal es el de la Sem ${BRIEF.semana_reporte || BRIEF.semana - 1} (${fd(BRIEF.corte_semanal)}).` : `${comentarios.length} comentarios de control del reporte semanal (Sem ${BRIEF.semana}, corte ${fd(BRIEF.corte_semanal)}); se editan cada semana en textos_semNN.json.`;
     el.innerHTML = comentarios.map(c => `<div class="al ${c.c}"><div class="af">${esc(c.f)}</div><div class="at">${esc(c.t)}</div><div class="ax">${esc(c.x)}</div></div>`).join('');
   }
-  try { renderHead(); renderFilters(); renderList(); renderLA(); renderRes(); renderMiles(); renderAlertas(); renderExp(); } catch(e){ console.error('Centro de decisión', e); }
+  if ($('v-dec')) try { renderHead(); renderFilters(); renderList(); renderLA(); renderRes(); renderMiles(); renderAlertas(); renderExp(); } catch(e){ console.error('Centro de decisión', e); }   // v72.27: la pestaña ya no existe
   document.addEventListener('dc:theme', () => { try { renderHead(); } catch(e){} });   // sparklines con los colores del tema
 })();
 </script>
