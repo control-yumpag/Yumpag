@@ -11243,7 +11243,8 @@ function renderKPIs(){
       const ej  = E ? E.ev  : AVFIS.ejec[k];
       const lb1 = E ? E.lb1 : AVFIS.recup[k];
       const lb0 = E ? E.lb0 : AVFIS.base[k];
-      const ref = E ? ('al ' + (DATA.corte_diario.fecha||'').slice(8) + '-set') : ('S' + AVFIS.corte);
+      const fcd = (DATA.corte_diario && DATA.corte_diario.fecha) || '', MESc = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+      const ref = E ? ('al ' + fcd.slice(8, 10) + '-' + (MESc[+fcd.slice(5, 7) - 1] || '')) : ('S' + AVFIS.corte);   // v72.28: mes real del corte (antes fijo «-set»)
       const spi1 = (ej != null && lb1 > 0) ? ej/lb1 : null;   // vs planificado (PdR)
       const spi0 = (ej != null && lb0 > 0) ? ej/lb0 : null;   // vs contractual
       const col = v => v == null ? '' : (v >= .95 ? 'var(--lime)' : (v >= .8 ? 'var(--amber)' : 'var(--red)'));
@@ -11261,7 +11262,7 @@ function renderKPIs(){
       if(a) a.textContent='—'; if(b) b.textContent='—';
     }
   })();
-  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres; ${F(DATA.ocGlobalPond)} % ponderado por pesos). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${F(pr.civil)}%</b>) y la llegada de los materiales de puesta a tierra (envío previsto para el 08-Set-26 vencido; el reporte ⟦reporte⟧ del ⟦fecha_dm⟧ tampoco confirma la llegada) marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag. SPI de construcción ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0) · S${AVFIS.corte} de obra.`;
+  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres; ${F(DATA.ocGlobalPond)} % ponderado por pesos). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${F(pr.civil)}%</b>) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de construcción ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0) · S${AVFIS.corte} de obra.`;
 }
 
 /* Crea el gráfico solo si su canvas sigue existiendo (hay vistas que se retiraron) */
