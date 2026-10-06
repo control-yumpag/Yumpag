@@ -9823,9 +9823,15 @@ function abrirFoto(src, lista){
   { const im=box.querySelector('img'); box.dataset.src=f.src; im.src=f.mini||f.src;   // v72.13: se ve al instante y se afina al llegar la de 800 px
     if (f.mini && f.mini!==f.src){ const big=new Image(); big.onload=()=>{ if (box.dataset.src===f.src) im.src=f.src; }; big.src=f.src; }
     if (ftNav.lista) [ftNav.i-1, ftNav.i+1].forEach(j=>{ const g=ftNav.lista[j]; if (g){ const x=new Image(); x.src=g.src; } }); }
-  const vis=esVisita(), et=etqTxt(f), ORIG={'EXIF':'EXIF de la cámara', 'nombre':'nombre del archivo', 'sello':'sello de la foto', 'carpeta':'carpeta del día'};
-  const priv = vis ? '' : [f.fecha_obs?`<span class="ftb-rev">fecha: ${f.fecha_obs}</span>`:'', f.origen_fecha?(f.origen_fecha==='revisada'?'fecha revisada':`fecha por ${ORIG[f.origen_fecha]||f.origen_fecha}`):'', f.origen_ubicacion?`ubicación por ${f.origen_ubicacion}`:'', `#${fotCod(f)} · ${f.id||''}`].filter(Boolean).join(' · ');
-  box.querySelector('.ftb-pie').innerHTML=`<b>${f.torre||(f.camino?'Camino '+f.camino:(f.zona||'Otras'))}</b>${f.torre&&f.camino?` · junto a ${f.camino}`:''} · ${f.fecha}${f.hora?' '+f.hora:''} · ${f.categoria}${f.fase?` · <b>${faseTxt(f)}</b>${et?` (${f.etiquetador==='yolo'?`<span class="ftb-rev">${et}</span>`:et})`:''}`:''}${f.coherente===false?` · <span class="ftb-rev">⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}</span>`:''}${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${f.alt?` · ${Math.round(f.alt)} m`:''}${f.estado==='conf'?' · <span class="ftb-rev">torre por confirmar</span>':''}${ftNav.lista?` · ${ftNav.i+1}/${ftNav.lista.length}`:''}${f.descripcion?`<br><span class="ftb-desc">«${f.descripcion}»${f.pata?` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}`:''}</span>`:''}${f.difuminada||f.documento?`<br><span class="ftb-priv">${f.documento?'Documento pixelado':`Rostro${f.difuminada>1?'s':''} difuminado${f.difuminada>1?'s':''}${f.difuminada>1?` (${f.difuminada} personas)`:''}`}${vis?' por privacidad':' para el portal · el original queda en el archivo privado'}</span>`:''}${priv?`<br><small>${priv}</small>`:''}`;
+  // v72.30 (06-Oct-26, pedido del usuario): el pie solo dice dónde está (torre o camino), su UTM y una breve descripción si está clara
+  // (pie del PPT o fase revisada; no la etiqueta de YOLO). Nada del proceso (difuminado, origen de fecha/ubicación, código, avisos):
+  // eso queda en el panel «Por revisar»; en modo completo el código #xxxxxx sale al pasar el puntero por la foto.
+  const vis=esVisita(), escP = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const lugar = f.torre || (f.camino ? 'Camino ' + f.camino : (f.zona || 'Otras'));
+  const faseClara = f.fase && f.etiquetador !== 'yolo' && !['personas','otro','documento','baño'].includes(f.fase) && faseTxt(f) !== 'Otras fotos';
+  const desc = f.descripcion ? escP(f.descripcion) : (faseClara ? faseTxt(f) + (f.pata ? ` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}` : '') : '');
+  box.querySelector('.ftb-pie').innerHTML=`<b>${escP(lugar)}</b>${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${desc?`<br><span class="ftb-desc">${desc}</span>`:''}`;
+  box.querySelector('img').title = vis ? '' : `#${fotCod(f)}`;
   box.style.display='flex';
 }
 
