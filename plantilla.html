@@ -9329,7 +9329,7 @@ function utmAEscena(E,N){
 }
 const FOTOS_VISITA_SOLO_AVANCE = false;                             // v72.8 (27-Set-26): la visita muestra todas las fotos; las personas salen difuminadas y los documentos pixelados desde el carril de fotos
 const esVisita = () => !!document.getElementById('visitaChip');
-const FASE_TXT = {acceso:'Acceso', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Vaciado', relleno:'Relleno', pat:'PAT', otras:'Otras fotos'};
+const FASE_TXT = {acceso:'Acceso', 'topografía':'Topografía', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Vaciado', relleno:'Relleno', pat:'PAT', otras:'Otras fotos'};
 const faseTxt = f => f.fase ? (FASE_TXT[f.fase]||f.fase) : '';
 /* v72.8: zonas de las fotos sin torre ni camino (fotos_build.zona_de) */
 const FOT_ZONAS = ['Campamento','Charlas','Otras'];
@@ -9343,7 +9343,7 @@ let FOT_CAMPAMENTO = null;                                           // {utm:[E,
    toda foto sin fase de obra (personas, otro, sin fase) se muestra como «Otras fotos»; la etiqueta interna queda en fase_orig
    (YOLO la sigue usando en el carril de fotos). mini = miniatura de 320 px (~13 KB) para listas, película y ficha de torre;
    src = copia de 800 px, solo para verla en grande. */
-const FASES_OBRA = ['acceso','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat'];
+const FASES_OBRA = ['acceso','topografía','excavación','solado','stub','acero','encofrado','vaciado','relleno','pat'];
 function fotNormalizar(f){
   const src = 'fotos/' + f.archivo;
   return Object.assign({}, f, { src, mini: f.mi ? src.replace(/([^/]+)$/, 'm/$1') : src,
@@ -9429,7 +9429,7 @@ function pintarAlertaFotos(){
    PESTAÑA FOTOS DE OBRA (v72.3) · histórico fotográfico por torre y camino
    Solo usa fotos/fotos.json (FOTOS_CAMPO), GEO/CAMINOS_KMZ (plano) y DATA.towers[].seq (% oficial por día).
    ===================================================================== */
-const FASE_COLOR = {acceso:'#6b8e23', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', otras:'#8f9a96'};
+const FASE_COLOR = {acceso:'#6b8e23', 'topografía':'#1fa2c4', 'excavación':'#b07a3a', solado:'#9aa5b1', stub:'#4a6fa5', acero:'#c0392b', encofrado:'#d9a441', vaciado:'#2d7667', relleno:'#7a5c3a', pat:'#8e44ad', otras:'#8f9a96'};
 const FASES_ORD = [...FASES_OBRA, 'otras'];
 const faseColor = f => f && f.fase ? (FASE_COLOR[f.fase]||'#8f9a96') : '#c2ccc8';
 const FASE_ACT = {acceso:'Caminos', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Concreto', relleno:'Relleno', pat:'PAT'};   // fase de la foto → actividad del Resumen
