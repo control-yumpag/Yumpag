@@ -15577,7 +15577,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     if(!h) return '<div class="hi-nada">Sin eventos.</div>';
     const c=CAT[h.cat], f=fotoDe(h), i=v.findIndex(x=>x.id===h.id);
     const fot = f ? `<figure class="hi-foto" data-src="${f.src}" title="Ampliar"><img src="${f.mini||f.src}" data-big="${f.src}" alt="Evidencia: ${esc(h.titulo)}"><figcaption>📷 Evidencia · foto del ${fc(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}${f.torre?' · '+f.torre:(f.zona?' · '+f.zona:'')}${f.difuminada?' · rostros difuminados':''} · clic para ver en grande</figcaption></figure>`
-      : (h.foto ? '<div class="hi-sinfoto">Cargando la foto de evidencia…</div>' : '<div class="hi-sinfoto">Sin foto de evidencia para este evento.</div>');
+      : ((h.foto && !(typeof FOTOS_CAMPO!=='undefined' && FOTOS_CAMPO.length)) ? '<div class="hi-sinfoto">Cargando la foto de evidencia…</div>' : '');   // v72.29: sin foto no se muestra nada (antes «Sin foto de evidencia para este evento.»)
     return `<div class="cab"><span class="hi-cat" style="--c:${c.c}">${c.t}</span>${h.sev===3?'<span class="hi-sev">★★★ crítico</span>':''}${h.paraliza?`<span class="hi-par">paralización ${h.paraliza}</span>`:''}
         <span>· ${rango(h)} · Reporte diario ${h.reporte}</span>${dur(h)>1?`<span class="hi-dur">⏱ ${dur(h)} días${h.duracion_nota?' · '+esc(h.duracion_nota):''}</span>`:''}
         <span class="nav2"><button data-n="-1" ${i<=0?'disabled':''} title="Evento más reciente">‹</button><button data-n="1" ${i<0||i>=v.length-1?'disabled':''} title="Anterior en el tiempo">›</button></span></div>
