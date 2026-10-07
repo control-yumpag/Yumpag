@@ -7722,7 +7722,8 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .ev-res b{color:var(--ink)}
 .cl-dias{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .cl-d{border:1px solid var(--line);border-radius:9px;padding:6px 7px;display:flex;flex-direction:column;gap:2px;min-width:0}
-.cl-d .dd{font-size:.62rem;font-weight:700;color:var(--ink-2);text-transform:capitalize}
+.cl-d .dd{font-size:.62rem;font-weight:700;color:var(--ink-2)}
+.cl-d .dd::first-letter{text-transform:uppercase}
 .cl-d .ic{font-size:1.35rem;line-height:1.1}
 .cl-d .tt{font-family:"Archivo";font-weight:800;font-size:.92rem;color:var(--ink);font-variant-numeric:tabular-nums}
 .cl-d .tt small{font-weight:600;color:var(--sky-2)}
@@ -15093,14 +15094,15 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     if (!dias.length){ body.innerHTML = h + '<div class="ev-res">El pronóstico publicado ya venció.</div>'; return; }
     h += '<div class="cl-dias">' + dias.map(d => {
       const f = dia0(d.fecha), [vc, vt] = veredicto(d);
-      const dd = f.toLocaleDateString('es-PE', { weekday: 'short' }).replace('.', '') + ' ' + fDM(f) + (d.fecha === hoyS ? ' · hoy' : '');
+      const dd = f.toLocaleDateString('es-PE', { weekday: 'short' }).replace('.', '') + ' ' + fDM(f) + (d.fecha === hoyS ? ' · hoy' + (d.desde ? ' desde ' + parseInt(d.desde, 10) + ' h' : '') : '');
       const frio = d.tmin != null && d.tmin < CRIT.frio ? `<span class="cl-hel">${d.tmin <= 0 ? '❄ Helada' : 'Frío'} (mín ${T1(d.tmin)}): proteger el concreto fresco</span>` : '';
-      const ll = `Lluvia ${MM(d.lluvia_mm)} mm · jornada ${MM(d.lluvia_jornada_mm)} mm<br>Prob. ${d.prob_max != null ? Math.round(d.prob_max) + ' %' : '—'}${d.tormenta_max != null ? ' · tormenta ' + Math.round(d.tormenta_max) + ' %' : ''}<br>` +
-                 `Ráfagas ${d.rafaga_max_kmh != null ? Math.round(d.rafaga_max_kmh) + ' km/h' : '—'}${d.horas_secas_jornada != null ? ' · ' + d.horas_secas_jornada + ' de ' + d.horas_jornada + ' h secas' : ''}`;
+      const pr = [d.prob_max != null ? 'prob. ' + Math.round(d.prob_max) + ' %' : '', d.tormenta_max != null ? 'tormenta ' + Math.round(d.tormenta_max) + ' %' : ''].filter(Boolean).join(' · ');   // MET no las publica para todas las zonas
+      const ll = `Lluvia ${MM(d.lluvia_mm)} mm · jornada ${MM(d.lluvia_jornada_mm)} mm${d.horas_secas_jornada != null ? '<br>' + d.horas_secas_jornada + ' de ' + d.horas_jornada + ' h de jornada sin lluvia' : ''}` +
+                 `${pr ? '<br>' + pr.charAt(0).toUpperCase() + pr.slice(1) : ''}<br>Ráfagas ${d.rafaga_max_kmh != null ? Math.round(d.rafaga_max_kmh) + ' km/h' : '—'} · ${esc(simTxt(d.simbolo))}`;
       return `<div class="cl-d" title="${esc(simTxt(d.simbolo))} · datos ${esc(d.resolucion || '')}${d.desde ? ' desde las ' + d.desde : ''}"><span class="dd">${dd}</span><span class="ic">${icono(d.simbolo)}</span>
         <span class="tt">${T1(d.tmax)} <small>/ ${T1(d.tmin)}</small></span><span class="ll">${ll}</span><span class="cl-v ${vc}">${vt}</span>${frio}</div>`;
     }).join('') + '</div>';
-    h += `<div class="cl-foot">Datos: MET Norway (Locationforecast 2.0, CC BY 4.0), ${esc((C.punto || {}).nombre || '')} a ${(C.punto || {}).alt || '—'} m s.n.m., publicado el ${genTxt}. Criterio del tablero, orientativo: desfavorable con ≥ ${CRIT.mmMalo} mm de lluvia en la jornada (${esc(C.jornada || '07:00–17:00')}) o tormenta ≥ ${CRIT.tormMala} %; con riesgo con ≥ ${CRIT.mmRiesgo} mm, probabilidad ≥ ${CRIT.probRiesgo} % o tormenta ≥ ${CRIT.tormRiesgo} %. Mínima bajo ${CRIT.frio} °C: clima frío (ACI 306R), proteger y curar el concreto.</div>`;
+    h += `<div class="cl-foot">Datos: MET Norway (Locationforecast 2.0, CC BY 4.0), ${esc((C.punto || {}).nombre || '')} a ${(C.punto || {}).alt || '—'} m s.n.m., publicado el ${genTxt}. Criterio del tablero, orientativo: desfavorable con ≥ ${CRIT.mmMalo} mm de lluvia en la jornada (${esc(C.jornada || '07:00–17:00')}) o probabilidad de tormenta ≥ ${CRIT.tormMala} %; con riesgo con ≥ ${CRIT.mmRiesgo} mm, tormenta en el pronóstico o, cuando MET las publica, probabilidad de lluvia ≥ ${CRIT.probRiesgo} % o de tormenta ≥ ${CRIT.tormRiesgo} %. Mínima bajo ${CRIT.frio} °C: clima frío (ACI 306R), proteger y curar el concreto.</div>`;
     body.innerHTML = h;
   }
 
