@@ -2689,6 +2689,10 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .sx-n small .sx-src::before{content:"";}
 .sx-crit{font-size:.6rem;line-height:1.4;color:var(--ink-2);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:4px 0 6px}
 .sx-crit b{color:var(--ink)}
+
+/* v72.32: foto que no se pudo cargar (ver _cargarFotosCampo) */
+figure.ft-rota,.hi-foto.ft-rota{display:none!important}
+.lt-p.ft-rota img{visibility:hidden}
 </style>
 <script>
 /* GLTFLoader */
@@ -9355,9 +9359,20 @@ function cargarFotosCampo(){
   if (!_fotosCarga) _fotosCarga = _cargarFotosCampo().finally(() => { if (!FOTOS_CAMPO.length) setTimeout(() => { _fotosCarga = null; }, 60000); });
   return _fotosCarga;
 }
+/* v72.32: el índice se pide con una marca por minuto (GitHub Pages lo guarda hasta ~10 min en su caché: con el índice viejo
+   y las fotos nuevas salían miniaturas rotas); si una foto no carga se intenta la copia de 800 px y, si tampoco está, se oculta
+   y el índice se vuelve a pedir una vez sin caché */
+let _fotSuf = '?v=' + Math.floor(Date.now() / 60000), _fotRecarga = false;
+document.addEventListener('error', ev => {
+  const im = ev.target; if (!im || im.tagName !== 'IMG') return;
+  const s = im.getAttribute('src') || ''; if (!/(^|\/)fotos\//.test(s)) return;
+  if (/\/m\//.test(s) && !im.dataset.reint){ im.dataset.reint = '1'; im.src = s.replace('/m/', '/'); return; }
+  const c = im.closest('figure, .lt-p, .hi-foto'); if (c) c.classList.add('ft-rota'); else im.style.visibility = 'hidden';
+  if (!_fotRecarga){ _fotRecarga = true; setTimeout(() => { _fotSuf = '?r=' + Date.now(); _fotosCarga = null; cargarFotosCampo(); }, 1200); }
+}, true);
 async function _cargarFotosCampo(){
   try{
-    const r = await fetch('fotos/fotos.json', {cache:'no-cache'}); if(!r.ok) return;
+    const r = await fetch('fotos/fotos.json' + _fotSuf, {cache:'no-cache'}); if(!r.ok) return;
     const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(fotNormalizar); FOT_CAMPAMENTO = j.campamento || null;
     try{ const ra = await fetch('fotos/avance_actividad.json', {cache:'no-cache'}); if (ra.ok) window.FOTOS_AVANCE = (await ra.json()).dias || {}; }catch(e){}   // % global por actividad y día (Resumen, columna EV)
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
