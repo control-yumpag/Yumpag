@@ -7688,6 +7688,53 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 #v-res .card .body:has(> #chTowers){height:230px;min-height:230px;max-height:230px}
 #v-res .card .body > canvas{max-height:100%}
 @media(max-width:860px){#v-res .card.half .body:has(> #chPhase),#v-res .card.half .body:has(> #chAct){height:180px;min-height:180px;max-height:180px}}
+/* ---- v72.34: fila «hoy» del Resumen — pronóstico de término (Earned Schedule) · avance con evidencia fotográfica · clima en obra ---- */
+#v-res .third{grid-column:span 2;min-height:max-content}
+#v-res .third .body{min-height:0!important;flex:none}
+@media(max-width:1100px){#v-res #pronCard,#v-res #evidCard{grid-column:span 2}#v-res #climaCard{grid-column:span 4}}
+@media(max-width:860px){#v-res .third,#v-res #pronCard,#v-res #evidCard,#v-res #climaCard{grid-column:span 2}}
+.pr-big{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.pr-big>b{font-family:"Archivo";font-size:1.55rem;font-weight:800;line-height:1;color:var(--red)}
+.pr-big span b{color:var(--ink)}
+.pr-big span{font-size:.68rem;color:var(--ink-2);line-height:1.3;flex:1;min-width:150px}
+.pr-g{display:grid;grid-template-columns:1fr auto auto;gap:3px 10px;margin-top:8px;font-size:.66rem;align-items:baseline}
+.pr-g .h{font-size:.56rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.35px;font-weight:600}
+.pr-g .n{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;color:var(--ink)}
+.pr-g .l{color:var(--ink-2)}
+.pr-fin{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;display:grid;gap:3px;font-size:.66rem;color:var(--ink-2)}
+.pr-fin div{display:flex;justify-content:space-between;gap:8px}
+.pr-fin b{font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.pr-fin .mal b{color:var(--red)}
+.pr-foot,.ev-foot,.cl-foot{font-size:.56rem;color:var(--ink-mut);margin-top:7px;line-height:1.35}
+.ev-row{display:grid;grid-template-columns:44px 1fr auto;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}
+.ev-row:first-child{border-top:0}
+.ev-t{font-family:"Archivo";font-weight:800;font-size:.8rem;cursor:pointer;color:var(--ink)}
+.ev-t:hover{color:var(--sky-2)}
+.ev-a{font-size:.64rem;color:var(--ink-2);line-height:1.45}
+.ev-c{display:inline-block;border-radius:9px;padding:0 6px;margin:1px 3px 1px 0;font-size:.6rem;font-weight:600;white-space:nowrap}
+.ev-c.si{background:var(--lime-soft);color:var(--lime)}
+.ev-c.no{background:var(--red-soft);color:var(--red)}
+.ev-c.na{background:var(--panel-2);color:var(--ink-mut)}
+.ev-m{display:flex;gap:3px}
+.ev-m img{width:44px;height:44px;object-fit:cover;border-radius:5px;cursor:zoom-in;display:block;background:var(--panel-2)}
+.ev-m .ft-rota{display:none}
+.ev-res{font-size:.68rem;color:var(--ink-2);margin-bottom:2px}
+.ev-res b{color:var(--ink)}
+.cl-dias{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cl-d{border:1px solid var(--line);border-radius:9px;padding:6px 7px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cl-d .dd{font-size:.62rem;font-weight:700;color:var(--ink-2);text-transform:capitalize}
+.cl-d .ic{font-size:1.35rem;line-height:1.1}
+.cl-d .tt{font-family:"Archivo";font-weight:800;font-size:.92rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-d .tt small{font-weight:600;color:var(--sky-2)}
+.cl-d .ll{font-size:.6rem;color:var(--ink-2);line-height:1.35}
+.cl-v{display:inline-block;align-self:flex-start;border-radius:9px;padding:1px 7px;font-size:.6rem;font-weight:700;margin-top:2px}
+.cl-v.ok{background:var(--lime-soft);color:var(--lime)}
+.cl-v.ri{background:var(--amber-soft);color:var(--amber)}
+.cl-v.ma{background:var(--red-soft);color:var(--red)}
+.cl-hel{font-size:.58rem;color:var(--sky-2);font-weight:600}
+.cl-viejo{font-size:.62rem;color:var(--red);margin-bottom:4px}
+.tw-evid{display:block;margin-top:2px;font-weight:500;opacity:.92}
+.tw-evid:empty{display:none}
 /* ---- v42 (M-11 / M-12): contraste de textos pequeños en oliva / teal / rojo ---- */
 :root:not([data-theme="dark"]) .pc-val,:root:not([data-theme="dark"]) .pc-sec span{color:#5f7320}
 :root:not([data-theme="dark"]) #v-dec .dc-cnt .w,:root:not([data-theme="dark"]) #v-dec .hz.warn .sev,:root:not([data-theme="dark"]) #v-dec .hz-grp.warn .hz-gh .sev{color:#4e5c15;border-color:#4e5c15}
@@ -7845,6 +7892,14 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       <div class="big" style="color:var(--amber)">En ejecución · Ruta crítica en cimentaciones (PdR Línea Base 1) y materiales de PAT</div>
       <div class="txt" id="vd-txt"></div>
     </div>
+
+    <!-- v72.34 (07-Oct-26): fila «hoy» — pronóstico de término por Earned Schedule, avance del día con evidencia fotográfica y clima en obra -->
+    <div class="card third" id="pronCard"><h3><span class="dot"></span>Pronóstico de término · Earned Schedule</h3>
+      <div class="desc" id="pronDesc"></div><div class="body" id="pronBody"></div></div>
+    <div class="card third" id="evidCard"><h3><span class="dot"></span>Avance del día con evidencia fotográfica</h3>
+      <div class="desc" id="evidDesc"></div><div class="body" id="evidBody"><div class="ev-res">Cargando las fotos de obra…</div></div></div>
+    <div class="card third" id="climaCard"><h3><span class="dot"></span>Clima en obra · vaciados</h3>
+      <div class="desc" id="climaDesc">Pronóstico para los próximos días a 4 550 m s.n.m. (centro de la línea) y criterio para programar vaciados.</div><div class="body" id="climaBody"><div class="ev-res">Cargando el pronóstico…</div></div></div>
 
     <div class="card half"><h3><span class="dot"></span>Avance por macro-fase constructiva</h3>
       <div class="desc">Cada torre atraviesa 3 fases en secuencia: acceso → obra civil → electromecánica. Promedio de las 23 estructuras.</div>
@@ -8196,6 +8251,40 @@ const INTERV = (DATA.corte_diario && DATA.corte_diario.intervenidas) || null;
 function intervDe(tt){ const L = INTERV && INTERV.torres && INTERV.torres[tt]; return (L && L.length) ? L : null; }
 function intervFecha(){ if (!INTERV) return ''; const d = new Date(INTERV.fecha + 'T12:00:00'), M = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic']; return String(d.getDate()).padStart(2,'0') + '-' + M[d.getMonth()]; }
 function intervTxt(tt){ const L = intervDe(tt); if (!L) return ''; return 'Intervenida el ' + intervFecha() + ': ' + L.map(x => x.act + ' ' + (typeof x.pct === 'number' ? String(x.pct).replace('.', ',') + ' %' : x.pct)).join(', '); }
+/* v72.34 (07-Oct-26): avance del día con evidencia fotográfica — para cada actividad marcada en el Resumen (INTERV), las fotos de ese
+   día y esa torre cuya fase reconocida coincide (para Caminos, también las de sus caminos de acceso: CAMINOS_DET). Solo cuenta: no
+   cambia ningún %. Actividades sin fase fotográfica equivalente (remediación, eliminación, muros) quedan fuera de la cuenta. */
+const EVID_FASE = {'Caminos':['acceso'], 'Excavación':['excavación'], 'Solado':['solado'], 'Stub':['stub','topografía'], 'Acero':['acero'],
+  'Encofrado':['encofrado'], 'Concreto':['vaciado'], 'Relleno compactado':['relleno'], 'Excavación PAT':['pat'], 'Contrapeso PAT':['pat'],
+  'Relleno PAT':['pat','relleno'], 'Medición de resistencia PAT':['pat']};
+function caminosDeTorre(tt){
+  const D = window.CAMINOS_DET, r = D && (D.torres || []).find(x => x.t === tt), s = new Set();
+  if (r){ (r.deps || []).forEach(d => d.c && s.add(d.c)); if (r.peat && r.peat.c) s.add(r.peat.c); if (r.pa) s.add(r.pa); }
+  return s;
+}
+function evidDe(tt){
+  const L = intervDe(tt); if (!L || typeof FOTOS_CAMPO === 'undefined' || !FOTOS_CAMPO.length) return null;
+  const dia = INTERV.fecha, cams = caminosDeTorre(tt);
+  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
+  const acts = L.map(x => {
+    const fs = EVID_FASE[x.act]; if (!fs) return { act: x.act, pct: x.pct, n: null, fotos: [] };
+    const m = delDia.filter(f => fs.includes(f.fase) && (f.torre === tt || x.act === 'Caminos'));
+    return { act: x.act, pct: x.pct, n: m.length, fotos: m };
+  });
+  const ap = acts.filter(a => a.n !== null), con = ap.filter(a => a.n > 0);
+  const ultima = FOTOS_CAMPO.reduce((m, f) => f.fecha > m ? f.fecha : m, '');
+  const estado = !ap.length ? 'na' : con.length === ap.length ? 'ok' : con.length ? 'parcial' : ultima < dia ? 'pendiente' : delDia.length ? 'otra' : 'sin';
+  return { tt, dia, acts, delDia, estado };
+}
+function evidTxt(tt){
+  const E = evidDe(tt); if (!E || E.estado === 'na') return '';
+  if (E.estado === 'pendiente') return `📷 Las fotos del ${intervFecha()} aún no están sincronizadas`;
+  if (E.estado === 'sin') return `📷 Sin fotos de ${tt} el ${intervFecha()}`;
+  const det = E.acts.filter(a => a.n !== null).map(a => `${a.act.toLowerCase()} ${a.n ? a.n + ' foto' + (a.n > 1 ? 's' : '') : 'sin foto'}`).join(' · ');
+  return ({ ok: '📷 Con evidencia: ', parcial: '📷 Evidencia parcial: ', otra: '📷 Sin fotos de esa fase: ' })[E.estado] + det +
+    (E.estado === 'otra' ? ` (${E.delDia.length} foto${E.delDia.length > 1 ? 's' : ''} de otra fase ese día)` : '');
+}
+function pintarEvidFicha(){ document.querySelectorAll('.tw-evid[data-t]').forEach(el => { el.textContent = evidTxt(el.dataset.t); }); }
 
 const BAC = 4087246, EV_TOT = 2404173;
 const costs = [
@@ -9378,6 +9467,7 @@ async function _cargarFotosCampo(){
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
     { const corte = (DATA.tl_weeks||[])[DATA.tl_weeks.length-1]; if (corte) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.fecha<=corte); }   // v72.4: solo fotos hasta la fecha del corte
     pintarFotosTorre(); pintarAlertaFotos();
+    try{ pintarEvidFicha(); pintarEvidResumen(); }catch(e){ console.warn('evidencia', e); }   // v72.34
     try{ const vf=document.getElementById('v-fot'); if (vf && vf.classList.contains('on')) renderFotosTab(); }catch(e){ console.warn('fotos', e); }   // v72.13: oculta, se arma al abrirla
     try{ if (typeof renderCamProc==='function') renderCamProc(); }catch(e){}
   }catch(e){ /* sin índice de fotos: el tablero funciona igual */ }
@@ -9439,6 +9529,31 @@ function pintarAlertaFotos(){
     <div class="at">${FOTOS_CAMPO.length} fotos indexadas (${fdFoto(fechas[0])}${fechas[0]!==fechas[fechas.length-1]?' – '+fdFoto(fechas[fechas.length-1]):''}) · ${nT} torres · ${nC} caminos${inco.length?` · <span class="ft-inco">⚠ ${inco.length} fotos en ${G.length} torre-día con fase distinta a la reportada</span>`:' · fases coherentes con el reporte'}</div>
     <div class="ax">${inco.length?lin+(G.length>6?` · +${G.length-6} torre-día más`:''):'La fase reconocida en cada foto de avance coincide con el % oficial de su torre ese día.'}${conf.length?` · ${conf.length} foto(s) con torre por confirmar (sin GPS legible: se usó la carpeta).`:''}${(()=>{ const n=FOTOS_CAMPO.filter(f=>(f.obs||[]).length).length; return n?` · ${n} fotos con observación por revisar (pestaña Fotos de obra · Por revisar).`:''; })()} Fotos en la ficha de cada torre (BIM 4D) y en la pestaña Fotos de obra.</div>`;
   el.prepend(div);
+}
+/* v72.34: tarjeta «Avance del día con evidencia fotográfica» del Resumen (evidDe junto a intervTxt) */
+function pintarEvidResumen(){
+  const body = document.getElementById('evidBody'), desc = document.getElementById('evidDesc'); if (!body) return;
+  const TT = INTERV && INTERV.torres ? Object.keys(INTERV.torres).sort() : [];
+  if (!TT.length){ if (desc) desc.textContent = ''; body.innerHTML = '<div class="ev-res">El Resumen del corte no marca torres intervenidas ese día.</div>'; return; }
+  if (desc) desc.textContent = `Frentes trabajados el ${intervFecha()} según el Resumen (celdas marcadas) frente a las fotos de ese día con la misma fase, en la torre o en su camino de acceso.`;
+  if (!FOTOS_CAMPO.length){ body.innerHTML = '<div class="ev-res">Cargando las fotos de obra…</div>'; return; }
+  const E = TT.map(evidDe).filter(Boolean), pc = v => typeof v === 'number' ? String(v).replace('.', ',') + ' %' : (v || '');
+  const nAp = E.filter(e => e.estado !== 'na').length, nOk = E.filter(e => e.estado === 'ok').length, nPar = E.filter(e => e.estado === 'parcial').length;
+  let h = `<div class="ev-res"><b>${nOk} de ${nAp}</b> torre${nAp === 1 ? '' : 's'} intervenida${nAp === 1 ? '' : 's'} con evidencia en todas sus actividades${nPar ? ` · <b>${nPar}</b> con evidencia parcial` : ''}${E.some(e => e.estado === 'pendiente') ? ` · las fotos del ${intervFecha()} aún no están sincronizadas` : ''}</div>`;
+  h += E.map(e => {
+    const chips = e.acts.map(a => a.n === null ? `<span class="ev-c na" title="Sin fase fotográfica equivalente">${a.act} ${pc(a.pct)}</span>`
+      : `<span class="ev-c ${a.n ? 'si' : 'no'}">${a.act} ${pc(a.pct)} · ${a.n ? '📷 ' + a.n : 'sin foto'}</span>`).join('');
+    const extra = e.estado === 'otra' ? `<span class="ev-c na">${e.delDia.length} foto${e.delDia.length > 1 ? 's' : ''} de otra fase</span>` : e.estado === 'sin' ? '<span class="ev-c na">sin fotos ese día</span>' : '';
+    const fotos = [...new Set(e.acts.flatMap(a => a.fotos))].slice(0, 3);
+    return `<div class="ev-row"><span class="ev-t" data-t="${e.tt}" title="Ver ${e.tt} en el BIM 4D">${e.tt}</span><div class="ev-a">${chips}${extra}</div>
+      <div class="ev-m">${fotos.map(f => `<figure style="margin:0"><img src="${f.mini || f.src}" data-src="${f.src}" loading="lazy" decoding="async" alt="${e.tt} ${f.fecha}" title="${(faseTxt(f) + ' · ' + (f.hora || '').slice(0, 5) + (etqTxt(f) ? ' · ' + etqTxt(f) : '')).replace(/"/g, '&quot;')}"></figure>`).join('')}</div></div>`;
+  }).join('');
+  h += `<div class="ev-foot">Fase reconocida por visión (Claude o YOLO, las de YOLO por revisar) o tomada del pie de foto del PPT. «Sin foto» no quiere decir que no se trabajó: solo que ese día no hay foto de esa fase. Clic en una miniatura para verla; en la torre, para abrirla en el BIM 4D.</div>`;
+  body.innerHTML = h;
+  const L = [...new Set(E.flatMap(e => e.acts.flatMap(a => a.fotos)))];
+  body.querySelectorAll('.ev-m img').forEach(im => im.onclick = () => abrirFoto(im.dataset.src, L));
+  body.querySelectorAll('.ev-t').forEach(el => el.onclick = () => { const k = DATA.towers.findIndex(t => t.t === el.dataset.t); if (k < 0) return;
+    const b = document.querySelector('#nav button[data-v="v-bim"]'); if (b) b.click(); setTimeout(() => { selectTower(k); if (typeof bimRouteMode !== 'undefined' && bimRouteMode) irATorreRuta(k); }, 300); });
 }
 /* =====================================================================
    PESTAÑA FOTOS DE OBRA (v72.3) · histórico fotográfico por torre y camino
@@ -11830,7 +11945,7 @@ function drawPataGrid(){
   }
   const gi = GEO.towers[d4sel]||{};
   let s = `<div class="tw-head">${t.t} · ${t.tp}<span>km ${((gi.km||0)/1000).toFixed(3).replace('.','+')} · cota ${Math.round(gi.z||0)} m</span></div>`;
-  if (intervDe(t.t)) s += `<div class="tw-hoy" title="${INTERV.fuente}">🛠 ${intervTxt(t.t)}</div>`;   // v72.25
+  if (intervDe(t.t)) s += `<div class="tw-hoy" title="${INTERV.fuente}">🛠 ${intervTxt(t.t)}<span class="tw-evid" data-t="${t.t}" title="Fotos de ese día con la fase de la actividad marcada (v72.34)">${evidTxt(t.t)}</span></div>`;   // v72.25 · v72.34: evidencia fotográfica
   const _via = bigBar('Vía de acceso', acc, css('--c-acc'), (t.long||0) + ' m', 'Longitud carrozable ' + (t.long||0) + ' m');
   // v68: en la ficha de torre las zapatas A–D ya están en el panel «Cimentaciones» (izquierda del visor):
   // aquí no se repiten ni la obra civil ni la grilla de patas
@@ -14891,6 +15006,109 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     window.addEventListener('resize', () => { fixHeights(); const v = document.querySelector('.view.on'); if (v) resizeChartsIn(v); });
     window.addEventListener('resize', () => { const v = $('v-res'); if (v && v.classList.contains('on')) { try { draw(); } catch(e){} } });
     document.addEventListener('dc:theme', () => { try { draw(); sintesis(); heat(); kpiDesfase(); } catch(e){} }); };
+  if (document.readyState === 'complete') setTimeout(boot, 0); else window.addEventListener('load', () => setTimeout(boot, 0));
+})();
+</script>
+<script id="pron-script">
+/* v72.34 (07-Oct-26, propuesta aprobada por el usuario): fila «hoy» del Resumen.
+   1) Pronóstico de término por Earned Schedule (Lipke; PMI, Practice Standard for Earned Value Management) con la serie diaria de la
+      Base de seguimiento MS (BASE_MS.diario): ES = día en que el plan (PdR o LB0) llegaba al ejecutado de hoy (interpolado entre días);
+      atraso = días transcurridos − ES; SPI(t) = ES / días transcurridos; término = inicio + duración planificada / SPI(t). Además, el
+      término al ritmo observado de los últimos 7 días (BASE_MS.al_corte.ritmo_obs_dia). Nada se lee de otra fuente.
+   2) Avance del día con evidencia fotográfica: pintarEvidResumen() (junto a las fotos de obra); aquí solo se piden las fotos.
+   3) Clima en obra: fotos/clima.json que publica el carril de fotos desde MET Norway (Locationforecast 2.0, CC BY 4.0). */
+(function(){
+  const $ = id => document.getElementById(id);
+  const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const dia0 = s => new Date(s + 'T12:00:00');
+  const masDias = (s, n) => { const d = dia0(s); d.setDate(d.getDate() + Math.round(n)); return d; };
+  const fDMA = d => String(d.getDate()).padStart(2, '0') + '-' + MES[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+  const fDM = d => String(d.getDate()).padStart(2, '0') + '-' + MES[d.getMonth()];
+  const fMA = d => MES[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
+  const N2 = v => v == null || isNaN(v) ? '—' : v.toFixed(2).replace('.', ',');
+  const N0 = v => v == null || isNaN(v) ? '—' : String(Math.round(v)).replace('-', '−');
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  /* ---------- 1) Earned Schedule ---------- */
+  function esDe(serie, ev){
+    for (let k = 0; k < serie.length; k++){ const v = serie[k];
+      if (v != null && v >= ev){ if (!k) return 0; const a = serie[k - 1]; return (k - 1) + (v > a ? (ev - a) / (v - a) : 1); } }
+    return null;
+  }
+  function calc(B, nom){
+    const D = B.diario, S = D && D[nom], ev = B.al_corte && B.al_corte.ev, at = D && D.iCorte;
+    if (!S || ev == null || at == null || !(at > 0)) return null;
+    const e = esDe(S, ev), P = S.findIndex(v => v != null && v >= 99.995); if (e == null) return null;
+    const spi = e / at;
+    return { atraso: at - e, fechaES: masDias(D.fechas[0], e), spi, fin: P >= 0 ? dia0(D.fechas[P]) : null,
+             ieac: (P >= 0 && spi > 0) ? masDias(D.fechas[0], P / spi) : null };
+  }
+  function pron(){
+    const body = $('pronBody'), desc = $('pronDesc'), B = window.BASE_MS; if (!body) return;
+    if (!B || !B.diario || !B.al_corte){ body.innerHTML = '<div class="ev-res">Este corte no trae la Base de seguimiento MS.</div>'; return; }
+    const AC = B.al_corte, D = B.diario, R1 = calc(B, 'lb1'), R0 = calc(B, 'lb0'), fc = D.fechas[D.iCorte], corte = dia0(fc);
+    if (desc) desc.innerHTML = `¿Cuándo terminaría la construcción? El ejecutado al ${fDMA(corte)} (<b>${N2(AC.ev)} %</b> del presupuesto de construcción) frente al día en que cada plan lo alcanzaba.`;
+    if (!R1){ body.innerHTML = '<div class="ev-res">El ejecutado ya supera lo que el Plan de Recuperación pedía al corte: sin atraso que medir.</div>'; return; }
+    const ritmo = AC.ritmo_obs_dia, finRitmo = ritmo > 0 ? masDias(fc, (100 - AC.ev) / ritmo) : null;
+    body.innerHTML = `<div class="pr-big"><b>${N0(R1.atraso)} días</b><span>de atraso frente al Plan de Recuperación: lo ejecutado al ${fDM(corte)} es lo que el PdR pedía el <b>${fDMA(R1.fechaES)}</b>.</span></div>
+      <div class="pr-g"><span class="h">Frente a</span><span class="h">atraso</span><span class="h">SPI(t)</span>
+        <span class="l">Plan de Recuperación (LB1)</span><span class="n">${N0(R1.atraso)} d</span><span class="n">${N2(R1.spi)}</span>
+        ${R0 ? `<span class="l">Línea base contractual (LB0) · lo pedía el ${fDMA(R0.fechaES)}</span><span class="n">${N0(R0.atraso)} d</span><span class="n">${N2(R0.spi)}</span>` : ''}</div>
+      <div class="pr-fin">
+        <div><span>Término según el Plan de Recuperación</span><b>${R1.fin ? fDMA(R1.fin) : '—'}</b></div>
+        <div class="mal"><span>Con la eficiencia acumulada frente al PdR (SPI(t) ${N2(R1.spi)})</span><b>≈ ${R1.ieac ? fDMA(R1.ieac) : '—'}</b></div>
+        <div class="mal"><span>Al ritmo de los últimos 7 días (${N2(ritmo)} %/día)</span><b>${finRitmo ? '≈ ' + fMA(finRitmo) : 'sin avance'}</b></div>
+        <div><span>Ritmo necesario para terminar el ${R1.fin ? fDM(R1.fin) : '—'}</span><b>${N2(AC.ritmo_req_dia)} %/día</b></div></div>
+      <div class="pr-foot">Earned Schedule (Lipke; PMI): mide el atraso en días y, a diferencia del SPI en US$, no tiende a 1 al acercarse el final. ES = día en que el plan llegaba al ejecutado de hoy; SPI(t) = ES / días transcurridos desde el ${fDMA(dia0(D.fechas[0]))}; término = inicio + duración planificada / SPI(t): supone que lo que falta se ejecuta con la misma eficiencia que hasta hoy. Fuente: serie diaria de ${esc(B.archivo || 'la Base de seguimiento MS')}.</div>`;
+  }
+
+  /* ---------- 3) Clima en obra ---------- */
+  const CL_IC = [['thunder', '⛈️'], ['snow', '🌨️'], ['sleet', '🌨️'], ['heavyrain', '🌧️'], ['rainshowers', '🌦️'], ['rain', '🌧️'], ['fog', '🌫️'],
+                 ['partlycloudy', '⛅'], ['cloudy', '☁️'], ['fair', '🌤️'], ['clearsky', '☀️']];
+  const icono = s => { const b = String(s || '').split('_')[0]; const m = CL_IC.find(([k]) => b.includes(k)); return m ? m[1] : '·'; };
+  const CL_TXT = { clearsky: 'despejado', fair: 'poco nuboso', partlycloudy: 'parcialmente nublado', cloudy: 'nublado', fog: 'niebla', lightrainshowers: 'chubascos débiles',
+                   rainshowers: 'chubascos', heavyrainshowers: 'chubascos fuertes', lightrain: 'llovizna', rain: 'lluvia', heavyrain: 'lluvia fuerte', lightsleet: 'aguanieve débil',
+                   sleet: 'aguanieve', sleetshowers: 'chubascos de aguanieve', lightsnow: 'nieve débil', snow: 'nieve', snowshowers: 'chubascos de nieve', heavysnow: 'nevada fuerte' };
+  const simTxt = s => { const b = String(s || '').split('_')[0], t = b.includes('thunder'); return (CL_TXT[b.replace(/andthunder$/, '')] || b) + (t ? ' con tormenta' : ''); };
+  // criterio del tablero para programar vaciados (orientativo; lluvia en la jornada 07–17 h)
+  const CRIT = { mmMalo: 5, mmRiesgo: 1, probRiesgo: 50, tormMala: 30, tormRiesgo: 10, frio: 5 };
+  function veredicto(d){
+    const mm = d.lluvia_jornada_mm, tor = d.tormenta_max || 0, tsim = String(d.simbolo || '').includes('thunder');
+    if ((mm != null && mm >= CRIT.mmMalo) || tor >= CRIT.tormMala) return ['ma', 'Desfavorable para vaciar'];
+    if ((mm != null && mm >= CRIT.mmRiesgo) || (d.prob_jornada || 0) >= CRIT.probRiesgo || tor >= CRIT.tormRiesgo || tsim) return ['ri', 'Vaciar con riesgo'];
+    return ['ok', 'Apto para vaciar'];
+  }
+  const T1 = v => v == null ? '—' : String(Math.round(v)).replace('-', '−') + '°';
+  const MM = v => v == null ? '—' : (v < 0.05 ? '0' : v.toFixed(1).replace('.', ','));
+  async function clima(){
+    const body = $('climaBody'); if (!body) return;
+    let C = null;
+    try { const r = await fetch('fotos/clima.json?v=' + Math.floor(Date.now() / 60000), { cache: 'no-cache' }); if (r.ok) C = await r.json(); } catch(e){}
+    if (!C || !(C.dias || []).length){ body.innerHTML = '<div class="ev-res">El pronóstico aún no está publicado: lo sube el carril de fotos tres veces al día (MET Norway).</div>'; return; }
+    const hoy = new Date(); const hoyS = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    const dias = C.dias.filter(d => d.fecha >= hoyS).slice(0, 3);
+    const gen = C.generado ? new Date(C.generado) : null, horas = gen ? (Date.now() - gen) / 36e5 : null;
+    const genTxt = gen ? fDM(gen) + ' ' + String(gen.getHours()).padStart(2, '0') + ':' + String(gen.getMinutes()).padStart(2, '0') : '—';
+    let h = (horas != null && horas > 30) ? `<div class="cl-viejo">⚠ Pronóstico del ${genTxt}: el carril de clima no se actualiza desde hace ${Math.round(horas)} h.</div>` : '';
+    if (!dias.length){ body.innerHTML = h + '<div class="ev-res">El pronóstico publicado ya venció.</div>'; return; }
+    h += '<div class="cl-dias">' + dias.map(d => {
+      const f = dia0(d.fecha), [vc, vt] = veredicto(d);
+      const dd = f.toLocaleDateString('es-PE', { weekday: 'short' }).replace('.', '') + ' ' + fDM(f) + (d.fecha === hoyS ? ' · hoy' : '');
+      const frio = d.tmin != null && d.tmin < CRIT.frio ? `<span class="cl-hel">${d.tmin <= 0 ? '❄ Helada' : 'Frío'} (mín ${T1(d.tmin)}): proteger el concreto fresco</span>` : '';
+      const ll = `Lluvia ${MM(d.lluvia_mm)} mm · jornada ${MM(d.lluvia_jornada_mm)} mm<br>Prob. ${d.prob_max != null ? Math.round(d.prob_max) + ' %' : '—'}${d.tormenta_max != null ? ' · tormenta ' + Math.round(d.tormenta_max) + ' %' : ''}<br>` +
+                 `Ráfagas ${d.rafaga_max_kmh != null ? Math.round(d.rafaga_max_kmh) + ' km/h' : '—'}${d.horas_secas_jornada != null ? ' · ' + d.horas_secas_jornada + ' de ' + d.horas_jornada + ' h secas' : ''}`;
+      return `<div class="cl-d" title="${esc(simTxt(d.simbolo))} · datos ${esc(d.resolucion || '')}${d.desde ? ' desde las ' + d.desde : ''}"><span class="dd">${dd}</span><span class="ic">${icono(d.simbolo)}</span>
+        <span class="tt">${T1(d.tmax)} <small>/ ${T1(d.tmin)}</small></span><span class="ll">${ll}</span><span class="cl-v ${vc}">${vt}</span>${frio}</div>`;
+    }).join('') + '</div>';
+    h += `<div class="cl-foot">Datos: MET Norway (Locationforecast 2.0, CC BY 4.0), ${esc((C.punto || {}).nombre || '')} a ${(C.punto || {}).alt || '—'} m s.n.m., publicado el ${genTxt}. Criterio del tablero, orientativo: desfavorable con ≥ ${CRIT.mmMalo} mm de lluvia en la jornada (${esc(C.jornada || '07:00–17:00')}) o tormenta ≥ ${CRIT.tormMala} %; con riesgo con ≥ ${CRIT.mmRiesgo} mm, probabilidad ≥ ${CRIT.probRiesgo} % o tormenta ≥ ${CRIT.tormRiesgo} %. Mínima bajo ${CRIT.frio} °C: clima frío (ACI 306R), proteger y curar el concreto.</div>`;
+    body.innerHTML = h;
+  }
+
+  const boot = () => {
+    try { pron(); } catch(e){ console.warn('pronóstico', e); }
+    try { if (typeof pintarEvidResumen === 'function') pintarEvidResumen(); if (typeof cargarFotosCampo === 'function' && !FOTOS_CAMPO.length) setTimeout(cargarFotosCampo, 600); } catch(e){ console.warn('evidencia', e); }
+    clima().catch(e => console.warn('clima', e));
+  };
   if (document.readyState === 'complete') setTimeout(boot, 0); else window.addEventListener('load', () => setTimeout(boot, 0));
 })();
 </script>
