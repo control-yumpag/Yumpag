@@ -9401,7 +9401,7 @@ function figFoto(f, hasta, conTorre, obs){
   const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.coherente===false?'inco':''}`;
   const tt = `${f.descripcion?f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
-      <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:''}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
+      <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:'<span class="ft-fase otras">Otras</span>'}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
       <figcaption>${obs?fotZona(f)+' · ':conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
@@ -15174,6 +15174,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-chips button.zona{font-style:italic}
 .lt-fila.zona{font-family:"IBM Plex Sans",system-ui,sans-serif;font-style:italic}
 .ft-fase.yolo{background:rgba(31,78,69,.55);outline:1px dashed rgba(255,255,255,.9);outline-offset:-3px}
+.ft-fase.otras{background:rgba(90,98,105,.78);font-weight:600}   /* v72.33: «Otras fotos» con su etiqueta (pedido del usuario) */
 .ft-fec{position:absolute;right:4px;top:4px;font-size:.48rem;font-weight:800;padding:1px 5px;border-radius:999px;background:var(--amber);color:#10201b;pointer-events:none}
 .ft figcaption .ft-obs{display:block;white-space:normal;font:600 .52rem "IBM Plex Mono",monospace;color:var(--ink);background:var(--amber-soft);border-radius:4px;padding:1px 4px;margin-top:2px;line-height:1.3}
 .lt-obs-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.62rem;color:var(--ink-2);padding:2px 0 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
