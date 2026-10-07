@@ -672,6 +672,28 @@
 "Relleno": 0,
 "PAT": 0
 },
+"2026-09-29": {
+"Caminos": 84.42,
+"Excavación": 51.39,
+"Solado": 51.37,
+"Stub": 43.21,
+"Acero": 41.42,
+"Encofrado": 36.9,
+"Concreto": 30.13,
+"Relleno": 0,
+"PAT": 0
+},
+"2026-09-30": {
+"Caminos": 84.42,
+"Excavación": 51.48,
+"Solado": 51.37,
+"Stub": 43.21,
+"Acero": 41.42,
+"Encofrado": 39.99,
+"Concreto": 31.45,
+"Relleno": 0,
+"PAT": 0.5
+},
 "2026-10-01": {
 "Caminos": 84.42,
 "Excavación": 51.55,
@@ -682,6 +704,50 @@
 "Concreto": 32.77,
 "Relleno": 0.05,
 "PAT": 1.5
+},
+"2026-10-02": {
+"Caminos": 84.42,
+"Excavación": 51.55,
+"Solado": 51.37,
+"Stub": 44.06,
+"Acero": 42.44,
+"Encofrado": 39.99,
+"Concreto": 32.77,
+"Relleno": 0.07,
+"PAT": 2.0
+},
+"2026-10-03": {
+"Caminos": 84.42,
+"Excavación": 51.62,
+"Solado": 51.37,
+"Stub": 47.27,
+"Acero": 42.95,
+"Encofrado": 42.31,
+"Concreto": 32.77,
+"Relleno": 0.08,
+"PAT": 2.0
+},
+"2026-10-04": {
+"Caminos": 84.42,
+"Excavación": 51.62,
+"Solado": 51.37,
+"Stub": 47.27,
+"Acero": 43.97,
+"Encofrado": 43.85,
+"Concreto": 32.77,
+"Relleno": 0.1,
+"PAT": 2.25
+},
+"2026-10-05": {
+"Caminos": 84.92,
+"Excavación": 51.62,
+"Solado": 51.37,
+"Stub": 47.27,
+"Acero": 43.97,
+"Encofrado": 43.85,
+"Concreto": 32.77,
+"Relleno": 0.1,
+"PAT": 2.9
 }
 }
 }
