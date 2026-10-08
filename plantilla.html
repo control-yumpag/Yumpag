@@ -9431,7 +9431,7 @@ const FOT_ZONA_TXT = {Campamento:'campamento de obra y alrededores', Charlas:'ch
 const FOT_ZONA_CORTA = {Campamento:'Camp.', Charlas:'Charlas', Otras:'Otras'};
 const fotZona = f => f.torre || f.camino || f.zona || 'Otras';
 const fotCod = f => ((f.id||'').split('_')[1]||'').slice(0,6);   // código corto y estable de la foto (no cambia si se corrige la fecha)
-const etqTxt = f => f.etiquetador==='ppt' ? 'pie del PPT' : f.etiquetador==='humano' ? 'revisada' : f.fase_conf ? `${f.etiquetador==='yolo'?'YOLO':'visión'} ${Math.round(f.fase_conf*100)} %${f.etiquetador==='yolo'?' · por revisar':''}` : '';
+const etqTxt = f => f.etiquetador==='ppt' ? 'pie del PPT' : f.etiquetador==='word' ? 'ficha del reporte diario' : f.etiquetador==='humano' ? 'revisada' :   /* v72.36: «word» = ficha del anexo de fotos del Word */ f.fase_conf ? `${f.etiquetador==='yolo'?'YOLO':'visión'} ${Math.round(f.fase_conf*100)} %${f.etiquetador==='yolo'?' · por revisar':''}` : '';
 let FOT_CAMPAMENTO = null;                                           // {utm:[E,N], radio_m} desde fotos.json
 /* v72.13 (pedido del usuario: «no etiquetar como personas, sin valor de obra y sin fases… crear una etiqueta Otras fotos»):
    toda foto sin fase de obra (personas, otro, sin fase) se muestra como «Otras fotos»; la etiqueta interna queda en fase_orig
@@ -9749,7 +9749,7 @@ const ltRgba = (hex,a) => { const n=parseInt(String(hex||'#c2ccc8').slice(1),16)
 const ltOrd = L => L.slice().sort((a,b)=>(a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
 function ltSemanas(desde, hasta){ const L=[]; for(let w=ltLunes(desde); w<=hasta; w=ltMas(w,7)) L.push(w); return L; }
 /* la foto que representa un grupo: pie del PPT o revisada primero, luego la de mayor confianza, luego la más reciente */
-function ltMejor(L){ const r=f=>((f.etiquetador==='ppt'||f.etiquetador==='humano')?2:0)+(f.coherente===false?-1:0)+(+f.fase_conf||0);
+function ltMejor(L){ const r=f=>((f.etiquetador==='ppt'||f.etiquetador==='humano'||f.etiquetador==='word')?2:0)+(f.coherente===false?-1:0)+(+f.fase_conf||0);
   return L.slice().sort((a,b)=>r(b)-r(a) || (b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')))[0]; }
 /* avance global de las actividades vistas, según el último Resumen disponible entre los días de la selección */
 function ltAvance(L){
