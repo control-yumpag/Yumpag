@@ -9425,7 +9425,7 @@ const FOTOS_VISITA_SOLO_AVANCE = false;                             // v72.8 (27
 const esVisita = () => !!document.getElementById('visitaChip');
 const FASE_TXT = {acceso:'Acceso', 'topografía':'Topografía', 'excavación':'Excavación', solado:'Solado', stub:'Stub', acero:'Acero', encofrado:'Encofrado', vaciado:'Vaciado', relleno:'Relleno', pat:'PAT', otras:'Otras fotos'};
 const faseTxt = f => f.fase ? (FASE_TXT[f.fase]||f.fase) : '';
-/* v72.8: zonas de las fotos sin torre ni camino (fotos_build.zona_de) */
+/* v72.8: zonas de las fotos sin torre ni camino (fotos_build.zona_de); v72.35: fotos.json «zonas» las amplía */
 const FOT_ZONAS = ['Campamento','Charlas','Otras'];
 const FOT_ZONA_TXT = {Campamento:'campamento de obra y alrededores', Charlas:'charlas, SST y asuntos sociales fuera de torres y caminos', Otras:'fotos sin torre, camino ni campamento (lejos de la línea o sin GPS legible)'};
 const FOT_ZONA_CORTA = {Campamento:'Camp.', Charlas:'Charlas', Otras:'Otras'};
@@ -9464,6 +9464,14 @@ async function _cargarFotosCampo(){
   try{
     const r = await fetch('fotos/fotos.json' + _fotSuf, {cache:'no-cache'}); if(!r.ok) return;
     const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(fotNormalizar); FOT_CAMPAMENTO = j.campamento || null;
+    /* v72.35: zonas de las fotos sin torre ni camino desde fotos.json (ítems nuevos por etiqueta de carpeta: Arqueología…);
+       Otras siempre al final */
+    if (Array.isArray(j.zonas) && j.zonas.length){
+      const zs = j.zonas.filter(z=>z && z.nombre);
+      zs.forEach(z=>{ if (z.txt) FOT_ZONA_TXT[z.nombre]=z.txt; FOT_ZONA_CORTA[z.nombre]=z.corta||FOT_ZONA_CORTA[z.nombre]||z.nombre; });
+      const nom = [...new Set(zs.map(z=>z.nombre).filter(n=>n!=='Otras')), 'Otras'];
+      FOT_ZONAS.splice(0, FOT_ZONAS.length, ...nom);
+    }
     try{ const ra = await fetch('fotos/avance_actividad.json', {cache:'no-cache'}); if (ra.ok) window.FOTOS_AVANCE = (await ra.json()).dias || {}; }catch(e){}   // % global por actividad y día (Resumen, columna EV)
     if (FOTOS_VISITA_SOLO_AVANCE && esVisita()) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.categoria==='Avance');
     { const corte = (DATA.tl_weeks||[])[DATA.tl_weeks.length-1]; if (corte) FOTOS_CAMPO = FOTOS_CAMPO.filter(f=>f.fecha<=corte); }   // v72.4: solo fotos hasta la fecha del corte
@@ -9490,10 +9498,10 @@ function obsMotivo(f, k){
 function figFoto(f, hasta, conTorre, obs){
   const vis = esVisita(), et = etqTxt(f);
   const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.coherente===false?'inco':''}`;
-  const tt = `${f.descripcion?f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
+  const tt = `${f.descripcion?(f.desc_fuente==='resumen'?'Resumen del día: ':'')+f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
       <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:'<span class="ft-fase otras">Otras</span>'}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
-      <figcaption>${obs?fotZona(f)+' · ':conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
+      <figcaption>${obs?fotZona(f)+' · ':conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
   const cont=document.getElementById('fotosTorre'); if(!cont) return;
@@ -9842,9 +9850,13 @@ function ltDetalle(fil){
   const chips=FASES_ORD.filter(k=>cnt[k]).map(k=>`<span class="lt-chip" style="background:${FASE_COLOR[k]||'#9aa5b1'}">${ltNom(k)} ${cnt[k]}</span>`).join('');
   const av=ltAvance(L), etq = k => grupo==='zona' ? k : grupo==='semana' ? `Semana del ${ltRango(k)}` : grupo==='dia-zona' ? ltDia(k) : fdFoto(k);
   const tira = fs => `<div class="ft-tira lt-tira">${fs.map(f=>figFoto(f, null, false)).join('')}</div>`;
+  /* v72.35: el texto del día del Resumen va una vez por grupo (torre o camino y día), no repetido bajo cada miniatura */
+  const resG = fs => { const ds=[...new Set(fs.filter(f=>f.desc_fuente==='resumen'&&f.descripcion).map(f=>f.descripcion))].slice(0,3);
+    const es = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return ds.length ? `<div class="lt-res"><i>Resumen del día:</i> ${ds.map(es).join(' · ')}</div>` : ''; };
   const bloque = k => grupo==='dia-zona'
-    ? `<div class="lt-grp lt-dia">${etq(k)} <small>· ${G[k].length} foto${G[k].length>1?'s':''}</small></div>`+SUB[k].map(([z,fs])=>`<div class="lt-sub">${z} <small>· ${fs.length}</small></div>${tira(fs)}`).join('')
-    : `<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div>${tira(G[k])}`;
+    ? `<div class="lt-grp lt-dia">${etq(k)} <small>· ${G[k].length} foto${G[k].length>1?'s':''}</small></div>`+SUB[k].map(([z,fs])=>`<div class="lt-sub">${z} <small>· ${fs.length}</small></div>${resG(fs)}${tira(fs)}`).join('')
+    : `<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div>${grupo==='dia'||grupo==='zona'?resG(G[k]):''}${tira(G[k])}`;
   const tit=document.getElementById('fotFotosTit'); if(tit) tit.textContent='Fotos de la selección';
   det.innerHTML = L.length
     ? `<div class="lt-cab">${cab} <small>· ${L.length} foto${L.length>1?'s':''}</small>${chips}</div>${av?`<div class="lt-av">${av}</div>`:''}`+
@@ -9960,7 +9972,8 @@ function abrirFoto(src, lista){
   const vis=esVisita(), escP = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const lugar = f.torre || (f.camino ? 'Camino ' + f.camino : (f.zona || 'Otras'));
   const faseClara = f.fase && f.etiquetador !== 'yolo' && !['personas','otro','documento','baño'].includes(f.fase) && faseTxt(f) !== 'Otras fotos';
-  const desc = f.descripcion ? escP(f.descripcion) : (faseClara ? faseTxt(f) + (f.pata ? ` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}` : '') : '');
+  /* v72.35: la descripción puede venir del texto del día del Resumen (fotos_build: desc_fuente «resumen»): se dice de dónde sale */
+  const desc = f.descripcion ? (f.desc_fuente==='resumen' ? '<i>Resumen del día:</i> ' : '') + escP(f.descripcion) : (faseClara ? faseTxt(f) + (f.pata ? ` · pata${f.pata.includes('+')?'s':''} ${f.pata.replace(/\+/g,', ')}` : '') : '');
   box.querySelector('.ftb-pie').innerHTML=`<b>${escP(lugar)}</b>${f.utm?` · UTM 18S ${f.utm[0]} ${f.utm[1]}`:''}${desc?`<br><span class="ftb-desc">${desc}</span>`:''}`;
   box.querySelector('img').title = vis ? '' : `#${fotCod(f)}`;
   box.style.display='flex';
@@ -15371,6 +15384,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .lt-grp{font-size:.62rem;font-weight:800;color:var(--ink-2);margin:10px 0 4px} .lt-grp small{font-weight:600;color:var(--ink-mut)}
 .lt-grp.lt-dia{font-size:.68rem;color:var(--ink);margin:12px 0 2px;padding:3px 0 3px 7px;border-left:3px solid var(--sky);background:var(--sky-soft);border-radius:2px}
 .lt-sub{font-size:.6rem;font-weight:700;color:var(--ink-2);margin:6px 0 3px 8px} .lt-sub small{font-weight:600;color:var(--ink-mut)}
+.lt-res{font-size:.6rem;color:var(--ink-2);margin:0 0 4px 8px;line-height:1.35} .lt-res i{color:var(--ink-mut)}
 .ft-tira.lt-tira{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:7px}
 .lt-tira .ft figcaption{font-size:.56rem;white-space:normal;line-height:1.25}
 .ft-ir{display:inline-block;margin:2px 0 6px;font-size:.6rem;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid var(--c-civ,#2d7667);background:var(--panel);color:var(--c-civ,#2d7667);cursor:pointer}
