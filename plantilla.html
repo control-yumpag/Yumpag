@@ -9825,7 +9825,9 @@ function ltMatriz(fil, W){
   const G={}, N={}; fil.forEach(f=>{ filasDe(f).forEach(z=>{ (G[z+'|'+ltLunes(f.fecha)]=G[z+'|'+ltLunes(f.fecha)]||[]).push(f); N[z]=(N[z]||0)+1; }); });
   const cams=[...new Set(fil.filter(f=>!f.torre&&f.camino).map(f=>f.camino))].sort(ordCam), zonas=FOT_ZONAS.filter(z=>N[z]);
   const nAcc = z => esTorre(z) ? fil.filter(f=>!f.torre&&f.tacc===z).length : 0;
-  const fila = z => `<button type="button" class="lt-fila${N[z]?'':' vacia'}${FOT_ZONAS.includes(z)?' zona':''}${esCamino(z)?' cam':''}" data-z="${z}" title="${FOT_ZONAS.includes(z)?z+' · '+FOT_ZONA_TXT[z]+' · ':esCamino(z)&&camTxt(z)?z+' · '+camTxt(z)+' · ':''}${N[z]||0} foto(s)${nAcc(z)?` (${nAcc(z)} de su camino de acceso)`:''}${N[z]?' · ver la película de '+z:''}">${zonaEtq(z)}</button>`+
+  /* v72.44: la torre intervenida el día del corte lleva el mismo recuadro punteado y la fecha («08-Oct») que su botón en el BIM */
+  const ivT = z => esTorre(z) && intervDe(z);
+  const fila = z => `<button type="button" class="lt-fila${N[z]?'':' vacia'}${FOT_ZONAS.includes(z)?' zona':''}${esCamino(z)?' cam':''}${ivT(z)?' iv':''}" data-z="${z}" title="${ivT(z)?intervTxt(z).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+' · ':''}${FOT_ZONAS.includes(z)?z+' · '+FOT_ZONA_TXT[z]+' · ':esCamino(z)&&camTxt(z)?z+' · '+camTxt(z)+' · ':''}${N[z]||0} foto(s)${nAcc(z)?` (${nAcc(z)} de su camino de acceso)`:''}${N[z]?' · ver la película de '+z:''}">${zonaEtq(z)}${ivT(z)?`<span class="hoy">${intervFecha()}</span>`:''}</button>`+
     W.map(w=>{ const L=G[z+'|'+w], cs=fotSel.sem===w?' csel':'';
       if(!L) return `<div class="lt-v${cs}"></div>`;
       const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; }); const ks=FASES_ORD.filter(k=>cnt[k]);
@@ -15586,6 +15588,9 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-obs button.on{background:var(--c-civ,#2d7667);border:1px solid var(--c-civ,#2d7667);color:#fff}
 .fot-chips button.zona{font-style:italic}
 .lt-fila.zona{font-family:"IBM Plex Sans",system-ui,sans-serif;font-style:italic}
+/* v72.44: torre intervenida el día del corte en la línea de tiempo de Fotos (como .d4-tw.iv del BIM) */
+.lt-fila.iv{outline:1.6px dashed #e4572e;outline-offset:1px;overflow:visible}
+.lt-fila .hoy{position:absolute;top:-7px;right:-5px;background:#e4572e;color:#fff;font:700 .5rem/1 "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:2px 4px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none;z-index:1}
 /* v72.38: el botón de un camino lleva debajo la torre (o el tramo) a la que sirve */
 .lt-fila.cam{line-height:1.05;padding-top:1px} .lt-fila.cam small{display:block;font:600 .46rem/1.1 "IBM Plex Mono",monospace;color:var(--ink-mut);letter-spacing:0} .lt-fila.cam:hover small{color:#fff}
 .ft-fase.yolo{background:rgba(31,78,69,.55);outline:1px dashed rgba(255,255,255,.9);outline-offset:-3px}
