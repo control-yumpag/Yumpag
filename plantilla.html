@@ -8083,6 +8083,8 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       </div>
 
       <div class="bim-panel" id="p-patas">
+        <!-- v72.38: columna izquierda (porcentajes, fija) · derecha (fotos con desplazamiento propio) cuando el panel es ancho -->
+        <div class="pp-izq">
         <div class="desc" style="margin-bottom:6px">Vía de acceso, obra civil y las 4 zapatas (A–D)</div>
         <div id="d4PataGrid" class="d4-patagrid"></div>
         <div class="d4-pata-legend">
@@ -8090,6 +8092,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
           <span><i style="background:var(--amber)"></i>en ejecución</span>
           <span><i style="background:var(--red)"></i>sin iniciar</span>
           <span><i style="background:var(--panel-3)"></i>N/A</span>
+        </div>
         </div>
         <div id="fotosTorre" class="ft-cont"></div>
       </div>
@@ -8262,6 +8265,26 @@ function caminosDeTorre(tt){
   const D = window.CAMINOS_DET, r = D && (D.torres || []).find(x => x.t === tt), s = new Set();
   if (r){ (r.deps || []).forEach(d => d.c && s.add(d.c)); if (r.peat && r.peat.c) s.add(r.peat.c); if (r.pa) s.add(r.pa); }
   return s;
+}
+/* v72.38 (08-Oct-26, pedido del usuario: «cada camino tiene que estar asociado a su torre, en fotos también»): torres a las que sirve cada
+   camino según la hoja PORCENTAJE POR TORRE (CAMINOS_DET: acceso requerido, dependencias y peatonal). Los peatonales P3…P7 de la hoja
+   son CP3…CP7 en el KMZ (y en fotos.json). Una foto tomada sobre un camino, lejos de toda torre, se asocia a la torre más cercana de las que
+   ese camino sirve (por sus coordenadas); sin coordenadas, solo si el camino sirve a una sola torre. Así la ficha de T22 muestra las fotos
+   del C15 y la de T16 solo las del tramo del C10 más cercano a ella. */
+const camId = c => String(c || '').toUpperCase().replace(/\s+/g, '').replace(/^P(\d)/, 'CP$1');
+function torresDeCamino(){
+  if (window._TDC) return window._TDC;
+  const M = {}; (DATA.towers || []).forEach(t => caminosDeTorre(t.t).forEach(c => { const k = camId(c); if (!(M[k] = M[k] || []).includes(t.t)) M[k].push(t.t); }));
+  return window._TDC = M;
+}
+function torreAcceso(f){
+  if (f.torre || !f.camino) return null;
+  const ts = torresDeCamino()[camId(f.camino)] || []; if (!ts.length) return null;
+  if (ts.length === 1) return ts[0];
+  if (!f.utm || typeof utmAEN !== 'function' || typeof GEO === 'undefined') return null;
+  const p = utmAEN(f.utm[0], f.utm[1]); let mejor = null, dm = Infinity;
+  ts.forEach(tt => { const g = (GEO.towers || []).find(x => x.t === tt); if (!g) return; const d = Math.hypot(g.e - p.e, g.n - p.n); if (d < dm){ dm = d; mejor = tt; } });
+  return mejor;
 }
 function evidDe(tt){
   const L = intervDe(tt); if (!L || typeof FOTOS_CAMPO === 'undefined' || !FOTOS_CAMPO.length) return null;
@@ -9415,7 +9438,8 @@ function pintarBtnCaminos(){
    ===================================================================== */
 const UTM_AFIN = {"e": [1.000000748949733, 0.005430719019713405, -371012.3456911882], "n": [-0.005078827273133992, 0.9994791999975229, -8820318.574305268]};                         // UTM 18S → e/n del modelo (23 torres, residuo < 0,8 m)
 let FOTOS_CAMPO = ⟦bloque:FOTOS_CAMPO⟧;                            // índice cargado
-const fotosDeTorre = (t, hasta) => FOTOS_CAMPO.filter(f => f.torre===t && (!hasta || f.fecha<=hasta))   // v72.11: la más reciente primero, de cualquier categoría
+/* v72.11: la más reciente primero, de cualquier categoría · v72.38: también las fotos de su camino de acceso (f.tacc = torre asociada por el camino) */
+const fotosDeTorre = (t, hasta) => FOTOS_CAMPO.filter(f => (f.torre===t || (!f.torre && f.tacc===t)) && (!hasta || f.fecha<=hasta))
                                                .sort((a,b)=>(b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')));
 function utmAEscena(E,N){
   const e=UTM_AFIN.e[0]*E+UTM_AFIN.e[1]*N+UTM_AFIN.e[2], n=UTM_AFIN.n[0]*E+UTM_AFIN.n[1]*N+UTM_AFIN.n[2];
@@ -9464,6 +9488,7 @@ async function _cargarFotosCampo(){
   try{
     const r = await fetch('fotos/fotos.json' + _fotSuf, {cache:'no-cache'}); if(!r.ok) return;
     const j = await r.json(); FOTOS_CAMPO = (j.fotos||[]).map(fotNormalizar); FOT_CAMPAMENTO = j.campamento || null;
+    try{ FOTOS_CAMPO.forEach(f => { f.tacc = torreAcceso(f); }); }catch(e){ console.warn('torre de acceso', e); }   // v72.38: torre a la que se asocia cada foto de camino
     /* v72.35: zonas de las fotos sin torre ni camino desde fotos.json (ítems nuevos por etiqueta de carpeta: Arqueología…);
        Otras siempre al final */
     if (Array.isArray(j.zonas) && j.zonas.length){
@@ -9501,7 +9526,7 @@ function figFoto(f, hasta, conTorre, obs){
   const tt = `${f.descripcion?(f.desc_fuente==='resumen'?'Resumen del día: ':'')+f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
       <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:'<span class="ft-fase otras">Otras</span>'}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
-      <figcaption>${obs?fotZona(f)+' · ':conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
+      <figcaption>${obs?fotZona(f)+' · ':conTorre==='cam'?(!f.torre&&f.camino?`<b>${f.camino}</b> · `:''):conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
   const cont=document.getElementById('fotosTorre'); if(!cont) return;
@@ -9511,14 +9536,19 @@ function pintarFotosTorre(){
   const total = fotosDeTorre(t.t).length;
   if (!FOTOS_CAMPO.length){ cont.innerHTML=''; cont.dataset.firma=''; return; }
   // v72.13: se llama en cada draw4D y selectTower; si la torre, la fecha y las fotos son las mismas no se rehace (ni se recargan imágenes)
-  const firma = `${t.t}|${hasta}|${hoy.length}|${total}|${FOTOS_CAMPO.length}`; if (cont.dataset.firma === firma && cont.childElementCount) return; cont.dataset.firma = firma;
-  if (!hoy.length){ cont.innerHTML=`<div class="tw-sec">Fotos de campo</div><div class="ft-vacio">Sin fotos de ${t.t} hasta el ${fdFoto(hasta)}${total?` · ${total} posteriores`:''}</div>`; return; }
-  const dia = hoy.filter(f=>f.fecha===hasta).length, inco = hoy.filter(f=>f.coherente===false).length;
+  const firma = `${t.t}|${hasta}|${hoy.length}|${total}|${FOTOS_CAMPO.length}|${window.innerWidth<=860?'c':'p'}`; if (cont.dataset.firma === firma && cont.childElementCount) return; cont.dataset.firma = firma;
+  /* v72.38: la torre y su camino de acceso (CAMINOS_DET); las del camino llevan su rótulo («C15 ·») */
+  const camsT = [...caminosDeTorre(t.t)].map(camId).filter((c,i,a)=>a.indexOf(c)===i).sort(fotNat).join(', ');
+  if (!hoy.length){ cont.innerHTML=`<div class="tw-sec">Fotos de campo</div><div class="ft-vacio">Sin fotos de ${t.t}${camsT?` ni de su acceso ${camsT}`:''} hasta el ${fdFoto(hasta)}${total?` · ${total} posteriores`:''}</div>`; return; }
+  const dia = hoy.filter(f=>f.fecha===hasta).length, inco = hoy.filter(f=>f.coherente===false).length, nCam = hoy.filter(f=>!f.torre).length;
+  const camsF = [...new Set(hoy.filter(f=>!f.torre).map(f=>f.camino))].sort(fotNat).join(', ');
   const fases = [...new Set(hoy.filter(f=>f.fase && f.fase!=='otras').map(f=>faseTxt(f)))];
-  const N_FT = 24, vis = hoy.slice(0, N_FT);   // v72.11: más fotos a la vista, la más reciente primero
-  cont.innerHTML = `<div class="tw-sec ft-h" title="De la más reciente a la más antigua${fases.length?' · fases vistas: '+fases.join(', '):''}"><span>Fotos de campo · ${hoy.length} hasta el ${ltDM(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${inco?` · <b class="ft-inco">⚠ ${inco} ≠ reporte</b>`:''}</span><button type="button" class="ft-ir" data-z="${t.t}">Línea de tiempo de ${t.t} →</button></div>
-    <div class="ft-tira">${vis.map(f=>figFoto(f, hasta, false)).join('')}
-    ${hoy.length>N_FT?`<button type="button" class="ft-mas ft-ir" data-z="${t.t}" title="Ver todas en la pestaña Fotos de obra">+${hoy.length-N_FT} más →</button>`:''}</div>`;
+  /* v72.38 (pedido del usuario): todas las fotos (antes 24), por día, el más reciente arriba; en panel ancho van en su propia columna con desplazamiento */
+  const N_FT = window.innerWidth <= 860 ? 24 : Infinity, vis = hoy.slice(0, N_FT);   // en celular el panel no tiene desplazamiento propio: 24 y «+N más →» (v72.11)
+  const G={}; vis.forEach(f=>{ (G[f.fecha]=G[f.fecha]||[]).push(f); }); const dias=Object.keys(G).sort().reverse();
+  cont.innerHTML = `<div class="tw-sec ft-h" title="De la más reciente a la más antigua${fases.length?' · fases vistas: '+fases.join(', '):''}${camsT?' · incluye las fotos de su camino de acceso ('+camsT+')':''}"><span>Fotos de campo · ${hoy.length} hasta el ${ltDM(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${nCam?` · ${nCam} de su acceso ${camsF}`:''}${inco?` · <b class="ft-inco">⚠ ${inco} ≠ reporte</b>`:''}</span><button type="button" class="ft-ir" data-z="${t.t}">Línea de tiempo de ${t.t} →</button></div>
+    <div class="ft-lista">${dias.map(d=>`<div class="ft-dia${d===hasta?' hoy':''}">${ltDia(d)} <small>· ${G[d].length} foto${G[d].length>1?'s':''}</small></div><div class="ft-tira">${G[d].map(f=>figFoto(f, hasta, 'cam')).join('')}</div>`).join('')}
+    ${hoy.length>N_FT?`<div class="ft-tira"><button type="button" class="ft-mas ft-ir" data-z="${t.t}" title="Ver todas en la pestaña Fotos de obra">+${hoy.length-N_FT} más →</button></div>`:''}</div>`;
   cont.querySelectorAll('.ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src, vis));
   cont.querySelectorAll('.ft-ir').forEach(ir=>ir.onclick=()=>{ ltParar(); fotSel.zona=ir.dataset.z; fotSel.celda=null; fotSel.sem=null; const nb=document.querySelector('#nav button[data-v="v-fot"]'); if(nb) nb.click(); });
 }
@@ -9582,12 +9612,26 @@ function utmAEN(E,N){ return { e:UTM_AFIN.e[0]*E+UTM_AFIN.e[1]*N+UTM_AFIN.e[2], 
 function fotDeZona(z){
   if (z==='Todas') return FOTOS_CAMPO.slice();
   if (FOT_ZONAS.includes(z)) return FOTOS_CAMPO.filter(f => !f.torre && !f.camino && (f.zona||'Otras')===z);
+  if (esTorre(z)) return FOTOS_CAMPO.filter(f => f.torre===z || (!f.torre && f.tacc===z));   // v72.38: la torre y las fotos de su camino de acceso
   return FOTOS_CAMPO.filter(f => f.torre===z || (f.camino===z && (!f.torre || f.fase==='acceso')));
 }
+/* v72.38 (pedido del usuario: «cada camino tiene que estar asociado a su torre, en fotos también»): cada camino se rotula con la torre
+   (o el tramo de torres) a la que sirve según PORCENTAJE POR TORRE, y las filas de caminos van en el orden de la línea (por su torre) */
+const esTorre = z => DATA.towers.some(t => t.t === z);
+const zonaTorres = z => (typeof torresDeCamino === 'function' ? (torresDeCamino()[camId(z)] || []) : []);
+const camTramo = z => { const ts = zonaTorres(z); return !ts.length ? '' : ts.length > 1 ? `${ts[0]}–${ts[ts.length-1]}` : ts[0]; };
+const esCamino = z => !esTorre(z) && !FOT_ZONAS.includes(z) && z !== 'Todas';
+const zonaEtq = z => esCamino(z) && camTramo(z) ? `${z}<small>${camTramo(z)}</small>` : (FOT_ZONA_CORTA[z] || z);          // botón de fila (dos líneas)
+const zonaEtqTxt = z => esCamino(z) && camTramo(z) ? `${z} · ${camTramo(z)}` : (FOT_ZONA_CORTA[z] || z);                     // texto plano
+const camTxt = z => { const ts = zonaTorres(z); return !ts.length ? '' : ts.length > 1 ? `acceso de ${ts[0]} a ${ts[ts.length-1]}` : `acceso de ${ts[0]}`; };
+const camPos = c => { const ts = zonaTorres(c); return ts.length ? DATA.towers.findIndex(t => t.t === ts[0]) : 99; };
+const ordCam = (a,b) => camPos(a) - camPos(b) || fotNat(a,b);
+const filasDe = f => (!f.torre && f.tacc) ? [zonaFila(f), f.tacc] : [zonaFila(f)];   // en la matriz, una foto de camino cuenta en su camino y en su torre
+const enFila = (f, z) => filasDe(f).includes(z);
 /* v72.11: zonas con fotos en el orden de la línea (torres T01→T23, caminos, otras zonas): ◀ ▶ entre películas */
 function ltZonasOrden(){
   const n = z => fotDeZona(z).length;
-  const cams = [...new Set(FOTOS_CAMPO.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino))].sort(fotNat);
+  const cams = [...new Set(FOTOS_CAMPO.filter(f=>f.camino&&(!f.torre||f.fase==='acceso')).map(f=>f.camino))].sort(ordCam);
   return [...DATA.towers.map(t=>t.t), ...cams, ...FOT_ZONAS].filter(n);
 }
 function fotFiltrar(base){ return base.filter(f => (fotSel.fase==='Todas' || (f.fase||'otras')===fotSel.fase) && (fotSel.cat==='Todas' || f.categoria===fotSel.cat)); }
@@ -9767,16 +9811,18 @@ function ltCabecera(W){
 /* toda la línea: torres y caminos por semana */
 function ltMatriz(fil, W){
   const el=document.getElementById('fotLinea'), c=fotSel.celda||{};
-  const G={}, N={}; fil.forEach(f=>{ const z=zonaFila(f); (G[z+'|'+ltLunes(f.fecha)]=G[z+'|'+ltLunes(f.fecha)]||[]).push(f); N[z]=(N[z]||0)+1; });
-  const cams=[...new Set(fil.filter(f=>!f.torre&&f.camino).map(f=>f.camino))].sort(fotNat), zonas=FOT_ZONAS.filter(z=>N[z]);
-  const fila = z => `<button type="button" class="lt-fila${N[z]?'':' vacia'}${FOT_ZONAS.includes(z)?' zona':''}" data-z="${z}" title="${FOT_ZONAS.includes(z)?z+' · '+FOT_ZONA_TXT[z]+' · ':''}${N[z]||0} foto(s)${N[z]?' · ver la película de '+z:''}">${FOT_ZONA_CORTA[z]||z}</button>`+
+  /* v72.38: una foto de camino cuenta en su camino y en la torre a la que ese camino sirve (filasDe) */
+  const G={}, N={}; fil.forEach(f=>{ filasDe(f).forEach(z=>{ (G[z+'|'+ltLunes(f.fecha)]=G[z+'|'+ltLunes(f.fecha)]||[]).push(f); N[z]=(N[z]||0)+1; }); });
+  const cams=[...new Set(fil.filter(f=>!f.torre&&f.camino).map(f=>f.camino))].sort(ordCam), zonas=FOT_ZONAS.filter(z=>N[z]);
+  const nAcc = z => esTorre(z) ? fil.filter(f=>!f.torre&&f.tacc===z).length : 0;
+  const fila = z => `<button type="button" class="lt-fila${N[z]?'':' vacia'}${FOT_ZONAS.includes(z)?' zona':''}${esCamino(z)?' cam':''}" data-z="${z}" title="${FOT_ZONAS.includes(z)?z+' · '+FOT_ZONA_TXT[z]+' · ':esCamino(z)&&camTxt(z)?z+' · '+camTxt(z)+' · ':''}${N[z]||0} foto(s)${nAcc(z)?` (${nAcc(z)} de su camino de acceso)`:''}${N[z]?' · ver la película de '+z:''}">${zonaEtq(z)}</button>`+
     W.map(w=>{ const L=G[z+'|'+w], cs=fotSel.sem===w?' csel':'';
       if(!L) return `<div class="lt-v${cs}"></div>`;
       const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; }); const ks=FASES_ORD.filter(k=>cnt[k]);
       const pk = ks.length>4 ? FASES_ORD.filter(k=>ks.slice().sort((a,b)=>cnt[b]-cnt[a]).slice(0,4).includes(k)) : ks;   // v72.9: hasta 4 puntos (las fases con más fotos), en el orden de la leyenda
       return `<button type="button" class="lt-c${cs}${c.z===z&&c.w===w?' sel':''}${L.some(f=>f.coherente===false)?' inco':''}" data-z="${z}" data-w="${w}" title="${z} · semana del ${ltRango(w)} · ${L.length} foto${L.length>1?'s':''}: ${ks.map(k=>`${ltNom(k)} ${cnt[k]}`).join(', ')}">${L.length}<span class="pts">${pk.map(k=>`<i style="background:${FASE_COLOR[k]||'#c2ccc8'}"></i>`).join('')}</span></button>`; }).join('');
   let h = ltCabecera(W) + DATA.towers.map(t=>fila(t.t)).join('');
-  if (cams.length) h += `<div class="lt-grupo">Caminos de acceso</div>` + cams.map(fila).join('');
+  if (cams.length) h += `<div class="lt-grupo" title="Cada camino lleva la torre (o el tramo de torres) a la que sirve según la hoja PORCENTAJE POR TORRE; sus fotos cuentan también en esa torre">Caminos de acceso · con la torre a la que sirven</div>` + cams.map(fila).join('');
   if (zonas.length) h += `<div class="lt-grupo">Otras zonas · campamento, charlas y otras (sin torre ni camino)</div>` + zonas.map(fila).join('');
   el.innerHTML = `<div class="lt-hbar" title="Desliza para recorrer las semanas"><div></div></div><div class="lt-scroll"><div class="lt-mx" style="--n:${W.length}">${h}</div></div>`;
   el.querySelectorAll('.lt-sem').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.sem=b.dataset.w; fotSel.celda=null; pintarHistorialFotos(); ltVerFotos(); });
@@ -9831,12 +9877,12 @@ function ltDetalle(fil){
   const det=document.getElementById('fotDetalle'), z=fotSel.zona, c=fotSel.celda||{};
   let L, cab, grupo;
   if (z==='Todas'){
-    if (c.z){ L=fil.filter(f=>zonaFila(f)===c.z && ltLunes(f.fecha)===c.w); cab=`${c.z} · semana del ${ltRango(c.w)}`; grupo='dia'; }
+    if (c.z){ L=fil.filter(f=>enFila(f,c.z) && ltLunes(f.fecha)===c.w); cab=`${zonaEtqTxt(c.z)} · semana del ${ltRango(c.w)}`; grupo='dia'; }   // v72.38: la celda de una torre incluye las fotos de su camino
     else { L=fil.filter(f=>ltLunes(f.fecha)===fotSel.sem); cab=`Semana del ${ltRango(fotSel.sem)} · toda la línea`; grupo='dia-zona'; }   // v72.10: por día, el más reciente arriba
   } else if (c.fase){
     L=fil.filter(f=>faseDe(f)===c.fase && (!c.w || ltLunes(f.fecha)===c.w));
-    cab=`${z} · ${ltNom(c.fase)}${c.w?` · semana del ${ltRango(c.w)}`:' · todas las semanas'}`; grupo=c.w?'dia':'semana';
-  } else { const w=c.w||fotSel.sem; L=fil.filter(f=>ltLunes(f.fecha)===w); cab=`${z} · semana del ${ltRango(w)}`; grupo='dia'; }
+    cab=`${zonaEtqTxt(z)} · ${ltNom(c.fase)}${c.w?` · semana del ${ltRango(c.w)}`:' · todas las semanas'}`; grupo=c.w?'dia':'semana';
+  } else { const w=c.w||fotSel.sem; L=fil.filter(f=>ltLunes(f.fecha)===w); cab=`${zonaEtqTxt(z)} · semana del ${ltRango(w)}`; grupo='dia'; }
   L=ltOrd(L).reverse();   // v72.11: lo más reciente arriba (día y hora), lo más antiguo va bajando
   const clave = f => grupo==='zona' ? zonaFila(f) : grupo==='semana' ? ltLunes(f.fecha) : f.fecha;
   const G={}; L.forEach(f=>{ (G[clave(f)]=G[clave(f)]||[]).push(f); });
@@ -9848,14 +9894,15 @@ function ltDetalle(fil){
   fotListaActual = grupo==='dia-zona' ? orden.flatMap(d=>SUB[d].flatMap(([,fs])=>fs)) : orden.flatMap(k=>G[k]);
   const cnt={}; L.forEach(f=>{ const k=faseDe(f); cnt[k]=(cnt[k]||0)+1; });
   const chips=FASES_ORD.filter(k=>cnt[k]).map(k=>`<span class="lt-chip" style="background:${FASE_COLOR[k]||'#9aa5b1'}">${ltNom(k)} ${cnt[k]}</span>`).join('');
-  const av=ltAvance(L), etq = k => grupo==='zona' ? k : grupo==='semana' ? `Semana del ${ltRango(k)}` : grupo==='dia-zona' ? ltDia(k) : fdFoto(k);
-  const tira = fs => `<div class="ft-tira lt-tira">${fs.map(f=>figFoto(f, null, false)).join('')}</div>`;
+  const av=ltAvance(L), etq = k => grupo==='zona' ? zonaEtqTxt(k) : grupo==='semana' ? `Semana del ${ltRango(k)}` : grupo==='dia-zona' ? ltDia(k) : fdFoto(k);
+  const enTorre = esTorre(z) || esTorre(c.z||'');   // v72.38: en la película o celda de una torre, las fotos de su camino llevan el rótulo del camino
+  const tira = fs => `<div class="ft-tira lt-tira">${fs.map(f=>figFoto(f, null, enTorre?'cam':false)).join('')}</div>`;
   /* v72.35: el texto del día del Resumen va una vez por grupo (torre o camino y día), no repetido bajo cada miniatura */
   const resG = fs => { const ds=[...new Set(fs.filter(f=>f.desc_fuente==='resumen'&&f.descripcion).map(f=>f.descripcion))].slice(0,3);
     const es = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return ds.length ? `<div class="lt-res"><i>Resumen del día:</i> ${ds.map(es).join(' · ')}</div>` : ''; };
   const bloque = k => grupo==='dia-zona'
-    ? `<div class="lt-grp lt-dia">${etq(k)} <small>· ${G[k].length} foto${G[k].length>1?'s':''}</small></div>`+SUB[k].map(([z,fs])=>`<div class="lt-sub">${z} <small>· ${fs.length}</small></div>${resG(fs)}${tira(fs)}`).join('')
+    ? `<div class="lt-grp lt-dia">${etq(k)} <small>· ${G[k].length} foto${G[k].length>1?'s':''}</small></div>`+SUB[k].map(([z,fs])=>`<div class="lt-sub">${zonaEtqTxt(z)} <small>· ${fs.length}</small></div>${resG(fs)}${tira(fs)}`).join('')
     : `<div class="lt-grp">${etq(k)} <small>· ${G[k].length}</small></div>${grupo==='dia'||grupo==='zona'?resG(G[k]):''}${tira(G[k])}`;
   const tit=document.getElementById('fotFotosTit'); if(tit) tit.textContent='Fotos de la selección';
   det.innerHTML = L.length
@@ -9914,6 +9961,7 @@ function ltObservaciones(fil){
 /* historial de la zona: filtros, línea de tiempo (matriz o película) y fotos de la selección */
 function pintarHistorialFotos(enPlay){
   const zona=fotSel.zona, base=fotDeZona(zona), t=DATA.towers.find(x=>x.t===zona), zn=FOT_ZONAS.includes(zona);
+  const nAccZ = t ? base.filter(f=>!f.torre).length : 0, camsZ = t ? [...new Set(base.filter(f=>!f.torre).map(f=>f.camino))].sort(fotNat).join(', ') : '';   // v72.38: fotos del camino de acceso incluidas en la torre
   const fases=[...new Set(base.map(faseDe))].sort((a,b)=>FASES_ORD.indexOf(a)-FASES_ORD.indexOf(b));
   const cats=[...new Set(base.map(f=>f.categoria))];
   if(fotSel.fase!=='Todas' && !fases.includes(fotSel.fase)) fotSel.fase='Todas'; if(fotSel.cat!=='Todas' && !cats.includes(fotSel.cat)) fotSel.cat='Todas';
@@ -9921,7 +9969,7 @@ function pintarHistorialFotos(enPlay){
   pintarObsFotos(fil);
   const $f=document.getElementById('fotFiltros');
   const Zs=zona==='Todas'?[]:ltZonasOrden(), iz=Zs.indexOf(zona), zAnt=iz>0?Zs[iz-1]:null, zSig=iz>=0&&iz<Zs.length-1?Zs[iz+1]:null;
-  const nav = (zona==='Todas' || fotSel.obs) ? '' : `<span class="lt-nav"><button type="button" class="lt-volver" data-ir="Todas" title="Volver a la matriz de toda la línea">← Toda la línea</button>${zAnt?`<button type="button" data-ir="${zAnt}" title="Película de ${zAnt}">◀ ${FOT_ZONA_CORTA[zAnt]||zAnt}</button>`:''}${zSig?`<button type="button" data-ir="${zSig}" title="Película de ${zSig}">${FOT_ZONA_CORTA[zSig]||zSig} ▶</button>`:''}</span>`;
+  const nav = (zona==='Todas' || fotSel.obs) ? '' : `<span class="lt-nav"><button type="button" class="lt-volver" data-ir="Todas" title="Volver a la matriz de toda la línea">← Toda la línea</button>${zAnt?`<button type="button" data-ir="${zAnt}" title="Película de ${zonaEtqTxt(zAnt)}">◀ ${FOT_ZONA_CORTA[zAnt]||zAnt}</button>`:''}${zSig?`<button type="button" data-ir="${zSig}" title="Película de ${zonaEtqTxt(zSig)}">${FOT_ZONA_CORTA[zSig]||zSig} ▶</button>`:''}</span>`;
   const $a=document.getElementById('fotAcc');   // v72.12: en el título: navegación entre zonas y «↺ Vista inicial»
   if ($a){ $a.innerHTML = nav + `<button type="button" class="fh-ini" title="Quitar filtros y volver a la vista inicial (toda la línea, última semana)">↺ Vista inicial</button>`;
     $a.querySelectorAll('button[data-ir]').forEach(b=>b.onclick=()=>{ ltParar(); fotSel.zona=b.dataset.ir; fotSel.celda=null; fotSel.sem=null; renderFotosTab(); });
@@ -9934,7 +9982,7 @@ function pintarHistorialFotos(enPlay){
   $f.querySelectorAll('.lt-paso').forEach(b=>b.onclick=()=>ltPaso(+b.dataset.d));
   const nomObs = fotSel.obs ? (OBS_TIPOS.find(x=>x[0]===fotSel.obs)||[0,fotSel.obs])[1] : '';
   document.getElementById('fotTitulo').textContent = fotSel.obs ? `Por revisar · ${nomObs}${zona==='Todas'?'':' · '+zona}`
-    : zona==='Todas' ? 'Línea de tiempo · toda la línea' : t ? `Línea de tiempo · ${zona}${t.tp?' · '+t.tp:''}` : zn ? `Línea de tiempo · ${zona}` : `Línea de tiempo · camino ${zona}`;
+    : zona==='Todas' ? 'Línea de tiempo · toda la línea' : t ? `Línea de tiempo · ${zona}${t.tp?' · '+t.tp:''}` : zn ? `Línea de tiempo · ${zona}` : `Línea de tiempo · camino ${zona}${camTxt(zona)?' · '+camTxt(zona):''}`;   // v72.38: el camino dice a qué torre sirve
   if(!fil.length){ document.getElementById('fotLinea').innerHTML=''; document.getElementById('fotDesc').textContent=''; document.getElementById('fotDetalle').innerHTML='<div class="fot-vacio">Sin fotos para este filtro.</div>'; return; }
   if (fotSel.obs){ ltObservaciones(fil); return; }
   const fechas=fil.map(f=>f.fecha).sort(), ult=fechas[fechas.length-1], TW=DATA.tl_weeks||[], corte=TW[TW.length-1]||ult;
@@ -9943,7 +9991,7 @@ function pintarHistorialFotos(enPlay){
   if(!fotSel.sem || !ltW.includes(fotSel.sem)) fotSel.sem=[...ltW].reverse().find(w=>con.has(w)) || ltW[ltW.length-1];
   document.getElementById('fotDesc').textContent = zona==='Todas'
     ? `${fil.length} fotos en ${new Set(fechas).size} días (${ltDM(fechas[0])} → ${ltDM(ult)}) · cada columna es una semana; el número son las fotos y los puntos, las fases · clic en una semana, una celda o el botón de una torre`
-    : `Película ${t?'de la torre '+zona:zn?'de '+zona:'del camino '+zona}: un carril por fase y una columna por semana (primero la foto del pie del PPT) · clic en una celda o en una fase · ⚠ fase ≠ reporte · ◌ torre de la carpeta`;
+    : `Película ${t?'de la torre '+zona+(nAccZ?' (con las '+nAccZ+' fotos de su acceso '+camsZ+')':''):zn?'de '+zona:'del camino '+zona+(camTxt(zona)?' ('+camTxt(zona)+')':'')}: un carril por fase y una columna por semana (primero la foto del pie del PPT) · clic en una celda o en una fase · ⚠ fase ≠ reporte · ◌ torre de la carpeta`;   // v72.38
   { const d=document.getElementById('fotDesc'); d.title = d.textContent + ' · Para recorrer las fechas: rueda del mouse sobre las semanas, la barra de desplazamiento de arriba o ‹ semana ›.'; }
   if(zona==='Todas') ltMatriz(fil, ltW); else ltPelicula(fil, ltW);
   ltDetalle(fil);
@@ -11965,7 +12013,7 @@ function drawPataGrid(){
   // aquí no se repiten ni la obra civil ni la grilla de patas
   const enFicha = (typeof bimRouteMode !== 'undefined') && !bimRouteMode;
   const leg = document.querySelector('#p-patas .d4-pata-legend'); if (leg) leg.style.display = enFicha ? 'none' : '';
-  const dsc = document.querySelector('#p-patas > .desc');
+  const dsc = document.querySelector('#p-patas .pp-izq > .desc');
   if (dsc) dsc.textContent = 'Vía de acceso, metrado y las 4 zapatas (A–D)';
   if (enFicha){
     s += `<div class="tw-kpi-row uno">${_via}</div>`;
@@ -15235,7 +15283,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #p-patas .mt-win.en-panel .mt-win-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 
 /* v70: panel «Avance torre» compacto · las 4 patas se ven sin scroll */
-#p-patas > .desc{font-size:.66rem;margin-bottom:4px!important}
+#p-patas .pp-izq > .desc{font-size:.66rem;margin-bottom:4px!important}
 #p-patas .tw-head{margin-bottom:6px}
 .tw-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
 .tw-kpi-row.uno{grid-template-columns:1fr}
@@ -15249,7 +15297,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #p-patas .d4-pata-legend{margin-top:6px}
 #p-patas #d4PataGrid{flex:0 0 auto!important}
 /* v72.11: «Avance torre» más compacto (barras, porcentajes y patas) para que las fotos de campo suban */
-#p-patas > .desc{display:none}
+#p-patas .pp-izq > .desc{display:none}
 #p-patas .tw-kpi-h .tw-sub{display:inline;font-size:.5rem;font-weight:500;margin:0 0 0 3px}
 #p-patas .tw-kpi-h > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin-right:4px}
 #p-patas .tw-head{font-size:.74rem;margin-bottom:4px} #p-patas .tw-head span{display:inline;margin-left:6px;font-size:.56rem}
@@ -15275,6 +15323,21 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #p-patas .ft-h .ft-ir{margin:0}
 #p-patas .ft-tira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
 #p-patas .ft-mas{cursor:pointer;border:1px dashed var(--line-2);border-radius:6px;background:var(--panel-2);font-family:inherit;font-weight:700;padding:6px}
+/* v72.38 (08-Oct-26, pedido del usuario con captura): ficha «Avance torre» en dos columnas cuando el panel es ancho (≥ 600 px): a la
+   izquierda los porcentajes, fijos (cabecera, intervenida, vía de acceso, obra civil, excavación y cimentaciones); a la derecha todas las
+   fotos de la torre y de su camino de acceso, por día, con desplazamiento propio. Con el panel angosto (320 px) o en celular, una columna. */
+.slide-deck{container-type:inline-size}
+#p-patas .pp-izq{display:contents}
+#p-patas .ft-dia{margin:7px 0 3px;font-size:.56rem;font-weight:700;color:var(--ink-2);display:flex;align-items:baseline;gap:4px} #p-patas .ft-dia.hoy{color:var(--c-civ,#2d7667)} #p-patas .ft-dia small{font-weight:600;color:var(--ink-mut)}
+#p-patas .ft-lista .ft-tira{content-visibility:auto;contain-intrinsic-size:auto 120px}
+#p-patas .ft figcaption b{font-weight:700;color:var(--ink)}
+@media(min-width:861px){ @container (min-width:600px){
+  .bim-panel#p-patas{display:grid;grid-template-columns:minmax(290px,2fr) minmax(0,3fr);grid-template-rows:minmax(0,1fr);column-gap:12px;overflow:hidden}
+  #p-patas .pp-izq{display:block;min-height:0;overflow-y:auto;padding-right:4px}
+  #p-patas .ft-cont{min-height:0;overflow-y:auto;margin-top:0;padding:0 4px 0 12px;border-top:0;border-left:1px solid var(--line)}
+  #p-patas .ft-h{position:sticky;top:0;z-index:1;background:var(--panel);padding:2px 0 4px;margin:0}
+  #p-patas .ft-tira{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+}}
 
 /* fotos de campo */
 .ft-cont{margin-top:6px} .ft-vacio{font-size:.6rem;color:var(--ink-mut);padding:2px 0 4px}
@@ -15407,6 +15470,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .fot-obs button.on{background:var(--c-civ,#2d7667);border:1px solid var(--c-civ,#2d7667);color:#fff}
 .fot-chips button.zona{font-style:italic}
 .lt-fila.zona{font-family:"IBM Plex Sans",system-ui,sans-serif;font-style:italic}
+/* v72.38: el botón de un camino lleva debajo la torre (o el tramo) a la que sirve */
+.lt-fila.cam{line-height:1.05;padding-top:1px} .lt-fila.cam small{display:block;font:600 .46rem/1.1 "IBM Plex Mono",monospace;color:var(--ink-mut);letter-spacing:0} .lt-fila.cam:hover small{color:#fff}
 .ft-fase.yolo{background:rgba(31,78,69,.55);outline:1px dashed rgba(255,255,255,.9);outline-offset:-3px}
 .ft-fase.otras{background:rgba(90,98,105,.78);font-weight:600}   /* v72.33: «Otras fotos» con su etiqueta (pedido del usuario) */
 .ft-fec{position:absolute;right:4px;top:4px;font-size:.48rem;font-weight:800;padding:1px 5px;border-radius:999px;background:var(--amber);color:#10201b;pointer-events:none}
