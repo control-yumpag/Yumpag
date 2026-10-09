@@ -8962,6 +8962,16 @@ function tpBar(out, p0, p1, w, h){
   out.push(g);
 }
 const tpLerp = (a,b,t)=> a.clone().lerp(b,t);
+/* ---- v72.40: angular L entre dos puntos (dos chapas ala × espesor): el vértice va en el eje de pata, hacia afuera de la torre, y las
+   alas hacia el centro (−sx, −sz), paralelas a las caras, como se monta en obra (fotos de T11: stub L4x4 con sus cartelas) ---- */
+function tpAngular(out, p0, p1, ala, esp, sx, sz){
+  const d = new THREE.Vector3().subVectors(p1, p0), L = d.length();
+  if (L < 1e-4) return;
+  const q = new THREE.Quaternion().setFromUnitVectors(_tpUp, d.normalize()), M = new THREE.Matrix4().compose(p0, q, new THREE.Vector3(1,1,1));
+  const g1 = new THREE.BoxGeometry(ala, L, esp); g1.translate(-sx*ala/2, L/2, -sz*esp/2);   // ala paralela a x, en la cara exterior z
+  const g2 = new THREE.BoxGeometry(esp, L, ala); g2.translate(-sx*esp/2, L/2, -sz*ala/2);   // ala paralela a z, en la cara exterior x
+  g1.applyMatrix4(M); g2.applyMatrix4(M); out.push(g1, g2);
+}
 
 /* ---- reparto de paneles: el X queda aproximadamente cuadrado, como en el plano ---- */
 function tpPaneles(f){
@@ -8996,8 +9006,10 @@ function buildTorreParam(){
   for (let i=0;i<4;i++){
     const rad = new THREE.Vector3(S[i][0], 0, S[i][1]).normalize();
     const tan = new THREE.Vector3(-rad.z, 0, rad.x);
-    tpBar(B.patas, N(yLeg0,i), N(f.hStub,i), 0.14, 0.14);                    // tramo de stub
-    tpBar(B.patas, N(f.hStub,i), N(yPatas,i), 0.13, 0.13);                    // montante de pata
+    // v72.40: el tramo de stub es un angular L (vértice afuera, alas a las caras) y sigue 1 m sobre el empalme; lo enterrado y las
+    // extensiones de pata (+1, +2, −1 m de la planilla) los dibuja la cimentación paramétrica pata por pata (buildFound)
+    tpAngular(B.patas, N(yLeg0,i), N(f.hStub+1.0,i), 0.1016, 0.014, S[i][0], S[i][1]);   // stub L4x4 + 1 m de pata
+    tpBar(B.patas, N(f.hStub+1.0,i), N(yPatas,i), 0.13, 0.13);                // montante de pata
     // empalme pata-stub en +1,80: cubrejuntas que abrazan el angular (manguito de 0,56 m)
     const pe = N(f.hStub,i), dirL = new THREE.Vector3().subVectors(N(f.hStub+1,i), N(f.hStub-1,i)).normalize();
     tpBar(B.patas, pe.clone().addScaledVector(dirL,-0.28), pe.clone().addScaledVector(dirL, 0.28), 0.21, 0.21);
@@ -13859,33 +13871,47 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   function addFound(obj, t){
     const m = mtOf(t); if (!m || obj.userData.found) return;
     const P = obj.userData.parts, F = {}, q = fundParams(m);
+    /* v72.40 (pedido del usuario: «tiene que ser realista… guíate de las fotos de campo… considera el desnivel de las patas»):
+       · cada pata baja o sube según su extensión de la planilla (patas_ext: +1, +2 = terreno más bajo; −1 = más alto) y el stub sigue
+         por el eje de pata hasta empalmar con la torre; · stub como angular L real (sección de la planilla: 4x4x5/16", 6x6x1/2"…),
+         galvanizado, con cartelas de anclaje y la placa de empalme; · parrilla y estribos como barras de acero de verdad;
+       · encofrado de tablas con soleras y puntales; · plantillado de madera que sostiene el stub hasta el vaciado; · cerco amarillo
+         de seguridad alrededor del foso abierto (fotos de T11 y T12, octubre 2026) */
+    const MU = THREE.BufferGeometryUtils;
     const matSol = new THREE.MeshStandardMaterial({ color: 0xc2c7cc, roughness: .9 });
-    const matCon = new THREE.MeshStandardMaterial({ color: 0x6b7178, roughness: .92, metalness: 0 });   // concreto (gris; el tono claro se lavaba con la luz de la escena)
-    const matCage = new THREE.MeshBasicMaterial({ color: 0xb5651d, wireframe: true, transparent: true, opacity: .85 });
-    const matBar = new THREE.MeshStandardMaterial({ color: 0x9c4f12, metalness: .5, roughness: .5 });
-    const matEnc = new THREE.MeshStandardMaterial({ color: 0xd9c46a, roughness: .8, transparent: true, opacity: .45, side: THREE.DoubleSide });
-    const matStb = new THREE.MeshStandardMaterial({ color: 0x4f5b6a, metalness: .7, roughness: .35 });
+    const matCon = new THREE.MeshStandardMaterial({ color: 0x8d9196, roughness: .88, metalness: 0 });   // concreto gris claro (fotos de T01/T11)
+    const matBar = new THREE.MeshStandardMaterial({ color: 0x5c5751, metalness: .35, roughness: .55 });   // acero corrugado (gris oscuro)
+    const matEnc = new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: .8, transparent: true, opacity: .8, side: THREE.DoubleSide });   // tablas
+    const matMad = new THREE.MeshStandardMaterial({ color: 0xb98b4e, roughness: .85 });                    // listones (soleras, puntales, plantillado)
+    const matCer = new THREE.MeshStandardMaterial({ color: 0xf2c21c, roughness: .6, emissive: 0x4a3a00 });  // cerco plástico amarillo
+    const matStb = new THREE.MeshStandardMaterial({ color: 0xb6bec4, metalness: .22, roughness: .48 });     // acero galvanizado (metalness bajo: con más, el entorno le daba un tono marrón)
     const up = new THREE.Vector3(0, 1, 0);
+    const extNum = s => { const v = String(s || '±0').replace('±', '').replace(',', '.'); const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+    const refExt = extNum(m.pata_ref), EX = m.patas_ext || {};
+    const secStub = (() => { const mm = String((m.diseno || {}).stub || '4x4x5/16').match(/(\d)x\d\s*x\s*(\d+)\/(\d+)/i); return mm ? { ala: (+mm[1]) * 0.0254, esp: (+mm[2]) / (+mm[3]) * 0.0254 } : { ala: 0.1016, esp: 0.0079 }; })();
+    const espV = Math.max(0.014, secStub.esp);   // espesor dibujado ≥ 14 mm para que se vea
+    const merge = arr => { const g = MU.mergeBufferGeometries(arr, false); arr.forEach(x => x.dispose && x.dispose()); return g; };
+    const box = (w, hh, d, x, y, z, rot) => { const g = new THREE.BoxGeometry(w, hh, d); if (rot) g.rotateY(rot); g.translate(x, y, z); return g; };
     [1, 2, 3, 4].forEach(n => {
       const fm = P['fund_' + n]; if (!fm) return;
       fm.geometry.computeBoundingBox();
       const c = fm.geometry.boundingBox.getCenter(new THREE.Vector3());
-      // v55: el stub es la prolongación de la pata, no una pieza aparte. Se ancla el grupo al
-      // eje de pata del plano extrapolado hasta la cota de arranque del stub, de modo que la
-      // punta del stub caiga exacta sobre el eje de pata a la cota de empalme (hp + hs).
-      if (typeof tpEjePata === 'function'){
-        const sY0q = -q.Pe + (q.roca ? 0 : q.e) + 0.20;
-        const rE = tpEjePata(sY0q);
-        c.x = Math.sign(c.x || 1) * rE; c.z = Math.sign(c.z || 1) * rE;
-      }
-      const g = new THREE.Group(); g.position.set(c.x, 0, c.z); g.userData.pataGroup = n;   // doble clic / encuadre por pata (v32)
+      const sx = Math.sign(c.x || 1), sz = Math.sign(c.z || 1);
       const { Le, Pe, Bz, hz, a, hp, hs, e, roca } = q;
-      // foso previsto (aristas) + suelo remanente + volumen excavado + paredes
+      // desnivel: extensión de esta pata respecto de la de referencia (±0): +1 → la cimentación baja 1 m
+      const ext = extNum(EX[PL[n]]) - refExt, offY = -ext;
+      // v55: el stub es la prolongación de la pata. Se ancla el grupo al eje de pata del plano extrapolado hasta la cota de arranque
+      // del stub (en escena), de modo que la punta del stub caiga exacta sobre el eje de pata de la torre.
+      const sY0q = -Pe + (roca ? 0 : e) + 0.20;
+      if (typeof tpEjePata === 'function'){ const rE = tpEjePata(sY0q + offY); c.x = sx * rE; c.z = sz * rE; }
+      const g = new THREE.Group(); g.position.set(c.x, offY, c.z); g.userData.pataGroup = n;   // doble clic / encuadre por pata (v32)
+      // foso previsto (aristas) + suelo remanente + paredes
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(Le, Pe, Le)), new THREE.LineBasicMaterial({ color: 0xc9a46a, transparent: true, opacity: .9 }));
       edges.position.y = -Pe / 2; g.add(edges);
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), new THREE.MeshStandardMaterial({ color: sc(soilOf(m)).hex, roughness: .95 })); g.add(soil);   // suelo remanente (opaco: v32)
+      const soilHex = sc(soilOf(m)).hex;
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), new THREE.MeshStandardMaterial({ color: soilHex, roughness: .97 })); g.add(soil);   // suelo remanente
       const dug = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), new THREE.MeshBasicMaterial({ color: 0x1a1512, transparent: true, opacity: .22, depthWrite: false })); g.add(dug);
-      const walls = new THREE.Mesh(new THREE.BoxGeometry(Le, 1, Le), new THREE.MeshStandardMaterial({ color: new THREE.Color(sc(soilOf(m)).hex).multiplyScalar(0.62), roughness: .95, side: THREE.BackSide })); g.add(walls);   // paredes del foso (opacas y en sombra: v32)
+      const walls = new THREE.Mesh(new THREE.BoxGeometry(Le, 1, Le), new THREE.MeshStandardMaterial({ color: new THREE.Color(soilHex).multiplyScalar(roca ? 0.7 : 0.55), roughness: .97, side: THREE.BackSide })); g.add(walls);   // paredes del foso en sombra
       // solado (suelo II/III)
       const sol = roca ? null : new THREE.Mesh(new THREE.BoxGeometry(Le * 0.96, e, Le * 0.96), matSol);
       if (sol){ sol.position.y = -Pe + e / 2; g.add(sol); }
@@ -13893,45 +13919,79 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const zapH = roca ? Pe : hz, zapY0 = roca ? -Pe : (-Pe + e);
       const zap = new THREE.Mesh(new THREE.BoxGeometry(Bz, 1, Bz), matCon); g.add(zap);
       const pedH = roca ? hp : (Pe - e - hz + hp), pedY0 = roca ? 0 : (-Pe + e + hz);
-      // el pedestal, su armadura y el encofrado van INCLINADOS en paralelo al stub (como en las elevaciones de los planos):
-      // grupo con origen en la base del pedestal, girado hacia el eje de la torre
+      // el pedestal, su armadura y el encofrado van INCLINADOS en paralelo al stub (como en las elevaciones de los planos)
       const dir = new THREE.Vector3(-c.x, 0, -c.z).normalize();
       const axis = new THREE.Vector3().crossVectors(up, dir).normalize();
       const ang = Math.atan(STUB_TAN);
-      // el stub arranca 0,20 m sobre el fondo de la zapata / dado: el eje del pedestal debe coincidir con el eje del stub a la
-      // altura de su base (en roca el dado es vertical y el stub ya viene desplazado ≈ (Hz − 0,2)·tan al llegar al pedestal: v33)
       const sY0 = roca ? -Pe + 0.2 : zapY0 + 0.2;
       const yl = new THREE.Vector3(0, 1, 0); if (axis.lengthSq() > 0) yl.applyAxisAngle(axis, ang);
       const shf = (pedY0 - sY0) / yl.y;
       const pedG = new THREE.Group(); pedG.position.set(yl.x * shf, pedY0, yl.z * shf); if (axis.lengthSq() > 0) pedG.setRotationFromAxisAngle(axis, ang); g.add(pedG);
       const ped = new THREE.Mesh(new THREE.BoxGeometry(a, 1, a), matCon); pedG.add(ped);
-      // punta de diamante del pedestal (0,10 m)
-      const cap = new THREE.Mesh(new THREE.ConeGeometry(a * 0.7071, 0.10, 4), matCon); cap.rotation.y = Math.PI / 4; cap.position.y = pedH + 0.05; pedG.add(cap);
-      // armadura: parrilla de la zapata (malla, horizontal) + barras verticales del pedestal que SOBRESALEN de la zapata hasta que se vacía
-      const cageZ = roca ? null : new THREE.Mesh(new THREE.BoxGeometry(Bz - 0.15, Math.max(0.08, hz - 0.1), Bz - 0.15, 5, 1, 5), matCage);
-      if (cageZ){ cageZ.position.y = zapY0 + hz / 2; g.add(cageZ); }
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(a * 0.7071, 0.10, 4), matCon); cap.rotation.y = Math.PI / 4; cap.position.y = pedH + 0.05; pedG.add(cap);   // punta de diamante (0,10 m)
+      // ---- armadura real: parrilla de la zapata en dos capas (Ø5/8" cada 0,15 m) y estribos del pedestal ----
+      let cageZ = null;
+      if (!roca){
+        const nb = Math.max(4, Math.round((Bz - 0.12) / 0.15) + 1), bl = Bz - 0.14, r = 0.008, gs = [];
+        for (let k = 0; k < nb; k++){
+          const t0 = -bl / 2 + bl * k / (nb - 1);
+          [[zapY0 + 0.07, 0], [zapY0 + hz - 0.09, 0]].forEach(([yy]) => {
+            const c1 = new THREE.CylinderGeometry(r, r, bl, 6); c1.rotateZ(Math.PI / 2); c1.translate(0, yy, t0); gs.push(c1);
+            const c2 = new THREE.CylinderGeometry(r, r, bl, 6); c2.rotateX(Math.PI / 2); c2.translate(t0, yy + 0.017, 0); gs.push(c2);
+          });
+        }
+        cageZ = new THREE.Mesh(merge(gs), matBar); g.add(cageZ);
+      }
       const bars = new THREE.Group(), bY0 = roca ? -0.6 : -(hz - 0.15), bLen = pedH - bY0 - 0.08, hb = a / 2 - 0.06;
       [[-hb, -hb], [0, -hb], [hb, -hb], [hb, 0], [hb, hb], [0, hb], [-hb, hb], [-hb, 0]].forEach(([bx, bz]) => {
-        const geo = new THREE.CylinderGeometry(0.018, 0.018, bLen, 6); geo.translate(0, bLen / 2, 0);
+        const geo = new THREE.CylinderGeometry(0.009, 0.009, bLen, 6); geo.translate(0, bLen / 2, 0);
         const bar = new THREE.Mesh(geo, matBar); bar.position.set(bx, bY0, bz); bars.add(bar);
       });
       pedG.add(bars);
-      const cageP = new THREE.Mesh(new THREE.BoxGeometry(a - 0.1, 1, a - 0.1, 2, 6, 2), matCage); pedG.add(cageP);   // estribos
-      const enc = new THREE.Mesh(new THREE.BoxGeometry(a + 0.08, 1, a + 0.08), matEnc); pedG.add(enc);
-      // stub inclinado (mismo eje y ángulo), empotrado 0,20 m sobre el fondo de la zapata / dado, con sus cartelas
-      const Lst = pedY0 + pedH + hs - sY0;
-      const sg = new THREE.BoxGeometry(0.14, Lst, 0.14); sg.translate(0, Lst / 2, 0);
-      const stub = new THREE.Mesh(sg, matStb.clone()); stub.position.set(0, sY0, 0);
+      { const fr = [], w = a - 0.09, nE = Math.max(3, Math.round(pedH / 0.22));   // estribos: marcos cuadrados cada ~0,22 m (altura unitaria: se escala con el % de acero)
+        for (let k = 0; k < nE; k++){ const yy = (k + 0.5) / nE; fr.push(box(w, 0.012, 0.012, 0, yy, -w / 2), box(w, 0.012, 0.012, 0, yy, w / 2), box(0.012, 0.012, w, -w / 2, yy, 0), box(0.012, 0.012, w, w / 2, yy, 0)); }
+        var cageP = new THREE.Mesh(merge(fr), matBar); pedG.add(cageP); }
+      // ---- encofrado: 4 tableros de madera (altura unitaria, se escala con el %) + soleras y puntales ----
+      const enc = new THREE.Group();
+      { const d2 = a / 2 + 0.03, ww = a + 0.06;
+        [[0, -d2, 0], [0, d2, 0], [-d2, 0, Math.PI / 2], [d2, 0, Math.PI / 2]].forEach(([x, z, rot]) => { const pl = new THREE.Mesh(new THREE.BoxGeometry(ww, 1, 0.022), matEnc); if (rot) pl.rotation.y = rot; pl.position.set(x, 0.5, z); enc.add(pl); });
+        const sol2 = [], w2 = a + 0.26; [0.28, 0.72].forEach(yy => { sol2.push(box(w2, 0.07, 0.07, 0, yy, -(a / 2 + 0.085)), box(w2, 0.07, 0.07, 0, yy, a / 2 + 0.085), box(0.07, 0.07, w2, -(a / 2 + 0.085), yy, 0), box(0.07, 0.07, w2, a / 2 + 0.085, yy, 0)); });
+        enc.add(new THREE.Mesh(merge(sol2), matMad)); }
+      pedG.add(enc);
+      // puntales del encofrado y plantillado del stub: listones de madera desde la pieza hasta el terreno fuera del foso (fotos de T11)
+      const liston = (p0, p1, w) => { const d = new THREE.Vector3().subVectors(p1, p0), L = d.length(); const gg = new THREE.BoxGeometry(w, L, w); gg.translate(0, L / 2, 0);
+        const mm = new THREE.Mesh(gg, matMad); mm.position.copy(p0); mm.quaternion.setFromUnitVectors(up, d.normalize()); return mm; };
+      const rp = Le / 2 + 0.9, punt = new THREE.Group(), plant = new THREE.Group();
+      [[sx, 0], [0, sz]].forEach(([ux, uz]) => { punt.add(liston(new THREE.Vector3(ux * (a / 2 + 0.1), hp - 0.05, uz * (a / 2 + 0.1)), new THREE.Vector3(ux * rp, 0, uz * rp), 0.07)); });
+      g.add(punt);
+      [[sx, sz], [-sx, sz], [sx, -sz]].forEach(([ux, uz]) => { plant.add(liston(new THREE.Vector3(ux * 0.08, hp + hs * 0.8, uz * 0.08), new THREE.Vector3(ux * rp * 1.1, 0, uz * rp * 1.1), 0.08)); });
+      g.add(plant);
+      // ---- stub: angular L real (sección de la planilla), inclinado, empotrado 0,20 m sobre el fondo, con cartelas y placa de empalme;
+      //      sube hasta donde arranca el tramo que dibuja la torre (cota +0,30 de la escena, o más si la pata es más larga) ----
+      const stubMat = matStb.clone();
+      const topLocal = 0.30 + Math.max(0, ext);
+      const Lst = Math.max(0.3, topLocal - sY0);
+      const gsSt = [];
+      const g1 = new THREE.BoxGeometry(secStub.ala, Lst, espV); g1.translate(-sx * secStub.ala / 2, Lst / 2, -sz * espV / 2);
+      const g2 = new THREE.BoxGeometry(espV, Lst, secStub.ala); g2.translate(-sx * espV / 2, Lst / 2, -sz * secStub.ala / 2);
+      gsSt.push(g1, g2);
+      const emb = hp - sY0;   // tramo empotrado en el concreto (del arranque al tope del pedestal)
+      [0.12, 0.36].forEach(f => gsSt.push(box(0.34, 0.016, 0.34, 0, emb * f, 0)));                                          // cartelas de anclaje en la cola
+      if (topLocal > hp + hs + 0.1) gsSt.push(box(0.21, 0.56, 0.21, 0, emb + hs, 0));                                       // placa de empalme stub–extensión (en el tope del stub, hs sobre el pedestal)
+      const stub = new THREE.Mesh(merge(gsSt), stubMat); stub.position.set(0, sY0, 0);
       if (axis.lengthSq() > 0) stub.setRotationFromAxisAngle(axis, ang);
-      [0.10, 0.30].forEach(f => { const y = (Lst - hs - 0.1) * f; const cl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.34), stub.material); cl.position.y = y; stub.add(cl); });   // cartelas de anclaje en la cola del stub
       g.add(stub);
+      // ---- cerco de seguridad: 4 parantes y 2 largueros amarillos alrededor del foso abierto ----
+      { const d3 = Le / 2 + 0.6, L3 = 2 * d3, gc = [];
+        [[-d3, -d3], [d3, -d3], [d3, d3], [-d3, d3]].forEach(([x, z]) => gc.push(box(0.05, 1.0, 0.05, x, 0.5, z)));
+        [0.5, 0.95].forEach(yy => { gc.push(box(L3, 0.035, 0.035, 0, yy, -d3), box(L3, 0.035, 0.035, 0, yy, d3), box(0.035, 0.035, L3, -d3, yy, 0), box(0.035, 0.035, L3, d3, yy, 0)); });
+        var fence = new THREE.Mesh(merge(gc), matCer); g.add(fence); }
       // anillo de resalte (al pasar el puntero por la ventana de cimentaciones)
       const hl = new THREE.Mesh(new THREE.RingGeometry(Le * 0.72, Le * 0.72 + 0.28, 40), new THREE.MeshBasicMaterial({ color: 0x3f9e8b, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false }));
       hl.rotation.x = -Math.PI / 2; hl.position.y = 0.06; hl.visible = false; g.add(hl);
-      // rótulo compacto opcional (por defecto oculto: la información va en la ventana flotante)
-      const lbl = makeTowerLabelSprite(PL[n], '#c9a46a', 0.026, true); lbl.position.set(Math.sign(c.x) * (Le / 2 + 1.6), 0.5, Math.sign(c.z) * (Le / 2 + 1.6)); lbl.visible = false; g.add(lbl);
+      const lbl = makeTowerLabelSprite(PL[n], '#c9a46a', 0.026, true); lbl.position.set(sx * (Le / 2 + 1.6), 0.5, sz * (Le / 2 + 1.6)); lbl.visible = false; g.add(lbl);
       obj.add(g);
-      F[n] = { g, soil, dug, walls, sol, zap, pedG, ped, cap, cageZ, bars, cageP, enc, stub, hl, lbl, c, Le, Pe, Bz, hz, a, hp, pedH, pedY0, zapH, zapY0, bLen, roca, lastTxt: '', state: {} };
+      F[n] = { g, soil, dug, walls, sol, zap, pedG, ped, cap, cageZ, bars, cageP, enc, punt, plant, stub, stubMat, fence, hl, lbl, c, Le, Pe, Bz, hz, a, hp, pedH, pedY0, zapH, zapY0, bLen, roca, ext, offY, lastTxt: '', state: {} };
     });
     obj.userData.found = F; obj.userData.foundParams = q;
   }
@@ -13956,7 +14016,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       // reportado sea menor (cambios de volumen en la planilla): la geometría usa la excavación efectiva
       const excG = (sol > 0 || stb > 0 || con > 0) ? 1 : exc;
       const dh = f.Pe * excG, rh = f.Pe - dh;
-      f.soil.visible = rh > 0.02; f.soil.scale.y = Math.max(0.02, rh); f.soil.position.y = -f.Pe + rh / 2;
+      f.soil.visible = rh > 0.02; f.soil.scale.y = Math.max(0.02, rh); f.soil.position.y = -f.Pe + rh / 2 - 0.02;   // v72.40: sin excavar, su cara superior queda a ras del terreno (que va a −0,02), no como una placa encima
       f.dug.visible = false;   // v32: el volumen excavado ya no se pinta (se veía como bloque encimado); el foso queda abierto
       f.walls.visible = dh > 0.02; f.walls.scale.y = Math.max(0.02, dh); f.walls.position.y = -dh / 2;
       // solado
@@ -13971,12 +14031,16 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const barF = Math.max(0.02, Math.min(1, ace));
       f.bars.visible = ace > 0 && cp < 0.999; f.bars.children.forEach(bar => { bar.scale.y = barF; });
       const stF = Math.min(1, Math.max(0, (ace - 0.5) / 0.5));
-      f.cageP.visible = ace > 0.5 && cp < 0.999; f.cageP.scale.y = Math.max(0.02, f.pedH * stF); f.cageP.position.y = f.pedH * stF / 2;
-      f.enc.visible = enc > 0 && cp < 0.999; f.enc.scale.y = Math.max(0.02, f.pedH * Math.min(1, enc)); f.enc.position.y = f.pedH * Math.min(1, enc) / 2;
+      f.cageP.visible = ace > 0.5 && cp < 0.999; f.cageP.scale.y = Math.max(0.02, f.pedH * stF); f.cageP.position.y = 0;   // v72.40: estribos de altura unitaria desde la base
+      f.enc.visible = enc > 0 && cp < 0.999; f.enc.scale.y = Math.max(0.02, f.pedH * Math.min(1, enc)); f.enc.position.y = 0;   // tableros desde la base
+      // v72.40: puntales del encofrado, plantillado del stub y cerco del foso se ven hasta el vaciado del pedestal
+      if (f.punt) f.punt.visible = enc > 0 && cp < 0.999;
+      if (f.plant) f.plant.visible = stb > 0 && cp < 0.999;
+      if (f.fence) f.fence.visible = excG > 0 && cp < 0.999;
       // stub: pieza completa (es un solo angular); mientras la nivelación no llega al 100 % se ve translúcido
       f.stub.visible = stb > 0; f.stub.scale.y = 1;
-      const stubOk = stb >= 0.995; f.stub.material.transparent = !stubOk; f.stub.material.opacity = stubOk ? 1 : 0.45;
-      f.stub.material.color.setHex(stubOk ? 0x4f5b6a : 0x8a949c); f.stub.material.needsUpdate = true;
+      const stubOk = stb >= 0.995, sm = f.stubMat || f.stub.material; sm.transparent = !stubOk; sm.opacity = stubOk ? 1 : 0.45;
+      sm.color.setHex(stubOk ? 0xb6bec4 : 0x9aa4ab); sm.needsUpdate = true;
       // rótulo compacto (opcional): pata · avance global · excavación · m³
       const pAll = (typeof pataOverall === 'function') ? pataOverall(t, L, d4i) : exc * 100;
       f.state = { L, pAll, exc, excR: exc, sol, stb, ace, enc, con, m3: m.excav / 4 * exc, m3t: m.excav / 4 };
@@ -14496,10 +14560,11 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     NAV.ground = pm ? { mesh: pm, grid, op: pm.material.opacity } : null;
     const rl = (typeof realista !== 'undefined') && realista;
     if (pm && F && !rl){
-      const sh = new THREE.Shape(); sh.moveTo(-35, -35); sh.lineTo(35, -35); sh.lineTo(35, 35); sh.lineTo(-35, 35); sh.closePath();
-      Object.values(F).forEach(f => { if (f.g) f.g.userData.pataGroup = true; const h = f.Le / 2 + 0.03, x = f.c.x, y = -f.c.z, p = new THREE.Path();
-        p.moveTo(x - h, y - h); p.lineTo(x + h, y - h); p.lineTo(x + h, y + h); p.lineTo(x - h, y + h); p.closePath(); sh.holes.push(p); });
-      const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2); pm.geometry.dispose(); pm.geometry = g;
+      /* v72.40: el terreno del detalle sigue el desnivel de las patas (extensiones de la planilla): superficie con la cota de cada
+         cimentación en su pata, suavizada entre ellas y que vuelve al nivel de referencia lejos de la torre (la plataforma nivelada);
+         los fosos quedan recortados como agujeros exactos. Antes era un plano con agujeros a cota 0. */
+      Object.values(F).forEach(f => { if (f.g) f.g.userData.pataGroup = true; });
+      const g = terrenoDesnivel(F); pm.geometry.dispose(); pm.geometry = g;
       pm.material.opacity = NAV.xray ? 0.12 : 0.92; pm.position.y = -0.02; NAV.ground.op = pm.material.opacity;   // opaco: los fosos se ven por sus huecos (y por debajo, al orbitar bajo el terreno)
     }
     // el fantasma "Proyectado" del GLB trae sus propios bloques de cimentación, que se encimaban sobre los fosos: se usa sin ellos
@@ -14518,6 +14583,52 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (o && o.userData.road) o.userData.road.visible = false;
     NAV.setSection(false);
     NAV.fitTower(NAV.homeDir, 0);   // encuadre inicial según el aspecto del visor (celular vertical incluido)
+  }
+  /* v72.40: altura del terreno del detalle por el desnivel de las patas: plano por mínimos cuadrados por las 4 cotas de pata
+     (offY = −extensión), residuo suave para que cada pata caiga exacta en su cota, y transición a la cota 0 entre 1,5 y 3,5 radios */
+  const PLAT_M = 1.0, PLAT_B = 1.8;   // plataforma nivelada alrededor de cada foso (m) y ancho de la transición al terreno natural
+  function alturaDesnivel(F){
+    const P = Object.values(F).map(f => ({ x: f.c.x, z: f.c.z, y: f.offY || 0, h: f.Le / 2 + 0.03 }));
+    if (!P.length || P.every(p => Math.abs(p.y) < 1e-6)) return () => 0;
+    let Sx = 0, Sz = 0, Sy = 0, Sxx = 0, Szz = 0, Sxz = 0, Sxy = 0, Szy = 0; const n = P.length;
+    P.forEach(p => { Sx += p.x; Sz += p.z; Sy += p.y; Sxx += p.x * p.x; Szz += p.z * p.z; Sxz += p.x * p.z; Sxy += p.x * p.y; Szy += p.z * p.y; });
+    const A = [[Sxx, Sxz, Sx], [Sxz, Szz, Sz], [Sx, Sz, n]], B = [Sxy, Szy, Sy];
+    const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    const D = det(A); let a = 0, b = 0, c = 0;
+    if (Math.abs(D) > 1e-9){ const col = k => A.map((r, i) => r.map((v, j) => j === k ? B[i] : v)); a = det(col(0)) / D; b = det(col(1)) / D; c = det(col(2)) / D; }
+    const R = Math.max(1, ...P.map(p => Math.hypot(p.x, p.z))), res = P.map(p => p.y - (a * p.x + b * p.z + c));
+    const natural = (x, z) => {
+      const r = Math.hypot(x, z); let w = 1;
+      if (r >= 3.5 * R) w = 0; else if (r > 1.5 * R){ const t = (r - 1.5 * R) / (2 * R); w = 1 - t * t * (3 - 2 * t); }
+      let sw = 0, sr = 0; P.forEach((p, i) => { const d = Math.hypot(x - p.x, z - p.z), wi = 1 / (0.5 + d * d); sw += wi; sr += wi * res[i]; });
+      return w * ((a * x + b * z + c) + (sw ? sr / sw : 0));
+    };
+    // cada foso se abre desde una plataforma nivelada a la cota de su pata (como en obra): dentro del foso y hasta PLAT_M fuera
+    // de su borde la cota es exacta; de ahí al terreno natural hay una transición suave de PLAT_B m (talud)
+    return (x, z) => {
+      let p = null, bd = Infinity;
+      P.forEach(q => { const d = Math.max(Math.abs(x - q.x), Math.abs(z - q.z)) - q.h; if (d < bd){ bd = d; p = q; } });
+      if (!p || bd >= PLAT_M + PLAT_B) return natural(x, z);
+      if (bd <= PLAT_M) return p.y;
+      const t = (bd - PLAT_M) / PLAT_B, w = 1 - t * t * (3 - 2 * t);
+      return w * p.y + (1 - w) * natural(x, z);
+    };
+  }
+  /* superficie 70 × 70 m con las líneas de la malla y los bordes exactos de los fosos; las celdas dentro de un foso no se dibujan */
+  function terrenoDesnivel(F){
+    const alt = alturaDesnivel(F), pits = Object.values(F).map(f => ({ x: f.c.x, z: f.c.z, h: f.Le / 2 + 0.03 }));
+    const ejes = base => { const s = new Set(); for (let v = -35; v <= 35; v += 1) s.add(v);
+      pits.forEach(p => { [p.h, p.h + PLAT_M, p.h + PLAT_M + PLAT_B * 0.5, p.h + PLAT_M + PLAT_B].forEach(d => { s.add(+(p[base] - d).toFixed(3)); s.add(+(p[base] + d).toFixed(3)); }); });   // borde del foso, de la plataforma y del talud
+      return [...s].sort((u, v) => u - v); };
+    const xs = ejes('x'), zs = ejes('z'), nx = xs.length, nz = zs.length, pos = [], uv = [], idx = [];
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++){ const x = xs[i], z = zs[j]; pos.push(x, alt(x, z), z); uv.push((x + 35) / 70, 1 - (z + 35) / 70); }
+    const dentro = (x, z) => pits.some(p => Math.abs(x - p.x) < p.h - 1e-6 && Math.abs(z - p.z) < p.h - 1e-6);
+    for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++){
+      if (dentro((xs[i] + xs[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2)) continue;
+      const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, c, b, b, c, d);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); g.type = 'PlaneGeometry';
+    return g;
   }
   function routeSetup(){
     if (!ready()) return;
