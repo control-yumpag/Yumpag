@@ -9546,7 +9546,7 @@ function pintarFotosTorre(){
   /* v72.38 (pedido del usuario): todas las fotos (antes 24), por día, el más reciente arriba; en panel ancho van en su propia columna con desplazamiento */
   const N_FT = window.innerWidth <= 860 ? 24 : Infinity, vis = hoy.slice(0, N_FT);   // en celular el panel no tiene desplazamiento propio: 24 y «+N más →» (v72.11)
   const G={}; vis.forEach(f=>{ (G[f.fecha]=G[f.fecha]||[]).push(f); }); const dias=Object.keys(G).sort().reverse();
-  cont.innerHTML = `<div class="tw-sec ft-h" title="De la más reciente a la más antigua${fases.length?' · fases vistas: '+fases.join(', '):''}${camsT?' · incluye las fotos de su camino de acceso ('+camsT+')':''}"><span>Fotos de campo · ${hoy.length} hasta el ${ltDM(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${nCam?` · ${nCam} de su acceso ${camsF}`:''}${inco?` · <b class="ft-inco">⚠ ${inco} ≠ reporte</b>`:''}</span><button type="button" class="ft-ir" data-z="${t.t}">Línea de tiempo de ${t.t} →</button></div>
+  cont.innerHTML = `<div class="tw-sec ft-h" title="De la más reciente a la más antigua${fases.length?' · fases vistas: '+fases.join(', '):''}${camsT?' · incluye las fotos de su camino de acceso ('+camsT+')':''}"><span>Fotos de campo · ${hoy.length} hasta el ${ltDM(hasta)}${dia?` · <b>${dia} de ese día</b>`:''}${nCam?` · ${nCam} de su acceso ${camsF}`:''}${inco?` · <b class="ft-inco">⚠ ${inco} ≠ reporte</b>`:''}</span><button type="button" class="ft-ir" data-z="${t.t}" title="Línea de tiempo de ${t.t} en la pestaña Fotos de obra">Línea de tiempo →</button></div>
     <div class="ft-lista">${dias.map(d=>`<div class="ft-dia${d===hasta?' hoy':''}">${ltDia(d)} <small>· ${G[d].length} foto${G[d].length>1?'s':''}</small></div><div class="ft-tira">${G[d].map(f=>figFoto(f, hasta, 'cam')).join('')}</div>`).join('')}
     ${hoy.length>N_FT?`<div class="ft-tira"><button type="button" class="ft-mas ft-ir" data-z="${t.t}" title="Ver todas en la pestaña Fotos de obra">+${hoy.length-N_FT} más →</button></div>`:''}</div>`;
   cont.querySelectorAll('.ft').forEach(el=>el.onclick=()=>abrirFoto(el.dataset.src, vis));
@@ -15332,11 +15332,18 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #p-patas .ft-lista .ft-tira{content-visibility:auto;contain-intrinsic-size:auto 120px}
 #p-patas .ft figcaption b{font-weight:700;color:var(--ink)}
 @media(min-width:861px){ @container (min-width:600px){
-  .bim-panel#p-patas{display:grid;grid-template-columns:minmax(290px,2fr) minmax(0,3fr);grid-template-rows:minmax(0,1fr);column-gap:12px;overflow:hidden}
-  #p-patas .pp-izq{display:block;min-height:0;overflow-y:auto;padding-right:4px}
-  #p-patas .ft-cont{min-height:0;overflow-y:auto;margin-top:0;padding:0 4px 0 12px;border-top:0;border-left:1px solid var(--line)}
-  #p-patas .ft-h{position:sticky;top:0;z-index:1;background:var(--panel);padding:2px 0 4px;margin:0}
-  #p-patas .ft-tira{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+  /* v72.39 (pedido del usuario: «más ajustado y acomodado»): columna izquierda fija de 290 px, fotos más chicas (4 por fila en el panel de 800 px),
+     huecos de 4 px, pie de una línea y el botón de la línea de tiempo en la misma fila que el título */
+  .bim-panel#p-patas{display:grid;grid-template-columns:290px minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:10px;overflow:hidden}
+  #p-patas .pp-izq{display:block;min-height:0;overflow-y:auto;padding-right:2px}
+  #p-patas .ft-cont{min-height:0;overflow-y:auto;margin-top:0;padding:0 2px 0 10px;border-top:0;border-left:1px solid var(--line)}
+  #p-patas .ft-h{position:sticky;top:0;z-index:1;background:var(--panel);padding:1px 0 3px;margin:0;flex-wrap:nowrap;gap:2px 6px}
+  #p-patas .ft-h > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #p-patas .ft-h .ft-ir{flex:0 0 auto;font-size:.56rem;padding:2px 7px}
+  #p-patas .ft-dia{margin:5px 0 2px}
+  #p-patas .ft-tira{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:4px}
+  #p-patas .ft figcaption{padding:1px 3px;font-size:.5rem}
+  #p-patas .ft figcaption .ft-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.5rem;margin-top:0}
 }}
 
 /* fotos de campo */
