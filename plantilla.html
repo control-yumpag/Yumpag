@@ -9006,19 +9006,17 @@ function buildTorreParam(){
   for (let i=0;i<4;i++){
     const rad = new THREE.Vector3(S[i][0], 0, S[i][1]).normalize();
     const tan = new THREE.Vector3(-rad.z, 0, rad.x);
-    // v72.40: el tramo de stub es un angular L (vértice afuera, alas a las caras) y sigue 1 m sobre el empalme; lo enterrado y las
-    // extensiones de pata (+1, +2, −1 m de la planilla) los dibuja la cimentación paramétrica pata por pata (buildFound)
-    tpAngular(B.patas, N(yLeg0,i), N(f.hStub+1.0,i), 0.1016, 0.014, S[i][0], S[i][1]);   // stub L4x4 + 1 m de pata
-    tpBar(B.patas, N(f.hStub+1.0,i), N(yPatas,i), 0.13, 0.13);                // montante de pata
-    // empalme pata-stub en +1,80: cubrejuntas que abrazan el angular (manguito de 0,56 m)
+    // v72.40: el tramo de stub es un angular L (vértice afuera, alas a las caras); lo enterrado y las extensiones de pata
+    // (+1, +2, −1 m de la planilla) los dibuja la cimentación paramétrica pata por pata (addFound).
+    // v72.41b (pedido del usuario: «se ve raro esa unión, empalme, como que no da continuidad»): el montante de pata es UN solo
+    // angular continuo del pedestal al cierre de la V (antes: L hasta +1 m del empalme, manguito cuadrado centrado en el eje y
+    // barra cuadrada encima, que se veían desalineados), y el empalme pata-stub en +1,80 es un cubrejuntas en L que abraza el
+    // angular por fuera; se quitan las presillas sueltas (triángulos que parecían flotar).
+    tpAngular(B.patas, N(yLeg0,i), N(f.hStub,i), 0.1016, 0.014, S[i][0], S[i][1]);   // stub L4x4 que asoma del pedestal, hasta el empalme
+    tpAngular(B.patas, N(f.hStub,i), N(yPatas,i), 0.13, 0.016, S[i][0], S[i][1]);    // montante de pata: angular algo mayor, mismo vértice y alas
     const pe = N(f.hStub,i), dirL = new THREE.Vector3().subVectors(N(f.hStub+1,i), N(f.hStub-1,i)).normalize();
-    tpBar(B.patas, pe.clone().addScaledVector(dirL,-0.28), pe.clone().addScaledVector(dirL, 0.28), 0.21, 0.21);
-    // redundantes: presillas cortas hacia el interior (como los perfiles secundarios del plano de patas)
-    for (let y=f.hStub+0.9; y<yPatas-0.5; y+=1.25){
-      const p = N(y,i), q = N(y+0.55,i).addScaledVector(rad, -0.42);
-      tpBar(B.patas, p, q, 0.045, 0.045);
-      tpBar(B.patas, N(y+0.55,i), q, 0.045, 0.045);
-    }
+    const cjOff = rad.clone().multiplyScalar(0.012);   // el cubrejuntas va 12 mm hacia afuera para envolver las alas de los dos angulares
+    tpAngular(B.patas, pe.clone().addScaledVector(dirL,-0.28).add(cjOff), pe.clone().addScaledVector(dirL, 0.28).add(cjOff), 0.16, 0.028, S[i][0], S[i][1]);
   }
   /* --- cierre de la V: del nudo de cierre bajan las diagonales a cada pata --- */
   [[0,1],[1,2],[2,3],[3,0]].forEach(([a,b])=>{
@@ -13966,7 +13964,11 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       gsSt.push(g1, g2);
       const emb = hp - sY0;   // tramo empotrado en el concreto (del arranque al tope del pedestal)
       [0.12, 0.36].forEach(f => gsSt.push(box(0.34, 0.016, 0.34, 0, emb * f, 0)));                                          // cartelas de anclaje en la cola
-      if (topLocal > hp + hs + 0.1) gsSt.push(box(0.21, 0.56, 0.21, 0, emb + hs, 0));                                       // placa de empalme stub–extensión (en el tope del stub, hs sobre el pedestal)
+      if (topLocal > hp + hs + 0.1){   // empalme stub–extensión en el tope del stub (hs sobre el pedestal): cubrejuntas en L que abraza el angular por fuera (como el de la torre)
+        const yj = emb + hs, cA = 0.14, cE = 0.024, o = 0.012;
+        const c1 = new THREE.BoxGeometry(cA, 0.56, cE); c1.translate(-sx * cA / 2 + sx * o, yj, -sz * cE / 2 + sz * o);
+        const c2 = new THREE.BoxGeometry(cE, 0.56, cA); c2.translate(-sx * cE / 2 + sx * o, yj, -sz * cA / 2 + sz * o);
+        gsSt.push(c1, c2); }
       const stub = new THREE.Mesh(merge(gsSt), stubMat); stub.position.set(0, sY0, 0);
       if (axis.lengthSq() > 0) stub.setRotationFromAxisAngle(axis, ang);
       g.add(stub);
