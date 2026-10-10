@@ -1,8 +1,8 @@
 {
 "fuente": "MET Norway · Locationforecast 2.0 (api.met.no)",
 "licencia": "CC BY 4.0 · Datos: MET Norway",
-"generado": "2026-10-10T03:29-05:00",
-"actualizado_met": "2026-10-10T08:19:21Z",
+"generado": "2026-10-10T10:23-05:00",
+"actualizado_met": "2026-10-10T13:17:19Z",
 "punto": {
 "lat": -10.6111,
 "lon": -76.6172,
@@ -13,123 +13,74 @@
 "dias": [
 {
 "fecha": "2026-10-10",
-"tmin": -1.0,
-"tmax": 13.3,
-"lluvia_mm": 1.1,
-"lluvia_jornada_mm": 1.1,
+"tmin": 3.0,
+"tmax": 13.6,
+"lluvia_mm": 0.9,
+"lluvia_jornada_mm": 0.7,
 "prob_max": null,
 "prob_jornada": null,
 "tormenta_max": null,
 "tormenta_simbolo": false,
-"rafaga_max_kmh": 17.0,
-"simbolo": "rainshowers_day",
-"horas_secas_jornada": 5,
+"rafaga_max_kmh": 18.0,
+"simbolo": "lightrain",
+"horas_secas_jornada": null,
 "horas_jornada": 10,
 "resolucion": "horaria",
-"desde": "03:00"
+"desde": "10:00"
 },
 {
 "fecha": "2026-10-11",
-"tmin": 1.0,
-"tmax": 14.4,
-"lluvia_mm": 3.1,
-"lluvia_jornada_mm": 2.3,
+"tmin": 0.5,
+"tmax": 14.1,
+"lluvia_mm": 0.5,
+"lluvia_jornada_mm": 0.5,
 "prob_max": null,
 "prob_jornada": null,
 "tormenta_max": null,
 "tormenta_simbolo": false,
-"rafaga_max_kmh": 17.0,
-"simbolo": "heavyrainshowers_day",
-"horas_secas_jornada": 5,
+"rafaga_max_kmh": 16.0,
+"simbolo": "lightrainshowers_day",
+"horas_secas_jornada": 7,
 "horas_jornada": 10,
 "resolucion": "horaria",
 "desde": null
 },
 {
 "fecha": "2026-10-12",
-"tmin": -2.6,
-"tmax": 14.8,
-"lluvia_mm": 2.8,
-"lluvia_jornada_mm": 2.5,
+"tmin": -1.9,
+"tmax": 16.1,
+"lluvia_mm": 0.3,
+"lluvia_jornada_mm": 0.3,
 "prob_max": null,
 "prob_jornada": null,
 "tormenta_max": null,
 "tormenta_simbolo": false,
-"rafaga_max_kmh": 22.0,
-"simbolo": "heavyrainshowers_day",
-"horas_secas_jornada": 5,
+"rafaga_max_kmh": 20.0,
+"simbolo": "rainshowers_day",
+"horas_secas_jornada": 9,
 "horas_jornada": 10,
-"resolucion": "mixta",
+"resolucion": "horaria",
 "desde": null
 },
 {
 "fecha": "2026-10-13",
 "tmin": -2.3,
 "tmax": 13.1,
-"lluvia_mm": 5.6,
-"lluvia_jornada_mm": 3.9,
+"lluvia_mm": 3.9,
+"lluvia_jornada_mm": 2.8,
 "prob_max": null,
 "prob_jornada": null,
 "tormenta_max": null,
 "tormenta_simbolo": false,
-"rafaga_max_kmh": 10.0,
-"simbolo": "heavyrainshowers_day",
+"rafaga_max_kmh": 11.0,
+"simbolo": "rainshowers_day",
 "horas_secas_jornada": null,
 "horas_jornada": 10,
-"resolucion": "6 h",
+"resolucion": "mixta",
 "desde": null
 }
 ],
 "horas": [
-{
-"t": "2026-10-10T03",
-"temp": -0.3,
-"mm": 0.0,
-"p": null,
-"simbolo": "cloudy"
-},
-{
-"t": "2026-10-10T04",
-"temp": -0.1,
-"mm": 0.0,
-"p": null,
-"simbolo": "cloudy"
-},
-{
-"t": "2026-10-10T05",
-"temp": -0.4,
-"mm": 0.0,
-"p": null,
-"simbolo": "cloudy"
-},
-{
-"t": "2026-10-10T06",
-"temp": -1.0,
-"mm": 0.0,
-"p": null,
-"simbolo": "cloudy"
-},
-{
-"t": "2026-10-10T07",
-"temp": 1.6,
-"mm": 0.0,
-"p": null,
-"simbolo": "cloudy"
-},
-{
-"t": "2026-10-10T08",
-"temp": 4.9,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_day"
-},
-{
-"t": "2026-10-10T09",
-"temp": 8.0,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_day"
-},
 {
 "t": "2026-10-10T10",
 "temp": 10.3,
@@ -139,98 +90,98 @@
 },
 {
 "t": "2026-10-10T11",
-"temp": 12.4,
+"temp": 12.2,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_day"
 },
 {
 "t": "2026-10-10T12",
-"temp": 13.3,
-"mm": 0.1,
+"temp": 13.6,
+"mm": 0.0,
 "p": null,
-"simbolo": "lightrainshowers_day"
+"simbolo": "partlycloudy_day"
 },
 {
 "t": "2026-10-10T13",
-"temp": 13.1,
+"temp": 13.0,
 "mm": 0.2,
 "p": null,
-"simbolo": "lightrainshowers_day"
+"simbolo": "lightrain"
 },
 {
 "t": "2026-10-10T14",
-"temp": 12.2,
+"temp": 12.0,
+"mm": 0.1,
+"p": null,
+"simbolo": "lightrain"
+},
+{
+"t": "2026-10-10T15",
+"temp": 12.3,
+"mm": 0.2,
+"p": null,
+"simbolo": "lightrain"
+},
+{
+"t": "2026-10-10T16",
+"temp": 10.9,
+"mm": 0.2,
+"p": null,
+"simbolo": "lightrain"
+},
+{
+"t": "2026-10-10T17",
+"temp": 8.9,
 "mm": 0.2,
 "p": null,
 "simbolo": "lightrainshowers_day"
 },
 {
-"t": "2026-10-10T15",
-"temp": 11.8,
-"mm": 0.3,
-"p": null,
-"simbolo": "rainshowers_day"
-},
-{
-"t": "2026-10-10T16",
-"temp": 10.7,
-"mm": 0.3,
-"p": null,
-"simbolo": "rainshowers_day"
-},
-{
-"t": "2026-10-10T17",
-"temp": 9.5,
-"mm": 0.0,
-"p": null,
-"simbolo": "fair_day"
-},
-{
 "t": "2026-10-10T18",
-"temp": 7.5,
+"temp": 6.7,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-10T19",
-"temp": 5.4,
+"temp": 5.3,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-10T20",
-"temp": 4.3,
+"temp": 4.4,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-10T21",
-"temp": 4.1,
+"temp": 4.0,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-10T22",
 "temp": 3.6,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-10T23",
-"temp": 3.1,
+"temp": 3.0,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-11T00",
-"temp": 3.0,
+"temp": 2.9,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
@@ -240,189 +191,238 @@
 "temp": 3.0,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-11T02",
-"temp": 2.5,
+"temp": 2.6,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-11T03",
-"temp": 2.1,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_night"
-},
-{
-"t": "2026-10-11T04",
 "temp": 1.8,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
+"t": "2026-10-11T04",
+"temp": 0.8,
+"mm": 0.0,
+"p": null,
+"simbolo": "partlycloudy_night"
+},
+{
 "t": "2026-10-11T05",
-"temp": 2.3,
+"temp": 0.7,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-11T06",
-"temp": 1.0,
+"temp": 0.5,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_day"
 },
 {
 "t": "2026-10-11T07",
-"temp": 3.2,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_day"
-},
-{
-"t": "2026-10-11T08",
-"temp": 6.0,
+"temp": 2.9,
 "mm": 0.0,
 "p": null,
 "simbolo": "fair_day"
 },
 {
+"t": "2026-10-11T08",
+"temp": 5.6,
+"mm": 0.0,
+"p": null,
+"simbolo": "clearsky_day"
+},
+{
 "t": "2026-10-11T09",
-"temp": 8.9,
+"temp": 8.4,
 "mm": 0.0,
 "p": null,
 "simbolo": "clearsky_day"
 },
 {
 "t": "2026-10-11T10",
-"temp": 11.5,
-"mm": 0.1,
+"temp": 11.1,
+"mm": 0.0,
 "p": null,
-"simbolo": "lightrainshowers_day"
+"simbolo": "fair_day"
 },
 {
 "t": "2026-10-11T11",
 "temp": 12.8,
+"mm": 0.0,
+"p": null,
+"simbolo": "fair_day"
+},
+{
+"t": "2026-10-11T12",
+"temp": 14.0,
+"mm": 0.0,
+"p": null,
+"simbolo": "fair_day"
+},
+{
+"t": "2026-10-11T13",
+"temp": 14.1,
 "mm": 0.1,
 "p": null,
 "simbolo": "lightrainshowers_day"
 },
 {
-"t": "2026-10-11T12",
-"temp": 13.8,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_day"
-},
-{
-"t": "2026-10-11T13",
-"temp": 13.9,
-"mm": 0.0,
-"p": null,
-"simbolo": "partlycloudy_day"
-},
-{
 "t": "2026-10-11T14",
-"temp": 14.4,
-"mm": 0.6,
+"temp": 13.5,
+"mm": 0.2,
 "p": null,
-"simbolo": "rainshowers_day"
+"simbolo": "lightrainshowers_day"
 },
 {
 "t": "2026-10-11T15",
-"temp": 8.5,
-"mm": 1.1,
+"temp": 11.9,
+"mm": 0.2,
 "p": null,
-"simbolo": "heavyrainshowers_day"
+"simbolo": "lightrainshowers_day"
 },
 {
 "t": "2026-10-11T16",
-"temp": 8.2,
-"mm": 0.4,
+"temp": 10.8,
+"mm": 0.0,
 "p": null,
-"simbolo": "rainshowers_day"
+"simbolo": "partlycloudy_day"
 },
 {
 "t": "2026-10-11T17",
-"temp": 6.6,
-"mm": 0.8,
+"temp": 9.2,
+"mm": 0.0,
 "p": null,
-"simbolo": "rainshowers_day"
+"simbolo": "partlycloudy_day"
 },
 {
 "t": "2026-10-11T18",
-"temp": 5.8,
+"temp": 7.2,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_night"
 },
 {
 "t": "2026-10-11T19",
-"temp": 5.3,
+"temp": 6.0,
 "mm": 0.0,
 "p": null,
 "simbolo": "fair_night"
 },
 {
 "t": "2026-10-11T20",
-"temp": 4.4,
+"temp": 4.9,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "clearsky_night"
 },
 {
 "t": "2026-10-11T21",
-"temp": 3.3,
+"temp": 3.9,
 "mm": 0.0,
 "p": null,
 "simbolo": "clearsky_night"
 },
 {
 "t": "2026-10-11T22",
-"temp": 2.3,
+"temp": 2.8,
 "mm": 0.0,
 "p": null,
 "simbolo": "clearsky_night"
 },
 {
 "t": "2026-10-11T23",
-"temp": 1.6,
+"temp": 1.8,
 "mm": 0.0,
 "p": null,
-"simbolo": "clearsky_night"
+"simbolo": "fair_night"
 },
 {
 "t": "2026-10-12T00",
-"temp": 0.9,
+"temp": 1.2,
 "mm": 0.0,
 "p": null,
 "simbolo": "clearsky_night"
 },
 {
 "t": "2026-10-12T01",
-"temp": 0.5,
+"temp": 0.7,
 "mm": 0.0,
 "p": null,
 "simbolo": "clearsky_night"
 },
 {
 "t": "2026-10-12T02",
-"temp": -0.2,
+"temp": -0.3,
 "mm": 0.0,
 "p": null,
-"simbolo": "clearsky_night"
+"simbolo": "fair_night"
 },
 {
 "t": "2026-10-12T03",
 "temp": -1.0,
 "mm": 0.0,
 "p": null,
-"simbolo": "fair_night"
+"simbolo": "partlycloudy_night"
+},
+{
+"t": "2026-10-12T04",
+"temp": -1.2,
+"mm": 0.0,
+"p": null,
+"simbolo": "cloudy"
+},
+{
+"t": "2026-10-12T05",
+"temp": -1.6,
+"mm": 0.0,
+"p": null,
+"simbolo": "cloudy"
+},
+{
+"t": "2026-10-12T06",
+"temp": -1.9,
+"mm": 0.0,
+"p": null,
+"simbolo": "fog"
+},
+{
+"t": "2026-10-12T07",
+"temp": 1.6,
+"mm": 0.0,
+"p": null,
+"simbolo": "cloudy"
+},
+{
+"t": "2026-10-12T08",
+"temp": 5.9,
+"mm": 0.0,
+"p": null,
+"simbolo": "partlycloudy_day"
+},
+{
+"t": "2026-10-12T09",
+"temp": 9.1,
+"mm": 0.0,
+"p": null,
+"simbolo": "fair_day"
+},
+{
+"t": "2026-10-12T10",
+"temp": 11.4,
+"mm": 0.0,
+"p": null,
+"simbolo": "clearsky_day"
 }
 ]
 }
