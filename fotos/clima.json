@@ -1,8 +1,8 @@
 {
 "fuente": "MET Norway · Locationforecast 2.0 (api.met.no)",
 "licencia": "CC BY 4.0 · Datos: MET Norway",
-"generado": "2026-10-11T09:36-05:00",
-"actualizado_met": "2026-10-11T13:19:56Z",
+"generado": "2026-10-11T10:41-05:00",
+"actualizado_met": "2026-10-11T13:19:50Z",
 "punto": {
 "lat": -10.6111,
 "lon": -76.6172,
@@ -26,7 +26,7 @@
 "horas_secas_jornada": null,
 "horas_jornada": 10,
 "resolucion": "horaria",
-"desde": "09:00"
+"desde": "10:00"
 },
 {
 "fecha": "2026-10-12",
@@ -81,13 +81,6 @@
 }
 ],
 "horas": [
-{
-"t": "2026-10-11T09",
-"temp": 7.9,
-"mm": 0.0,
-"p": null,
-"simbolo": "clearsky_day"
-},
 {
 "t": "2026-10-11T10",
 "temp": 10.6,
@@ -420,6 +413,13 @@
 {
 "t": "2026-10-13T09",
 "temp": 9.4,
+"mm": 0.0,
+"p": null,
+"simbolo": "partlycloudy_day"
+},
+{
+"t": "2026-10-13T10",
+"temp": 11.5,
 "mm": 0.0,
 "p": null,
 "simbolo": "partlycloudy_day"
