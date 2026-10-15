@@ -13221,16 +13221,23 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   const keyOf = a => a.k || ('x' + a.idx);
   window.pcSel = window.pcSel || 'Caminos';
   const secCol = s => /acceso/i.test(s) ? cssv('--c-acc') : (/montaje|tendido/i.test(s) ? cssv('--c-elm') : cssv('--c-civ'));
-  const hasT = a => !!a.k && a.k !== 'Montaje';
-  const valOf = a => (hasT(a) && typeof stageAvg === 'function') ? stageAvg(a.k) : a.ev;
-  const cnt = k => { if (!k || k === 'Montaje') return null; const v = DATA.towers.map(t => t.d[k]); const num = v.filter(x => typeof x === 'number');
-    return { done: num.filter(x => x >= 99.5).length, prog: num.filter(x => x > 0 && x < 99.5).length, none: num.filter(x => x <= 0).length, na: v.filter(x => x === 'NA').length }; };
+  // 15-Oct-26: TODAS las partidas se ven por torre, como en la tabla resumen del Excel. Las 8 del % de torre salen de
+  // DATA.towers[].d; las demás (relleno, puesta a tierra, muros, electromecánicas) traen sus 23 valores en a.vals.
+  const vT = (a, i) => a.k ? (DATA.towers[i] ? DATA.towers[i].d[a.k] : null) : (a.vals ? a.vals[i] : null);
+  const valsT = a => DATA.towers.map((t, i) => vT(a, i));
+  const conT = a => (!!a.k && a.k !== 'Montaje') || !!(a.vals && a.conDato > 0);
+  const hasT = conT;
+  const valOf = a => (!!a.k && a.k !== 'Montaje' && typeof stageAvg === 'function') ? stageAvg(a.k) : a.ev;
+  const cnt = a => { const k = (a && typeof a === 'object') ? null : a, ac = (a && typeof a === 'object') ? a : ACTL.find(x => x.k === k);
+    if (!ac || !conT(ac)) return null; const v = valsT(ac); const num = v.filter(x => typeof x === 'number');
+    return { done: num.filter(x => x >= 99.5).length, prog: num.filter(x => x > 0 && x < 99.5).length, none: num.filter(x => x <= 0).length,
+             na: v.filter(x => x === 'NA').length, sin: v.filter(x => x == null).length }; };
   const F1 = v => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('es-PE', { maximumFractionDigits: 1 });
   const kpiCls = a => (a.kpi == null || !(a.pv > 0)) ? '' : (a.kpi >= 0.95 ? 'ok' : (a.kpi >= 0.7 ? 'warn' : 'bad'));
   const stCls = v => v === 'NA' ? 'na' : (typeof v !== 'number' ? 'na' : (v >= 99.5 ? 'done' : (v > 0 ? 'prog' : 'none')));
   const goT = t => { if (typeof dcGoTower === 'function') dcGoTower(t); };
   const tipOf = a => {
-    const val = valOf(a), c = cnt(a.k);
+    const val = valOf(a), c = cnt(a);
     return `<b>${a.nm}</b><br>Ejecutado (EV) <b>${F1(val)} %</b> · Plan (PV) ${F1(a.pv)} %${a.kpi != null && a.pv > 0 ? ' · KPI EV/PV ' + a.kpi.toFixed(2) : ''}` +
       (c ? `<br>${c.done} torres al 100 % · ${c.prog} en curso · ${c.none} sin iniciar${c.na ? ' · ' + c.na + ' N/A' : ''}` : (a.g === 'elm' ? '<br>Partida electromecánica aún no iniciada' : '<br>Sin desglose por torre en el reporte')) +
       `<br><span style="color:var(--ink-mut)">clic: ver avance por torre</span>`;
@@ -13261,7 +13268,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const val = valOf(a), col = secCol(a.sec + ' ' + a.nm), sel = keyOf(a) === window.pcSel;
       if (a.sec !== lastSec){ h += `<div class="pc-sec" style="--c:${col}"><span>${title(a.sec)}</span></div>`; lastSec = a.sec; }
       let strip = '';
-      if (hasT(a)) strip = DATA.towers.map(t => { const v = t.d[a.k]; return `<i class="${stCls(v)}" data-t="${t.t}" data-v="${v === 'NA' ? 'N/A' + (a.k === 'Solado' ? ' · suelo tipo I (roca): sin solado' : '') : F1(v) + ' %'}"></i>`; }).join('');
+      if (hasT(a)) strip = DATA.towers.map((t, i) => { const v = vT(a, i); return `<i class="${stCls(v)}" data-t="${t.t}" data-v="${v === 'NA' ? 'N/A' + (a.k === 'Solado' ? ' · suelo tipo I (roca): sin solado' : '') : (v == null ? 'sin dato en la hoja Avance' : F1(v) + ' %')}"></i>`; }).join('');
       else strip = DATA.towers.map(() => `<i class="na"></i>`).join('');
       h += `<div class="pc-row${sel ? ' on' : ''}${i === 0 ? ' first' : ''}${i === R.length - 1 ? ' last' : ''}" data-i="${a.idx}" data-k="${keyOf(a)}" style="--c:${col}">` +
         `<div class="pc-n"><span>${i + 1}</span></div>` +
@@ -13289,20 +13296,21 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   // métricas de la etapa (columna derecha)
   function renderMetrics(a){
     const el = $('secKpis'); if (!el || !a) return;
-    const val = valOf(a), c = cnt(a.k), col = secCol(a.sec + ' ' + a.nm), kc = kpiCls(a);
+    const val = valOf(a), c = cnt(a), col = secCol(a.sec + ' ' + a.nm), kc = kpiCls(a);
     let h = `<div class="pc-kpis">` +
-      `<div class="k"><span class="l">Avance ponderado (reporte)</span><b style="color:${val > 0 ? col : 'var(--ink-mut)'}">${F1(val)}<small>%</small></b><span class="s">${c ? (c.na ? 'media ponderada de las ' + (23 - c.na) + ' torres aplicables (' + c.na + ' N/A) · hoja Avance' : 'media ponderada de las 23 torres · hoja Avance') : (a.g === 'elm' ? 'partida electromecánica aún no iniciada' : 'sin desglose por torre en la hoja Avance')}</span></div>` +
+      `<div class="k"><span class="l">Avance ponderado (reporte)</span><b style="color:${val > 0 ? col : 'var(--ink-mut)'}">${F1(val)}<small>%</small></b><span class="s">${c ? (c.sin ? 'ponderado de la línea · ' + (23 - c.sin) + ' torres con dato en la hoja Avance' + (c.na ? ' (' + c.na + ' N/A)' : '') : (c.na ? 'media ponderada de las ' + (23 - c.na) + ' torres aplicables (' + c.na + ' N/A) · hoja Avance' : 'media ponderada de las 23 torres · hoja Avance')) : (a.g === 'elm' ? 'partida electromecánica aún no iniciada' : 'sin desglose por torre en la hoja Avance')}</span></div>` +
       `<div class="k"><span class="l">Plan (PV) · hoja Avance</span><b>${F1(a.pv)}<small>%</small></b><span class="s">${a.pv > 0 ? 'al corte' : (a.g === 'elm' ? 'la hoja Avance aún no programa esta partida (el plan LB0 de la curva, ' + F1(typeof CURVAS !== 'undefined' && CURVAS.elmPlan ? CURVAS.elmPlan[CUT] : null) + ' %, es el de toda la fase electromecánica)' : 'sin plan al corte')}</span></div>` +
       `<div class="k ${kc}"><span class="l">KPI EV/PV</span><b>${a.pv > 0 ? (a.kpi != null ? a.kpi : (a.ev || 0) / a.pv).toFixed(2) : '—'}</b><span class="s">${a.pv > 0 ? '≥ 0.95 ok · 0.70–0.95 atención · < 0.70 crítico' : 'sin plan al corte'}</span></div>` +
       `</div>`;
     if (c){
       h += `<div class="pc-cnt"><div class="done"><b>${c.done}</b><span>al 100 %</span></div><div class="prog"><b>${c.prog}</b><span>en curso</span></div><div class="none"><b>${c.none}</b><span>sin iniciar</span></div><div class="na"><b>${c.na}</b><span>N/A</span></div></div>`;
-      const prog = DATA.towers.filter(t => typeof t.d[a.k] === 'number' && t.d[a.k] > 0 && t.d[a.k] < 99.5);
-      const none = DATA.towers.filter(t => typeof t.d[a.k] === 'number' && t.d[a.k] <= 0);
-      if (prog.length) h += `<div class="pc-tw"><span class="l">En curso</span>${prog.map(t => `<button class="tchip" data-t="${t.t}">${t.t}<small>${F1(t.d[a.k])} %</small></button>`).join('')}</div>`;
+      const prog = DATA.towers.filter((t, i) => typeof vT(a, i) === 'number' && vT(a, i) > 0 && vT(a, i) < 99.5);
+      const none = DATA.towers.filter((t, i) => typeof vT(a, i) === 'number' && vT(a, i) <= 0);
+      if (prog.length) h += `<div class="pc-tw"><span class="l">En curso</span>${prog.map(t => `<button class="tchip" data-t="${t.t}">${t.t}<small>${F1(vT(a, DATA.towers.indexOf(t)))} %</small></button>`).join('')}</div>`;
       if (none.length) h += `<div class="pc-tw"><span class="l">Sin iniciar</span>${none.map(t => `<button class="tchip" data-t="${t.t}">${t.t}</button>`).join('')}</div>`;
-      const naT = DATA.towers.filter(t => t.d[a.k] === 'NA');
+      const naT = DATA.towers.filter((t, i) => vT(a, i) === 'NA');
       if (naT.length) h += `<div class="pc-tw"><span class="l">N/A</span>${naT.map(t => `<button class="tchip na" data-t="${t.t}">${t.t}</button>`).join('')}<span class="s" style="font-size:.56rem;color:var(--ink-mut);align-self:center">${a.k === 'Solado' ? 'no aplica concreto solado: en suelo tipo I (roca) la cimentación es un dado empotrado en roca, sin solado' : 'no aplica en estas torres (hoja Avance)'} · no cuentan en el promedio ni en las barras</span></div>`;
+      if (c.sin) h += `<div class="pc-note" style="margin-top:6px">${c.sin} torre(s) sin dato en la hoja Avance para esta partida: su barra queda vacía. El avance ponderado del reporte no es el promedio de las barras — la hoja lo pondera por metrado.</div>`;
       h += `<div class="pc-note" style="margin-top:6px">Clic en una torre para verla en el BIM 4D · clic en una barra del gráfico para lo mismo.</div>`;
     } else if (a.g === 'elm'){
       const planElm = (typeof CURVAS !== 'undefined' && CURVAS.elmPlan) ? CURVAS.elmPlan[CUT] : null;
@@ -13322,6 +13330,26 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (selStage && (!a || (a.k && a.k !== selStage))){
       const b = ACTL.find(x => x.k === selStage);
       if (b){ a = b; window.pcSel = keyOf(b); if (b.g !== grupo){ grupo = b.g; if (tabs) tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.g === grupo)); try { drawFlow(); } catch(e){} } }
+    }
+    // 15-Oct-26: partida sin clave pero con desglose en la hoja (relleno, puesta a tierra, muros): gráfico por torre igual que las demás
+    if (a && !a.k && a.vals && a.conDato > 0){
+      selStage = null;
+      $('detTitle').textContent = `${a.nm} · Avance por Torre`;
+      const raw0 = valsT(a), v0 = raw0.map(v => (v === 'NA' || v == null) ? 0 : v);
+      try { const ex = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart($('chSecTower')) : null; if (ex) ex.destroy(); } catch(e){}
+      try { if (charts.sec) charts.sec.destroy(); } catch(e){}
+      charts.sec = mkChart('chSecTower', {
+        type: 'bar',
+        data: { labels: DATA.towers.map(t => t.t), datasets: [{ data: v0, backgroundColor: raw0.map(v => (typeof v === 'number') ? colOf(v) : cssv('--line-2')), borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: it => {
+            const v = raw0[it.dataIndex]; return v === 'NA' ? 'N/A' : (v == null ? 'sin dato en la hoja Avance' : F1(v) + ' %'); } } } },
+          onClick: (ev, els) => { if (els && els.length) goT(DATA.towers[els[0].index].t); },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, x: { ticks: { font: { size: 9 } } } } }
+      });
+      try { renderMetrics(a); } catch(e){}
+      const mp0 = $('mtProc'); if (mp0) mp0.style.display = 'none';
+      return;
     }
     if (!a || a.k){
       if (a && a.k) selStage = a.k;
