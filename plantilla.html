@@ -8289,7 +8289,9 @@ function torreAcceso(f){
 function evidDe(tt){
   const L = intervDe(tt); if (!L || typeof FOTOS_CAMPO === 'undefined' || !FOTOS_CAMPO.length) return null;
   const dia = INTERV.fecha, cams = caminosDeTorre(tt);
-  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
+  /* v72.46 (18-Oct-26): una foto cuya torre se heredó de las vecinas en el tiempo (f.inferida, GPS congelado) NO cuenta como
+     evidencia de la ficha de torre: se muestra en la galería con su chapa «·?» hasta que el usuario la confirme. */
+  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && !f.inferida && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
   const acts = L.map(x => {
     const fs = EVID_FASE[x.act]; if (!fs) return { act: x.act, pct: x.pct, n: null, fotos: [] };
     const m = delDia.filter(f => fs.includes(f.fase) && (f.torre === tt || x.act === 'Caminos'));
@@ -9522,21 +9524,23 @@ const fdFoto = f => { const d=new Date(f+'T12:00:00'); return d.toLocaleDateStri
 const OBS_TIPOS = [['fecha','Fecha ≠ carpeta','La fecha sale de la foto (EXIF, nombre o sello) y no coincide con la carpeta en que se subió: confirma el día.'],
   ['carpeta','Torre por confirmar','Sin GPS en la foto (torre de la carpeta o escrita en el sello) o el GPS y la carpeta no coinciden: confirma la torre.'],
   ['reporte','Fase ≠ reporte','La fase de la foto no coincide con el % del reporte de ese día para esa torre: revisa la fase o la torre.'],
-  ['yolo','Etiqueta de YOLO','Fase puesta por el modelo YOLO, sin revisión humana: corrígela si no es. Tus correcciones las aprende YOLO el domingo.']];
+  ['yolo','Etiqueta de YOLO','Fase puesta por el modelo YOLO, sin revisión humana: corrígela si no es. Tus correcciones las aprende YOLO el domingo.'],
+  ['inferida','Torre inferida','El GPS de la foto quedó congelado en un punto repetido ese día: la torre se tomó de las fotos tomadas minutos antes y después. No cuenta como evidencia en la ficha de torre hasta confirmarla.']];
 function obsMotivo(f, k){
   if (k==='fecha') return f.fecha_obs || 'fecha distinta a la carpeta';
   if (k==='yolo') return `YOLO: ${faseTxt(f)||'—'}${f.fase_conf?' '+Math.round(f.fase_conf*100)+' %':''}`;
   if (k==='carpeta') return f.origen_ubicacion==='carpeta' ? `sin GPS · ${f.torre||'—'} por la carpeta` : /torre/.test(f.origen_ubicacion||'') ? `sin GPS · ${f.torre||'—'} por el sello` : `GPS ${f.torre||'—'} · carpeta ${f.torre_carpeta||'—'}`;
+  if (k==='inferida') return `${f.torre||'—'} de ${(f.inferida_de||{}).n||'?'} de ${(f.inferida_de||{}).de||'?'} vecinas en ±${(f.inferida_de||{}).min||10} min · GPS congelado`;
   if (k==='reporte') return `${faseTxt(f)||'—'} ≠ reporte ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')||'—'}`;
   return '';
 }
 function figFoto(f, hasta, conTorre, obs){
   const vis = esVisita(), et = etqTxt(f);
-  const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.coherente===false?'inco':''}`;
-  const tt = `${f.descripcion?(f.desc_fuente==='resumen'?'Resumen del día: ':'')+f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
+  const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.inferida?'infer':''} ${f.coherente===false?'inco':''}`;
+  const tt = `${f.descripcion?(f.desc_fuente==='resumen'?'Resumen del día: ':'')+f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${f.inferida?` · ${f.torre} inferida de ${(f.inferida_de||{}).n} de ${(f.inferida_de||{}).de} fotos vecinas en ±${(f.inferida_de||{}).min} min (GPS congelado) · no cuenta como evidencia`:''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
       <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:'<span class="ft-fase otras">Otras</span>'}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
-      <figcaption>${obs?fotZona(f)+' · ':conTorre==='cam'?(!f.torre&&f.camino?`<b>${f.camino}</b> · `:''):conTorre&&f.torre?f.torre+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
+      <figcaption>${obs?fotZona(f)+(f.inferida?' ·?':'')+' · ':conTorre==='cam'?(!f.torre&&f.camino?`<b>${f.camino}</b> · `:''):conTorre&&f.torre?f.torre+(f.inferida?' ·?':'')+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
   const cont=document.getElementById('fotosTorre'); if(!cont) return;
@@ -15491,7 +15495,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .ft{margin:0;cursor:pointer;border-radius:6px;overflow:hidden;background:var(--panel-2);border:2px solid transparent}
 .ft img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 .ft figcaption{font-size:.52rem;color:var(--ink-2);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ft figcaption i{font-style:normal;color:var(--ink-mut)}
-.ft.hoy{border-color:var(--c-civ,#2d7667)} .ft.rev{outline:1px dashed var(--amber)}
+.ft.hoy{border-color:var(--c-civ,#2d7667)} .ft.rev{outline:1px dashed var(--amber)} .ft.infer{outline:1px dotted var(--ink-mut)}
 .ft-mas{font-size:.58rem;color:var(--ink-mut);align-self:center;text-align:center}
 .ft{position:relative} .ft-fase{position:absolute;left:4px;top:4px;font-size:.5rem;font-weight:700;letter-spacing:.2px;padding:1px 5px;border-radius:999px;background:rgba(31,78,69,.88);color:#fff;pointer-events:none}
 .ft-fase.inco{background:var(--amber);color:#1a1a1a} .ft.inco{border-color:var(--amber)} .ft-inco{color:var(--amber)} .ft-fases{font-style:normal;color:var(--ink-mut);font-weight:500}
