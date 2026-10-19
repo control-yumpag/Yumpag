@@ -14,7 +14,11 @@
     try { const j = sessionStorage.getItem('yumpagDatos'); if (j) { datos = JSON.parse(j); modo = 'completo'; } } catch (e) {}
     const tplR = await fetch('plantilla.html', {cache: 'no-store'}); if (!tplR.ok) throw new Error('no se pudo cargar plantilla.html');
     let t = await tplR.text();
-    if (!datos) { say('cargando los datos'); const r = await fetch('datos.json', {cache: 'no-store'}); if (!r.ok) throw new Error('no se pudo cargar datos.json'); datos = (await r.json()).visita; }
+    if (!datos) { say('cargando los datos'); const r = await fetch('datos.json', {cache: 'no-store'}); if (!r.ok) throw new Error('no se pudo cargar datos.json');
+      const j = await r.json();
+      /* 19-Oct-26 (decisión del usuario: «que esté libre, que ya no requiera clave ni contraseña, solo un botón de entrar»):
+         si datos.json trae el tablero completo, se muestra entero sin sesión; si trae «visita», el modo visita de siempre. */
+      if (j.completo) { datos = j.completo; modo = 'completo'; } else datos = j.visita; }
     say('colocando los datos del corte ' + (datos.campos.fecha_larga || ''));
     for (const [n, v] of Object.entries(datos.bloques)) t = t.split('⟦bloque:' + n + '⟧').join(v);
     t = t.replace(/⟦(\w+)⟧/g, (m, k) => (k in datos.campos ? datos.campos[k] : m));
