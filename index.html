@@ -29,6 +29,13 @@ body{font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--tinta);backg
 .visita b{display:block;font-weight:600;color:var(--pino)}
 .visita span{font-size:14px;color:var(--gris)}
 .visita:hover{background:#f4f8f6}
+/* 19-Oct-26: acceso de un click cuando el equipo ya recordó el acceso (o cuando se entra por el enlace con llave) */
+.directo{display:block;width:100%;text-align:left;border:0;background:var(--pino);color:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font:inherit;margin-bottom:12px}
+.directo b{display:block;font-weight:600}
+.directo span{font-size:14px;opacity:.85}
+.directo:hover{filter:brightness(1.08)}
+.liga{border:0;background:none;color:var(--pino);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:0;margin-right:12px}
+[hidden]{display:none !important}   /* display:block de .directo/.liga gana al hidden del navegador si no se fuerza */
 .sep{display:flex;align-items:center;gap:12px;color:var(--gris);font-size:14px;margin:26px 0 18px}
 .sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--borde)}
 label{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
@@ -62,12 +69,17 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
   <div class="panel">
     <h2>Acceso al tablero</h2>
 
+    <button class="directo" type="button" id="btnDirecto" hidden>
+      <b>Entrar al tablero completo</b>
+      <span>Acceso recordado en este equipo.</span>
+    </button>
+
     <button class="visita" type="button" id="btnVisita">
       <b>Entrar como visita</b>
       <span>Avance en el modelo BIM 4D y el proceso constructivo.</span>
     </button>
 
-    <div class="sep">o con tu cuenta</div>
+    <div class="sep" id="sepCuenta">o con tu cuenta</div>
 
     <form id="login" autocomplete="on" novalidate>
       <label for="usuario">Usuario</label>
@@ -78,7 +90,9 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
       <div class="msg" id="msg" role="status" aria-live="polite"></div>
     </form>
 
-    <p class="nota">Con cuenta se ve el tablero completo: decisiones, curvas S, alertas y plazos.</p>
+    <p class="nota" id="nota">Con cuenta se ve el tablero completo: decisiones, curvas S, alertas y plazos.</p>
+    <p class="nota"><button type="button" class="liga" id="btnLink" hidden>Copiar enlace de acceso para otro equipo</button>
+      <button type="button" class="liga" id="btnOlvidar" hidden>Olvidar este acceso</button></p>
   </div>
 </main>
 
@@ -93,6 +107,79 @@ async function sha256hex(t){ const d = await crypto.subtle.digest('SHA-256', new
 
 $('btnVisita').onclick = () => { try{ sessionStorage.removeItem('yumpagDatos'); }catch(e){} location.href = 'tablero.html'; };
 
+/* ---- 19-Oct-26 (pedido del usuario: «solo un click para acceder al tablero») ------------------------------------
+   El tablero completo sigue cifrado: lo que cambia es que ya no hay que escribir la cuenta cada vez.
+   · La cuenta «enlace» tiene su propio token; con él en el ancla de la URL (…/#k=TOKEN) la portada abre el tablero sola.
+   · Tras un acceso normal, el token se guarda en este navegador y la portada ofrece el botón de un click.
+   El ancla no se envía al servidor ni queda en los registros, y se borra de la barra en cuanto se usa. */
+const LS = 'yumpagLlave';
+const guardado = () => { try{ return localStorage.getItem(LS) || ''; }catch(e){ return ''; } };
+const delHash = () => { try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} };
+
+async function abrir(usuario, pase, modo){
+  const msg = $('msg'); msg.className = 'msg ok'; msg.textContent = 'Verificando…';
+  const F = (await (await fetch('datos.json', {cache:'no-store'})).json()).enc;
+  const rec = F.users[await sha256hex('yumpag:' + usuario.toLowerCase())];
+  if (!rec) throw new Error('cred');
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pase), 'PBKDF2', false, ['deriveKey']);
+  const kek = await crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(rec.salt), iterations:F.kdf.iter, hash:'SHA-256'},
+                                           base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  let ckRaw;
+  try{ ckRaw = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(rec.iv)}, kek, b64(rec.wk)); }
+  catch(e){ throw new Error('cred'); }
+  msg.textContent = 'Abriendo el tablero…';
+  const ck = await crypto.subtle.importKey('raw', ckRaw, 'AES-GCM', false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(F.iv)}, ck, b64(F.ct));
+  let datos;
+  if (F.gz){ datos = await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); }
+  else datos = new TextDecoder().decode(pt);
+  /* los datos descifrados quedan solo en esta pestaña; tablero.html los junta con plantilla.html */
+  sessionStorage.setItem('yumpagUser', usuario); sessionStorage.setItem('yumpagDatos', datos);
+  if (modo !== 'enlace'){            // tras entrar con la cuenta, este equipo recuerda el acceso para el botón de un click
+    try{ const t = (JSON.parse(datos) || {}).acceso; if (t) localStorage.setItem(LS, t); }catch(e){}
+  }
+  delHash();
+  location.href = 'tablero.html';
+}
+
+function pintarDirecto(){
+  const t = guardado(); if (!t) return;
+  for (const id of ('btnDirecto btnLink btnOlvidar').split(' ')) $(id).hidden = false;
+  $('nota').textContent = 'Este equipo recuerda tu acceso: el botón de arriba abre el tablero completo de un click.';
+}
+$('btnDirecto').onclick = async () => {
+  $('btnDirecto').disabled = true;
+  try{ await abrir('enlace', guardado(), 'enlace'); }
+  catch(e){ try{ localStorage.removeItem(LS); }catch(x){}
+    $('msg').className = 'msg'; $('msg').textContent = 'El acceso recordado ya no vale: entra con tu cuenta.';
+    $('btnDirecto').hidden = true; $('btnDirecto').disabled = false; }
+};
+$('btnLink').onclick = async () => {
+  const url = location.origin + location.pathname + '#k=' + guardado();
+  try{ await navigator.clipboard.writeText(url); $('msg').className = 'msg ok'; $('msg').textContent = 'Enlace copiado: ábrelo en el otro equipo y entra de un click.'; }
+  catch(e){ window.prompt('Copia este enlace:', url); }
+};
+$('btnOlvidar').onclick = () => {
+  try{ localStorage.removeItem(LS); }catch(e){}
+  for (const id of ('btnDirecto btnLink btnOlvidar').split(' ')) $(id).hidden = true;
+  $('nota').textContent = 'Con cuenta se ve el tablero completo: decisiones, curvas S, alertas y plazos.';
+  $('msg').className = 'msg ok'; $('msg').textContent = 'Este equipo ya no recuerda el acceso.';
+};
+
+async function porEnlace(){           // ¿se llegó por el enlace con llave?
+  const m = /[#&]k=([^&]+)/.exec(location.hash || '');
+  if (!m || !window.crypto || !crypto.subtle) return pintarDirecto();
+  const tok = decodeURIComponent(m[1]); delHash();
+  $('btnDirecto').hidden = false; $('btnDirecto').disabled = true;
+  try{ try{ localStorage.setItem(LS, tok); }catch(e){} await abrir('enlace', tok, 'enlace'); }
+  catch(e){ try{ localStorage.removeItem(LS); }catch(x){}
+    $('btnDirecto').hidden = true;
+    $('msg').className = 'msg'; $('msg').textContent = 'Ese enlace de acceso ya no vale: entra con tu cuenta.'; }
+}
+porEnlace();
+/* pegar el enlace estando ya en la portada solo cambia el ancla y el navegador no recarga: hay que atenderlo igual */
+addEventListener('hashchange', porEnlace);
+
 $('login').addEventListener('submit', async ev => {
   ev.preventDefault();
   const u = $('usuario').value.trim(), p = $('clave').value;
@@ -101,24 +188,7 @@ $('login').addEventListener('submit', async ev => {
   if (!window.crypto || !crypto.subtle){ msg.textContent = 'Este navegador no permite abrir el tablero cifrado. Usa Chrome, Edge o Firefox actualizados.'; return; }
   $('btnEntrar').disabled = true; msg.className = 'msg ok'; msg.textContent = 'Verificando…';
   try{
-    const F = (await (await fetch('datos.json', {cache:'no-store'})).json()).enc;
-    const rec = F.users[await sha256hex('yumpag:' + u.toLowerCase())];
-    if (!rec) throw new Error('cred');
-    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(p), 'PBKDF2', false, ['deriveKey']);
-    const kek = await crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(rec.salt), iterations:F.kdf.iter, hash:'SHA-256'},
-                                             base, {name:'AES-GCM', length:256}, false, ['decrypt']);
-    let ckRaw;
-    try{ ckRaw = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(rec.iv)}, kek, b64(rec.wk)); }
-    catch(e){ throw new Error('cred'); }
-    msg.textContent = 'Abriendo el tablero…';
-    const ck = await crypto.subtle.importKey('raw', ckRaw, 'AES-GCM', false, ['decrypt']);
-    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(F.iv)}, ck, b64(F.ct));
-    let datos;
-    if (F.gz){ datos = await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); }
-    else datos = new TextDecoder().decode(pt);
-    /* los datos descifrados quedan solo en esta pestaña; tablero.html los junta con plantilla.html */
-    sessionStorage.setItem('yumpagUser', u); sessionStorage.setItem('yumpagDatos', datos);
-    location.href = 'tablero.html';
+    await abrir(u, p, 'cuenta');
   }catch(e){
     await new Promise(r => setTimeout(r, 900));      // frena intentos repetidos
     msg.className = 'msg';
