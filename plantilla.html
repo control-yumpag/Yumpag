@@ -8286,12 +8286,16 @@ function torreAcceso(f){
   ts.forEach(tt => { const g = (GEO.towers || []).find(x => x.t === tt); if (!g) return; const d = Math.hypot(g.e - p.e, g.n - p.n); if (d < dm){ dm = d; mejor = tt; } });
   return mejor;
 }
+/* v72.47 (19-Oct-26): ubicación que todavía no es firme — torre heredada de las fotos vecinas (GPS congelado) o leída del
+   sello porque la coordenada caía lejos. Se ve en la galería con «·?» y no cuenta como evidencia hasta que el usuario la confirme. */
+const ubicDudosa = f => !!(f.inferida || /GPS lejos/.test(f.origen_ubicacion || ''));
 function evidDe(tt){
   const L = intervDe(tt); if (!L || typeof FOTOS_CAMPO === 'undefined' || !FOTOS_CAMPO.length) return null;
   const dia = INTERV.fecha, cams = caminosDeTorre(tt);
-  /* v72.46 (18-Oct-26): una foto cuya torre se heredó de las vecinas en el tiempo (f.inferida, GPS congelado) NO cuenta como
-     evidencia de la ficha de torre: se muestra en la galería con su chapa «·?» hasta que el usuario la confirme. */
-  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && !f.inferida && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
+  /* v72.46 (18-Oct-26) y v72.47 (19-Oct-26): una foto cuya torre se heredó de las vecinas en el tiempo (f.inferida, GPS congelado) NO cuenta como
+     evidencia de la ficha de torre: se muestra en la galería con su chapa «·?» hasta que el usuario la confirme. Lo mismo
+     vale para la que se ubicó leyendo la torre del sello porque su coordenada caía lejos de toda torre (GPS congelado). */
+  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && !ubicDudosa(f) && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
   const acts = L.map(x => {
     const fs = EVID_FASE[x.act]; if (!fs) return { act: x.act, pct: x.pct, n: null, fotos: [] };
     const m = delDia.filter(f => fs.includes(f.fase) && (f.torre === tt || x.act === 'Caminos'));
@@ -9525,22 +9529,26 @@ const OBS_TIPOS = [['fecha','Fecha ≠ carpeta','La fecha sale de la foto (EXIF,
   ['carpeta','Torre por confirmar','Sin GPS en la foto (torre de la carpeta o escrita en el sello) o el GPS y la carpeta no coinciden: confirma la torre.'],
   ['reporte','Fase ≠ reporte','La fase de la foto no coincide con el % del reporte de ese día para esa torre: revisa la fase o la torre.'],
   ['yolo','Etiqueta de YOLO','Fase puesta por el modelo YOLO, sin revisión humana: corrígela si no es. Tus correcciones las aprende YOLO el domingo.'],
-  ['inferida','Torre inferida','El GPS de la foto quedó congelado en un punto repetido ese día: la torre se tomó de las fotos tomadas minutos antes y después. No cuenta como evidencia en la ficha de torre hasta confirmarla.']];
+  ['inferida','Torre inferida','El GPS de la foto quedó congelado en un punto repetido ese día: la torre se tomó de las fotos tomadas minutos antes y después. No cuenta como evidencia en la ficha de torre hasta confirmarla.'],
+  ['discrepa','Sello ≠ vecinas','La torre escrita en el sello de la foto no es la que dicen las fotos vecinas en el tiempo: la foto queda sin ubicar hasta que elijas cuál vale.']];
 function obsMotivo(f, k){
   if (k==='fecha') return f.fecha_obs || 'fecha distinta a la carpeta';
   if (k==='yolo') return `YOLO: ${faseTxt(f)||'—'}${f.fase_conf?' '+Math.round(f.fase_conf*100)+' %':''}`;
-  if (k==='carpeta') return f.origen_ubicacion==='carpeta' ? `sin GPS · ${f.torre||'—'} por la carpeta` : /torre/.test(f.origen_ubicacion||'') ? `sin GPS · ${f.torre||'—'} por el sello` : `GPS ${f.torre||'—'} · carpeta ${f.torre_carpeta||'—'}`;
+  if (k==='discrepa') return `sello ${(f.discrepa||{}).sello||'—'} · vecinas ${(f.discrepa||{}).vecinas||'—'}`;
+  if (k==='carpeta') return f.origen_ubicacion==='carpeta' ? `sin GPS · ${f.torre||'—'} por la carpeta`
+    : /GPS lejos/.test(f.origen_ubicacion||'') ? `${f.torre||'—'} por el sello · el GPS caía a ${f.dist_torre_m||'?'} m`   /* v72.47: GPS congelado, torre leída del sello */
+    : /torre/.test(f.origen_ubicacion||'') ? `sin GPS · ${f.torre||'—'} por el sello` : `GPS ${f.torre||'—'} · carpeta ${f.torre_carpeta||'—'}`;
   if (k==='inferida') return `${f.torre||'—'} de ${(f.inferida_de||{}).n||'?'} de ${(f.inferida_de||{}).de||'?'} vecinas en ±${(f.inferida_de||{}).min||10} min · GPS congelado`;
   if (k==='reporte') return `${faseTxt(f)||'—'} ≠ reporte ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')||'—'}`;
   return '';
 }
 function figFoto(f, hasta, conTorre, obs){
   const vis = esVisita(), et = etqTxt(f);
-  const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${f.inferida?'infer':''} ${f.coherente===false?'inco':''}`;
+  const cls = `ft ${f.fecha===hasta?'hoy':''} ${f.estado==='conf'?'rev':''} ${ubicDudosa(f)?'infer':''} ${f.coherente===false?'inco':''}`;
   const tt = `${f.descripcion?(f.desc_fuente==='resumen'?'Resumen del día: ':'')+f.descripcion+' — ':''}${fotZona(f)} · ${f.fecha} ${f.hora||''} · ${f.categoria}${f.fase?' · '+faseTxt(f)+(et?` (${et})`:''):''}${f.coherente===false?` · ⚠ el reporte da ${(f.fase_esperada||[]).map(x=>FASE_TXT[x]||x).join('/')}`:''}${f.estado==='conf'?' · torre por confirmar':''}${f.inferida?` · ${f.torre} inferida de ${(f.inferida_de||{}).n} de ${(f.inferida_de||{}).de} fotos vecinas en ±${(f.inferida_de||{}).min} min (GPS congelado) · no cuenta como evidencia`:''}${!vis&&f.fecha_obs?' · '+f.fecha_obs:''}${f.difuminada?' · rostros difuminados':''}${f.documento?' · documento pixelado':''}${vis?'':' · #'+fotCod(f)}`;
   return `<figure class="${cls}" data-src="${f.src}" title="${tt.replace(/"/g,'&quot;')}">
       <img src="${f.mini||f.src}" loading="lazy" decoding="async" alt="${fotZona(f)} ${f.fecha}">${f.fase&&f.fase!=='otras'?`<span class="ft-fase ${f.coherente===false?'inco':''} ${f.etiquetador==='yolo'?'yolo':''}">${f.coherente===false?'⚠ ':''}${faseTxt(f)}</span>`:'<span class="ft-fase otras">Otras</span>'}${!vis&&f.fecha_obs?'<span class="ft-fec">fecha</span>':''}
-      <figcaption>${obs?fotZona(f)+(f.inferida?' ·?':'')+' · ':conTorre==='cam'?(!f.torre&&f.camino?`<b>${f.camino}</b> · `:''):conTorre&&f.torre?f.torre+(f.inferida?' ·?':'')+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
+      <figcaption>${obs?fotZona(f)+(ubicDudosa(f)?' ·?':'')+' · ':conTorre==='cam'?(!f.torre&&f.camino?`<b>${f.camino}</b> · `:''):conTorre&&f.torre?f.torre+(ubicDudosa(f)?' ·?':'')+' · ':''}${fdFoto(f.fecha)}${f.hora?' '+f.hora.slice(0,5):''}<i>${f.categoria==='Avance'?'':' · '+f.categoria}</i>${obs?`<span class="ft-obs">#${fotCod(f)} · ${obsMotivo(f, obs)}</span>`:''}${f.descripcion&&f.desc_fuente!=='resumen'?`<span class="ft-desc">${f.descripcion}</span>`:''}</figcaption></figure>`;
 }
 function pintarFotosTorre(){
   const cont=document.getElementById('fotosTorre'); if(!cont) return;
