@@ -8433,11 +8433,11 @@ function initBIM3D() {
   bimRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference:'high-performance' });
   bimRenderer.setSize(w, h);
   bimRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  bimRenderer.shadowMap.enabled = false;   // sombras desactivadas por defecto
+  bimRenderer.shadowMap.enabled = VIS.sombras;   // v72.50: según VIS (antes siempre apagadas al arrancar)
   bimRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
   bimRenderer.outputEncoding = THREE.sRGBEncoding;
   bimRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-  bimRenderer.toneMappingExposure = 0.40;
+  bimRenderer.toneMappingExposure = VIS.exposicion;   // v72.50: según VIS (antes 0,40 fijo, todo apagado)
   container.appendChild(bimRenderer.domElement);
 
   // Controles orbitales
@@ -8481,22 +8481,27 @@ function initBIM3D() {
   // Entorno para los reflejos del acero: un metal sin nada que reflejar
   // se ve plano y apagado. Se construye un cielo/suelo procedural.
   try{
-    const cv = document.createElement('canvas'); cv.width = 32; cv.height = 160;
+    // v72.50: cielo de 4 500 m con disco solar, bruma y nubes altas; sirve de reflejo del acero y de fondo del detalle de torre
+    const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512;
     const cx = cv.getContext('2d');
-    const gr = cx.createLinearGradient(0, 0, 0, 160);
-    gr.addColorStop(0.00, '#5d93c4');   // cenit
-    gr.addColorStop(0.42, '#bcd6ea');   // cielo bajo
-    gr.addColorStop(0.50, '#e3ddcd');   // horizonte
-    gr.addColorStop(0.62, '#9c8f74');   // terreno cercano
-    gr.addColorStop(1.00, '#5f5748');   // suelo
-    cx.fillStyle = gr; cx.fillRect(0, 0, 32, 160);
+    const gr = cx.createLinearGradient(0, 0, 0, 512);
+    gr.addColorStop(0.00, '#2b74cc'); gr.addColorStop(0.28, '#79b3ee'); gr.addColorStop(0.45, '#d6e8f6');
+    gr.addColorStop(0.50, '#efe9db'); gr.addColorStop(0.54, '#a9a07c'); gr.addColorStop(1.00, '#6f6850');
+    cx.fillStyle = gr; cx.fillRect(0, 0, 1024, 512);
+    const sx = 1024 * 0.62, sy = 512 * 0.22;
+    const halo = cx.createRadialGradient(sx, sy, 2, sx, sy, 160);
+    halo.addColorStop(0, 'rgba(255,250,235,1)'); halo.addColorStop(0.08, 'rgba(255,245,220,0.9)'); halo.addColorStop(0.35, 'rgba(255,240,215,0.25)'); halo.addColorStop(1, 'rgba(255,240,215,0)');
+    cx.fillStyle = halo; cx.fillRect(0, 0, 1024, 512);
+    let sem = 7; const rnd = () => { sem = (sem * 9301 + 49297) % 233280; return sem / 233280; };   // nubes fijas (misma imagen en cada carga)
+    for (let i = 0; i < 26; i++){ const x = rnd() * 1024, y = 60 + rnd() * 150, r = 40 + rnd() * 90;
+      const g2 = cx.createRadialGradient(x, y, 0, x, y, r); g2.addColorStop(0, 'rgba(255,255,255,0.22)'); g2.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = g2; cx.fillRect(x - r, y - r, 2 * r, 2 * r); }
     const tex = new THREE.CanvasTexture(cv);
-    tex.mapping = THREE.EquirectangularReflectionMapping;
+    tex.mapping = THREE.EquirectangularReflectionMapping; tex.encoding = THREE.sRGBEncoding;
     const pmrem = new THREE.PMREMGenerator(bimRenderer);
     pmrem.compileEquirectangularShader();
     bimEnvMap = pmrem.fromEquirectangular(tex).texture;
     bimScene.environment = bimEnvMap;
-    tex.dispose(); pmrem.dispose();
+    window._skyTex = tex; pmrem.dispose();
   }catch(err){ bimEnvMap = null; console.warn('entorno no disponible:', err); }
 
   // Post-procesado: brillo sutil en el acero iluminado
@@ -8825,9 +8830,24 @@ function ajustarShaderTerreno(mat){
   mat.needsUpdate = true;
 }
 const VIS_DEF = { tBrillo:1.0, tContraste:1.0, tSaturacion:1.0, resalte:0.0 };
+
+/* v72.50 (20-Oct-26, pedido del usuario: «la vista 3D mejoraría… tienes las fotos»): texturas de obra sacadas de las fotos de campo,
+   publicadas en portal/tex (83 KB): puna (T-13, 19-Oct), tierra del foso (T-13), roca y grava (pedestal T-10, 21-Ago), concreto (T-10)
+   y encofrado fenólico (T-15). Se cargan una vez; con VIS.texturas=false todo vuelve a los colores planos. */
+window.TEX = (function(){
+  const L = new THREE.TextureLoader(); const T = { ok: false, _copias: {} };
+  // una copia (T.rep) hecha antes de que llegue la imagen se quedaría sin ella (Texture.clone copia la referencia en ese momento):
+  // al cargar, la imagen se pasa a todas las copias pendientes de esa textura
+  const mk = (n, rep) => { const t = L.load('tex/' + n + '.jpg', img => { T.ok = true; (T._copias[n] || []).forEach(c => { c.image = img.image || img; c.needsUpdate = true; }); T.pinta(); }); t.nombre = n; t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rep, rep); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+  ['puna','tierra','roca','grava','concreto','madera'].forEach(n => T[n] = mk(n, 1));
+  T.rep = (t, r) => { const c = t.clone(); c.repeat.set(r, r); c.needsUpdate = true; if (!t.image) (T._copias[t.nombre] = T._copias[t.nombre] || []).push(c); return c; };
+  T.on = () => VIS.texturas !== false;
+  // el visor solo dibuja cuando algo cambia: al llegar cada imagen se pide un redibujado (y se insiste si el 3D aún no existe)
+  T.pinta = (n) => { if (window.bimInvalidate){ bimInvalidate(200); setTimeout(() => window.bimInvalidate && bimInvalidate(200), 700); } else if ((n || 0) < 12) setTimeout(() => T.pinta((n || 0) + 1), 500); };
+  return T; })();
 const VIS = {
   tBrillo: 1.0, tContraste: 1.0, tSaturacion: 1.0,   // terreno en Realista
-  caminos: false,          // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (pedido del usuario); botón «Caminos»
+  caminos: true,           // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (eran líneas rojas que confundían) · v72.50: encendidos, ya son caminos de tierra sobre el relieve (pedido del usuario: «ruta de caminos de acceso de acuerdo a carreteras»)
   resalte: 0.0,            // v71: franja del eje apagada por defecto (se confundía con un camino)
   aislador: 'vidrio',      // el modelo trae cadena de discos: vidrio o porcelana
   aceroRough: 0.42,        // rugosidad del galvanizado
@@ -8837,11 +8857,13 @@ const VIS = {
   fundTransmision: 0.80,
   fundRough: 0.58,
   bloom: true,
-  bloomFuerza: 0.35,
+  bloomFuerza: 0.16,
   bloomRadio: 0.5,
   bloomUmbral: 0.92,
-  exposicion: 0.40,
-  sombras: false
+  exposicion: 0.80,          // v72.50: luz de altura (antes 0,40, todo apagado)
+  sombras: true,             // v72.50: sombras encendidas por defecto (se apagan en Render)
+  vegetacion: true,          // v72.50: ichu y tropilla en el detalle de torre
+  texturas: true             // v72.50: texturas de obra sacadas de las fotos (portal/tex)
 };
 let bimComposer = null, bimBloom = null, bimEnvMap = null;
 let bimRouteMode = true;
@@ -8894,7 +8916,7 @@ function bimThemeColors(){
   }
   const light = document.documentElement.getAttribute('data-theme') === 'light';
   return light
-    ? { bg:0xf2f7f5, fog:0xe3efeb, ground:0x8c9a6a, wire:0x6f7d58, ghost:0x8593a0 }
+    ? { bg:0xf2f7f5, fog:0xe3efeb, ground:0x8c9a6a, wire:0x6f7d58, ghost: (TEX.on() ? 0x3f4a54 : 0x8593a0) }   // v72.50: grafito sobre la puna texturizada (el gris claro se perdía)
     : { bg:0x0b1714, fog:0x0b1714, ground:0x3b4a36, wire:0x4c5d47, ghost:0xa9b6c2 };
 }
 
@@ -9425,9 +9447,13 @@ function construirCaminos(){
   const dentro = (x,z) => x>bb.min.x && x<bb.max.x && z>bb.min.z && z<bb.max.z;
   const yT = (x,z) => terrainYAtScene(x,z) - 0.4 + 0.34;
   const G = new THREE.Group(); G.name='caminosKMZ';
-  const matC = new THREE.MeshBasicMaterial({ color:0xe5372c, transparent:true, opacity:.95, depthWrite:false, side:THREE.DoubleSide,
-                  polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3, fog:false });
-  const matP = matC.clone(); matP.color.setHex(0xa23fd0);
+  /* v72.50 (pedido del usuario: «ruta de caminos de acceso de acuerdo a carreteras»): los caminos dejan de ser cintas rojas y moradas y
+     pasan a ser caminos de tierra sobre el relieve, con la grava de las fotos: carrozable más ancho y claro, peatonal angosto y
+     más terroso. Sin texturas (VIS.texturas=false) vuelven las cintas de color. */
+  const matC = TEX.on()
+    ? new THREE.MeshStandardMaterial({ map: TEX.rep(TEX.grava, 1), color: 0xcfc4ad, roughness: 1, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })
+    : new THREE.MeshBasicMaterial({ color:0xe5372c, transparent:true, opacity:.95, depthWrite:false, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3, fog:false });
+  const matP = matC.clone(); if (TEX.on()){ matP.map = TEX.rep(TEX.tierra, 1); matP.color.setHex(0xb9ad94); } else matP.color.setHex(0xa23fd0);
   CAMINOS_KMZ.forEach(c=>{
     // puntos del camino en escena, densificados cada ~15 m para que sigan el relieve
     const pts=[];
@@ -9440,7 +9466,7 @@ function construirCaminos(){
       }
       pts.push([x,z]);
     }
-    const ancho = (c.tipo==='carrozable' ? 0.62 : 0.40) * _camFactor();
+    const ancho = (TEX.on() ? (c.tipo==='carrozable' ? 5.0 : 1.8) * GEO_SCALE * Math.max(1, _camFactor() * 0.6) : (c.tipo==='carrozable' ? 0.62 : 0.40) * _camFactor());   // v72.50: ancho real (5 m carrozable · 1,8 m peatonal), algo más desde lejos
     const pos=[], idx=[]; let tramo=0;
     const cerrar=()=>{};
     for (let i=0;i<pts.length;i++){
@@ -10143,7 +10169,7 @@ function resaltarLinea(){
           return;
         }
         const b0 = mt.userData.base0; mt.metalness = b0.met; mt.roughness = b0.rou; mt.envMapIntensity = b0.env;
-        mt.opacity = Math.min(1, mt.userData.baseOp + 0.42 * k);
+        mt.opacity = Math.min(1, Math.max(mt.userData.baseOp, TEX.on() && bimRouteMode ? 0.78 : 0) + 0.42 * k);   // v72.50: más cuerpo sobre la puna
         if (mt.color) mt.color.copy(base).lerp(claro, 0.75 * k);
         if (mt.emissive){ mt.emissive.setHex(0xffffff); mt.emissiveIntensity = 0.32 * k; }
       });
@@ -10233,7 +10259,7 @@ function updateBIM4D(){
     ln.visible = strung || ghostOn;
     const CC = cableColors();
     ln.material.color.setHex(ln.userData.kind==='opgw' ? CC.opgw : CC.cond);
-    ln.material.opacity = strung ? 0.98 : (paletaOrtoActiva() ? PALETA_ORTO.cableOp : (realista ? 0.55 : 0.40));
+    ln.material.opacity = strung ? 0.98 : (paletaOrtoActiva() ? PALETA_ORTO.cableOp : (realista ? 0.55 : (TEX.on() ? 0.72 : 0.40)));   // v72.50
   });
 }
 
@@ -10728,6 +10754,23 @@ function buildRouteBIM(){
   geo.computeVertexNormals();
   const TC = bimThemeColors();
   let groundMat;
+  /* v72.50 (pedido del usuario: «se pierde en lo marrón, tal vez algo verde y vegetación»): la puna no es toda igual — las hondonadas
+     y las partes bajas son verdes (bofedales, pasto), las laderas y las cumbres pajizas y pedregosas. Color por vértice según la
+     cota relativa y la pendiente, que multiplica a la textura de pasto de las fotos. */
+  try {
+    const col = new Float32Array(pos.count * 3); const verde = new THREE.Color(0x5e8a34), paja = new THREE.Color(0xa89b5e), roca = new THREE.Color(0x8e877a);
+    const zs = []; for (let k = 0; k < pos.count; k++) zs.push(pos.getY(k)); const zmin = Math.min(...zs), zmax = Math.max(...zs);
+    const nrm = geo.attributes.normal; const c = new THREE.Color();
+    for (let k = 0; k < pos.count; k++){
+      const h = (pos.getY(k) - zmin) / Math.max(1e-6, zmax - zmin);           // 0 bajo · 1 alto
+      const pend = 1 - Math.abs(nrm.getY(k));                                 // 0 llano · 1 empinado
+      const ruido = 0.5 + 0.5 * Math.sin(pos.getX(k) * 0.37 + pos.getZ(k) * 0.23) * Math.cos(pos.getX(k) * 0.11 - pos.getZ(k) * 0.29);
+      let f = Math.min(1, Math.max(0, 0.10 + 0.85 * h + 2.2 * pend - 0.40 * ruido));   // 0 verde · 1 paja
+      c.copy(verde).lerp(paja, f); if (pend > 0.35) c.lerp(roca, Math.min(1, (pend - 0.35) * 2.5));
+      col[3 * k] = c.r; col[3 * k + 1] = c.g; col[3 * k + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  } catch(e){ console.warn('color de puna', e); }
   if (realista){
     let tt = null; try { tt = makeTerrainTexture(eMin, eMax, nMin, nMax); } catch(e){ console.error('textura de terreno', e); }
     groundMat = new THREE.MeshStandardMaterial(tt ? {
@@ -10736,12 +10779,12 @@ function buildRouteBIM(){
   } else {
     // v55: el terreno de proyecto también lleva la textura altoandina (pasto, ichu, ladera, roca)
     // vista de proyecto: terreno esquemático (color plano translúcido + malla de cotas); la textura solo en Realista
-    groundMat = new THREE.MeshStandardMaterial({
-      color:TC.ground, roughness:1, transparent:true, opacity:.55,
-      side:THREE.DoubleSide, flatShading:false });
+    groundMat = TEX.on()
+      ? new THREE.MeshStandardMaterial({ map: TEX.rep(TEX.puna, 90), vertexColors: true, color: 0xcfcfcf, roughness: 1, metalness: 0, side: THREE.DoubleSide })   // v72.50: pasto de las fotos × verde/paja por cotas
+      : new THREE.MeshStandardMaterial({ color:TC.ground, roughness:1, transparent:true, opacity:.55, side:THREE.DoubleSide, flatShading:false });
   }
   // v55d: cúpula de cielo con gradiente (azul arriba, pálido en el horizonte) + neblina de distancia (solo Realista)
-  if (bimScene) bimScene.fog = null;
+  if (bimScene) bimScene.fog = (!realista && TEX.on()) ? new THREE.Fog(0xdfe3dc, 900, 2600) : null;   // v72.50: bruma solo lejos del corredor (como en Realista); la exponencial blanqueaba toda la ruta
   if (realista) try {
     const TCc = bimThemeColors();
     const skyG = new THREE.SphereGeometry(1400, 24, 12);
@@ -10764,10 +10807,11 @@ function buildRouteBIM(){
   gmesh.receiveShadow = VIS.sombras;          // el terreno recibe la sombra de las torres
   gmesh.castShadow = false;
   bimGroundGroup.add(gmesh);
+  if (TEX.on()) [600, 1600].forEach(ms => setTimeout(() => window.bimInvalidate && bimInvalidate(200), ms));   // v72.50: redibujar cuando las texturas ya están en la GPU
   if (!realista){
     const wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
       color:TC.wire, wireframe:true, transparent:true, opacity:.16 }));
-    wire.position.y=-0.35; wire.name='terrenoMalla'; wire.visible=!ortoActiva(); bimGroundGroup.add(wire);   // v72.11: la malla de cotas no va sobre la ortofoto
+    wire.position.y=-0.35; wire.name='terrenoMalla'; wire.visible=!ortoActiva() && !TEX.on(); bimGroundGroup.add(wire);   // v72.11: la malla de cotas no va sobre la ortofoto · v72.50: ni sobre la puna texturizada
   }
 
 
@@ -10891,7 +10935,7 @@ function buildRouteBIM(){
   const thick = Math.max(5, topY - (yLow - 5));
 
   const M = {
-    grava:  new THREE.MeshStandardMaterial({color:0xa4a9ad, roughness:1, metalness:0, transparent:true, opacity:0.55, depthWrite:false}),
+    grava:  new THREE.MeshStandardMaterial(Object.assign({color:0xd6d9dc, roughness:1, metalness:0, transparent:true, opacity:0.85, depthWrite:false}, TEX.on() ? {map: TEX.rep(TEX.grava, 6)} : {color:0xa4a9ad, opacity:0.55})),   // v72.50
     talud:  new THREE.MeshStandardMaterial({color:0x6f757b, roughness:1, metalness:0, transparent:true, opacity:0.30, depthWrite:false, side:THREE.DoubleSide}),
     acero:  new THREE.MeshStandardMaterial({color:0xb4bcc2, roughness:.5,  metalness:.5}),
     aceroO: new THREE.MeshStandardMaterial({color:0x8f979d, roughness:.6,  metalness:.4}),
@@ -11071,6 +11115,69 @@ function buildRouteBIM(){
 }
 
 /* --- VISTA TORRE: una estructura a escala real --- */
+
+/* ───── v72.50: contexto de puna en el detalle de torre (pedido del usuario: «algo verde y vegetación, algo de contexto, animales») ─────
+   Ichu: matas de pasto como dos planos cruzados con textura dibujada (InstancedMesh, ~520 matas, sin sombra propia: barato en celular).
+   Tropilla: 6 alpacas de pocas caras (cuerpo, cuello, cabeza, orejas, patas) pastando a 16–40 m de la torre, nunca sobre los fosos.
+   Posiciones fijas por torre (semilla = índice de torre) para que no cambien en cada apertura. */
+let _ichuTex = null;
+function ichuTextura(){
+  if (_ichuTex) return _ichuTex;
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 128; const g = cv.getContext('2d');
+  g.clearRect(0, 0, 128, 128);
+  let sem = 11; const rnd = () => { sem = (sem * 9301 + 49297) % 233280; return sem / 233280; };
+  for (let i = 0; i < 46; i++){
+    const x0 = 20 + rnd() * 88, h = 60 + rnd() * 66, dx = (rnd() - 0.5) * 70, v = rnd();
+    g.strokeStyle = v < 0.35 ? '#a9a04f' : (v < 0.7 ? '#8f9a3f' : '#c9bd6e'); g.lineWidth = 1.2 + rnd() * 1.6; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x0, 128); g.quadraticCurveTo(x0 + dx * 0.3, 128 - h * 0.6, x0 + dx, 128 - h); g.stroke();
+  }
+  _ichuTex = new THREE.CanvasTexture(cv); _ichuTex.encoding = THREE.sRGBEncoding; return _ichuTex;
+}
+function alpacaGeometria(){
+  const MU = THREE.BufferGeometryUtils; const partes = [];
+  const add = (geo, x, y, z, rx, ry, rz) => { geo.rotateX(rx || 0); geo.rotateY(ry || 0); geo.rotateZ(rz || 0); geo.translate(x, y, z); partes.push(geo); };
+  add(new THREE.SphereGeometry(0.36, 10, 8).scale(1.35, 0.95, 0.85), 0, 0.92, 0);                // cuerpo (largo en x)
+  add(new THREE.CylinderGeometry(0.11, 0.14, 0.62, 8), 0.44, 1.40, 0, 0, 0, -0.35);               // cuello
+  add(new THREE.SphereGeometry(0.15, 8, 6).scale(1.5, 0.9, 0.8), 0.60, 1.72, 0);                  // cabeza
+  add(new THREE.ConeGeometry(0.035, 0.14, 5), 0.52, 1.86, 0.07); add(new THREE.ConeGeometry(0.035, 0.14, 5), 0.52, 1.86, -0.07);   // orejas
+  [[0.32, 0.18], [0.32, -0.18], [-0.32, 0.18], [-0.32, -0.18]].forEach(([x, z]) => add(new THREE.CylinderGeometry(0.055, 0.045, 0.66, 6), x, 0.33, z));   // patas
+  add(new THREE.SphereGeometry(0.07, 6, 5), -0.5, 1.0, 0);                                        // cola
+  const g = MU.mergeBufferGeometries(partes, false); g.computeVertexNormals(); return g;
+}
+function decorarPuna(grupo, torreIdx, R, excl){
+  if (!VIS.vegetacion || !TEX.on()) return;
+  let sem = 1000 + (torreIdx || 0) * 97; const rnd = () => { sem = (sem * 9301 + 49297) % 233280; return sem / 233280; };
+  const libre = (x, z) => Math.hypot(x, z) > excl;
+  // ichu
+  try {
+    const N = 520; const plano = new THREE.PlaneGeometry(0.55, 0.48); plano.translate(0, 0.24, 0);
+    const cruz = THREE.BufferGeometryUtils.mergeBufferGeometries([plano, plano.clone().rotateY(Math.PI / 2)], false);
+    const mat = new THREE.MeshStandardMaterial({ map: ichuTextura(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1, metalness: 0, color: 0xfff6d8 });
+    const inst = new THREE.InstancedMesh(cruz, mat, N); const M = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+    let k = 0, intentos = 0;
+    while (k < N && intentos++ < N * 4){
+      const x = (rnd() * 2 - 1) * R, z = (rnd() * 2 - 1) * R; if (!libre(x, z)) continue;
+      e.set(0, rnd() * Math.PI, 0); q.setFromEuler(e); const sz = 0.7 + rnd() * 0.8; sc.set(sz, sz * (0.8 + rnd() * 0.5), sz);
+      v.set(x, 0, z); M.compose(v, q, sc); inst.setMatrixAt(k++, M);
+    }
+    inst.count = k; inst.instanceMatrix.needsUpdate = true; inst.userData.decor = true; grupo.add(inst);
+  } catch(err){ console.warn('ichu', err); }
+  // tropilla
+  try {
+    const geo = alpacaGeometria();
+    const colores = [0xeadfcd, 0xe4d6bf, 0x9c7a58, 0xf1ebe0, 0x7a5a42, 0xd9c7ad];
+    const cx = (rnd() * 2 - 1) * 14, cz = (rnd() * 2 - 1) * 14;                    // centro de la tropilla
+    const dirx = cx || 1, dirz = cz || 1; const L = Math.hypot(dirx, dirz); const bx = dirx / L * 26, bz = dirz / L * 26;   // a ~26 m de la torre, del lado del centro
+    for (let i = 0; i < 6; i++){
+      let x, z, n = 0; do { x = bx + (rnd() * 2 - 1) * 7; z = bz + (rnd() * 2 - 1) * 7; } while (!libre(x, z) && n++ < 20);
+      if (!libre(x, z)) continue;
+      const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: colores[i % colores.length], roughness: .95, metalness: 0 }));
+      m.position.set(x, 0, z); m.rotation.y = rnd() * Math.PI * 2; const sz = 0.85 + rnd() * 0.25; m.scale.setScalar(sz);
+      if (rnd() < 0.5) m.rotation.z = -0.22;   // pastando (cabeza baja)
+      m.castShadow = VIS.sombras; m.userData.decor = true; grupo.add(m);
+    }
+  } catch(err){ console.warn('tropilla', err); }
+}
 function buildTowerBIM(towerIndex){
   bimRouteMode = false;
   currentSelectedTowerIdx = towerIndex;
@@ -11093,16 +11200,20 @@ function buildTowerBIM(towerIndex){
   const pg=new THREE.PlaneGeometry(70,70,1,1); pg.rotateX(-Math.PI/2);
   // v55d: la plataforma de la torre lleva la misma textura de suelo altoandino (pasto/ichu con grano)
   let ptex = null; if (realista) try { ptex = makeTerrainTexture(gi.e-35, gi.e+35, gi.n-35, gi.n+35); } catch(e){}
+  const conPuna = !ptex && TEX.on();   // v72.50: en la vista de proyecto, pasto de puna de las fotos, opaco (antes color plano translúcido)
   const pm = new THREE.Mesh(pg, new THREE.MeshStandardMaterial(Object.assign({
-    color: ptex ? 0xffffff : (realista ? 0x7b8752 : bimThemeColors().ground),
+    color: (ptex || conPuna) ? 0xffffff : (realista ? 0x7b8752 : bimThemeColors().ground),
     roughness: realista?.98:1, metalness:0,
-    transparent:!realista, opacity:realista?1:.42, side:THREE.DoubleSide },
-    ptex ? { map: ptex, bumpMap: ptex.userData.bump, bumpScale: 0.25 } : {})));
+    transparent: !realista, opacity: (realista || conPuna) ? 1 : .42, side:THREE.DoubleSide },   // v72.50: con pasto sigue «transparent» (NAV.xray le baja la opacidad; sin ello el alfa se colaba al lienzo)
+    ptex ? { map: ptex, bumpMap: ptex.userData.bump, bumpScale: 0.25 } : (conPuna ? { map: TEX.rep(TEX.puna, 26), color: 0x8c9a6a } : {}))));   // v72.50: el pasto algo más verde que la foto (pedido del usuario)
+  pm.receiveShadow = true;
   pm.position.y=-0.02; pm.userData.plataforma = true; bimGroundGroup.add(pm);
+  try { decorarPuna(bimGroundGroup, towerIndex, 33, 9.5); } catch(e){ console.warn('decorar puna', e); }   // v72.50: ichu y tropilla
+  if (TEX.on()) [600, 1600].forEach(ms => setTimeout(() => window.bimInvalidate && bimInvalidate(200), ms));   // v72.50: redibujar cuando las texturas ya están en la GPU
   const grid=new THREE.GridHelper(70,14,
     realista?0x6b7748:0x2a3d52, realista?0x6b7748:0x1e2c3b);
   grid.material.transparent=true;
-  grid.material.opacity = realista ? .12 : .35;
+  grid.material.opacity = realista ? .12 : (TEX.on() ? .10 : .35);   // v72.50: malla casi invisible sobre el pasto
   bimGroundGroup.add(grid);
 
   const obj = makeTowerObject(t, towerIndex);
@@ -12202,17 +12313,19 @@ function applyBimLighting(){
     L.fill.color.setHex(0x9ab86f); L.fill.intensity = 0.14;   // rebote del terreno
     if (L.hemi){ L.hemi.color.setHex(0xa9c9ef); L.hemi.groundColor.setHex(0x6d6046); L.hemi.intensity = 0.62; }
   } else {
-    L.amb.color.setHex(0xdde8f5);  L.amb.intensity  = 0.26;
-    L.dir.color.setHex(0xfff7ea);  L.dir.intensity  = 1.75;   // v55b: algo más de sol para que el relieve se lea
-    L.fill.color.setHex(0x9ab86f); L.fill.intensity = 0.18;   // rebote cálido del pasto, no azul
-    if (L.hemi){ L.hemi.color.setHex(0xbcd6f2); L.hemi.groundColor.setHex(0x555f6b); L.hemi.intensity = 0.55; }
+    // v72.50: luz de altura — casi sin relleno plano, sol cálido fuerte y cielo/suelo hemisférico alto (antes amb 0,26 · sol 1,75)
+    L.amb.color.setHex(0xdde8f5);  L.amb.intensity  = 0.08;
+    L.dir.color.setHex(0xfff1dc);  L.dir.intensity  = 2.0;
+    L.fill.color.setHex(0x9ab86f); L.fill.intensity = 0.10;
+    if (L.hemi){ L.hemi.color.setHex(0xcfe3ff); L.hemi.groundColor.setHex(0x7c6b4f); L.hemi.intensity = 0.75; }
   }
   // la posición del sol la fija encuadrarSombra() según el tramo visible
 }
+function fondoBIM(C){ return (!bimRouteMode && window._skyTex && TEX.on()) ? window._skyTex : new THREE.Color(C.bg); }   // v72.50
 function applyBimTheme(){
   if(!bimScene) return;
   const C = bimThemeColors();
-  bimScene.background = new THREE.Color(C.bg);
+  bimScene.background = fondoBIM(C);   // v72.50: cielo en el detalle de torre, color del tema en la ruta
   
   if (GLB_READY){ if (bimRouteMode) buildRouteBIM(); else buildTowerBIM(currentSelectedTowerIdx); }
 }
@@ -13173,7 +13286,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   try { const _apply = window.applyBimTheme; if (typeof _apply === 'function' && !_apply.__bimx){
     const w = function(){ const v = $('v-bim');
       if (v && !v.classList.contains('on')){ window.__bimThemeDirty = true;
-        try { if (typeof bimScene !== 'undefined' && bimScene && typeof bimThemeColors === 'function'){ const C = bimThemeColors(); bimScene.background = new THREE.Color(C.bg);  } } catch(e){}
+        try { if (typeof bimScene !== 'undefined' && bimScene && typeof bimThemeColors === 'function'){ const C = bimThemeColors(); bimScene.background = fondoBIM(C);  } } catch(e){}
         return; }
       window.__bimThemeDirty = false; return _apply.apply(this, arguments); };
     w.__bimx = true; window.applyBimTheme = w;
@@ -13955,10 +14068,12 @@ const BRIEF = ⟦bloque:BRIEF⟧;
          baja hasta su stub o, si aún no hay stub, hasta el terreno de su pata («algunas están en el aire»). */
     const MU = THREE.BufferGeometryUtils;
     const matSol = new THREE.MeshStandardMaterial({ color: 0xc2c7cc, roughness: .9 });
-    const matCon = new THREE.MeshStandardMaterial({ color: 0x8d9196, roughness: .88, metalness: 0 });   // concreto gris claro (fotos de T01/T11)
+    const matCon = TEX.on() ? new THREE.MeshStandardMaterial({ map: TEX.rep(TEX.concreto, 1), color: 0xd8dadc, roughness: .82, metalness: 0 })   // v72.50: concreto de la foto del pedestal T-10
+                         : new THREE.MeshStandardMaterial({ color: 0x8d9196, roughness: .88, metalness: 0 });   // concreto gris claro (fotos de T01/T11)
     const matBar = new THREE.MeshStandardMaterial({ color: 0x5c5751, metalness: .35, roughness: .55 });   // acero corrugado (gris oscuro)
-    const matEnc = new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: .8, transparent: true, opacity: .8, side: THREE.DoubleSide });   // tablas
-    const matStb = new THREE.MeshStandardMaterial({ color: 0xb6bec4, metalness: .22, roughness: .48 });     // acero galvanizado (metalness bajo: con más, el entorno le daba un tono marrón)
+    const matEnc = TEX.on() ? new THREE.MeshStandardMaterial({ map: TEX.rep(TEX.madera, 1), color: 0xffffff, roughness: .75, side: THREE.DoubleSide })   // v72.50: encofrado fenólico con marco de madera (foto T-15)
+                         : new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: .8, transparent: true, opacity: .8, side: THREE.DoubleSide });   // tablas
+    const matStb = new THREE.MeshStandardMaterial({ color: 0xc3c9cd, metalness: TEX.on() ? .62 : .22, roughness: TEX.on() ? .34 : .48 });     // acero galvanizado · v72.50: con el cielo nuevo el reflejo ya no tira a marrón
     const up = new THREE.Vector3(0, 1, 0);
     const extNum = s => { const v = String(s || '±0').replace('±', '').replace(',', '.'); const n = parseFloat(v); return isNaN(n) ? 0 : n; };
     const refExt = extNum(m.pata_ref), EX = m.patas_ext || {};
@@ -13983,9 +14098,9 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(Le, Pe, Le)), new THREE.LineBasicMaterial({ color: 0xc9a46a, transparent: true, opacity: .9 }));
       edges.position.y = -Pe / 2; g.add(edges);
       const soilHex = sc(soilOf(m)).hex;
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), new THREE.MeshStandardMaterial({ color: soilHex, roughness: .97 })); g.add(soil);   // suelo remanente
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), TEX.on() ? new THREE.MeshStandardMaterial({ map: TEX.rep(roca ? TEX.roca : TEX.tierra, 1), color: 0xcfc6b8, roughness: .97 }) : new THREE.MeshStandardMaterial({ color: soilHex, roughness: .97 })); g.add(soil);   // suelo remanente · v72.50: tierra o roca de las fotos
       const dug = new THREE.Mesh(new THREE.BoxGeometry(Le * 0.985, 1, Le * 0.985), new THREE.MeshBasicMaterial({ color: 0x1a1512, transparent: true, opacity: .22, depthWrite: false })); g.add(dug);
-      const walls = new THREE.Mesh(new THREE.BoxGeometry(Le, 1, Le), new THREE.MeshStandardMaterial({ color: new THREE.Color(soilHex).multiplyScalar(roca ? 0.7 : 0.55), roughness: .97, side: THREE.BackSide })); g.add(walls);   // paredes del foso en sombra
+      const walls = new THREE.Mesh(new THREE.BoxGeometry(Le, 1, Le), TEX.on() ? new THREE.MeshStandardMaterial({ map: TEX.rep(roca ? TEX.roca : TEX.tierra, 1), color: 0xa89d8c, roughness: .97, side: THREE.BackSide }) : new THREE.MeshStandardMaterial({ color: new THREE.Color(soilHex).multiplyScalar(roca ? 0.7 : 0.55), roughness: .97, side: THREE.BackSide })); g.add(walls);   // paredes del foso · v72.50: textura
       // solado (suelo II/III)
       const sol = roca ? null : new THREE.Mesh(new THREE.BoxGeometry(Le * 0.96, e, Le * 0.96), matSol);
       if (sol){ sol.position.y = -Pe + e / 2; g.add(sol); }
@@ -14569,7 +14684,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   NAV.pitsBox = function(){ const o = towerObjs && towerObjs[0]; const F = o && o.userData.found; if (!F) return null; try { bimScene.updateMatrixWorld(true); } catch(e){} const b = new THREE.Box3(); Object.values(F).forEach(f => expandVisible(b, f.g)); return b; };
   NAV.fitPits = function(ms){ const b = NAV.pitsBox(); if (b) NAV.fitBox(b, V3(0.9, 0.62, 1.05), 1.04, ms); };
   // terreno: translúcido por defecto (se ven las cimentaciones enterradas); el botón ◫ Terreno lo vuelve opaco
-  NAV.setXray = function(on){ NAV.xray = !!on; if (NAV.ground){ NAV.ground.op = NAV.xray ? 0.12 : 0.92; } const b = $('vcXray'); if (b) b.classList.toggle('on', !NAV.xray); };
+  const OP_XRAY = () => (TEX.on() ? 0.6 : 0.12);   // v72.50: con el pasto de las fotos, el terreno translúcido conserva cuerpo (los fosos se ven por sus huecos)
+  NAV.setXray = function(on){ NAV.xray = !!on; if (NAV.ground){ NAV.ground.op = NAV.xray ? OP_XRAY() : 0.92; } const b = $('vcXray'); if (b) b.classList.toggle('on', !NAV.xray); };
   NAV.fitPata = function(f, ms){ if (!f || !f.g) return; const b = NAV.boxOf(f.g); NAV.fitBox(b, V3(Math.sign(f.c.x) || 1, 0.6, Math.sign(f.c.z) || 1), 1.18, ms); };
 
   // ---------- intersección bajo el cursor (elementos visibles de la torre / cimentaciones / terreno) ----------
@@ -14640,7 +14756,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
          los fosos quedan recortados como agujeros exactos. Antes era un plano con agujeros a cota 0. */
       Object.values(F).forEach(f => { if (f.g) f.g.userData.pataGroup = true; });
       const g = terrenoDesnivel(F); pm.geometry.dispose(); pm.geometry = g;
-      pm.material.opacity = NAV.xray ? 0.12 : 0.92; pm.position.y = -0.02; NAV.ground.op = pm.material.opacity;   // opaco: los fosos se ven por sus huecos (y por debajo, al orbitar bajo el terreno)
+      pm.material.opacity = NAV.xray ? OP_XRAY() : 0.92; pm.position.y = -0.02; NAV.ground.op = pm.material.opacity;   // opaco: los fosos se ven por sus huecos (y por debajo, al orbitar bajo el terreno)
     }
     // el fantasma "Proyectado" del GLB trae sus propios bloques de cimentación, que se encimaban sobre los fosos: se usa sin ellos
     try {
