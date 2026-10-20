@@ -8191,33 +8191,37 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     </div>
   </section>
 
-  <!-- ==================== REPORTES DIARIOS (v72.48, 20-Oct-26, pedido del usuario) ====================
-       Los reportes diarios de los últimos 7 días dentro del tablero: torres con su descripción breve y las
-       actividades del día, cumplimiento de MEGASIL, personal en obra y equipos. Va también en la visita
-       pública y sin nombres de personas (pedido expreso). Datos: bloque REPORTES_7D (reportes7_build.py). -->
+  <!-- ==================== REPORTES DIARIOS (v72.48 · rediseño v72.49, 20-Oct-26) ====================
+       Los reportes diarios de los últimos 7 días dentro del tablero. v72.49 (pedido del usuario: «mejora toda la representación
+       visual y distribución de campo de la pestaña, lo noto muy cargado de texto y poco estructurado»): tira de días + cuatro
+       cifras del día; tarjetas de torre (chips de partida con resultado, «hoy» en una línea y el estado plegado); personal en
+       tres cifras con el detalle plegado; equipos como lista con punto de estado; el texto del reporte plegado al final.
+       Va también en la visita pública y sin nombres de personas. Datos: bloque REPORTES_7D (reportes7_build.py). -->
   <section id="v-rep" class="view">
-    <div class="card rp-dias">
-      <h3><span class="dot"></span>Reportes diarios · últimos 7 días</h3>
-      <div class="desc">Lo que dice el reporte de supervisión de cada día: qué torres se intervinieron y con qué actividad, cuánto de su propio programa cumplió MEGASIL, y cuánta gente y qué equipos hubo en obra. Elige un día.</div>
+    <div class="card rp-cab-card">
+      <div class="rp-cab-top">
+        <h3><span class="dot"></span>Reportes diarios · últimos 7 días</h3>
+        <span class="rp-cab-sub" id="rpCabSub"></span>
+      </div>
       <div class="rp-tira" id="rpTira"></div>
-      <div class="rp-resumen" id="rpResumen"></div>
+      <div class="rp-kpis" id="rpKpis"></div>
     </div>
     <div class="card rp-torres">
-      <h3><span class="dot"></span><span id="rpTorresTit">Torres y actividades del día</span></h3>
-      <div id="rpTorres"></div>
+      <h3><span class="dot"></span><span id="rpTorresTit">Torres intervenidas</span><span class="rp-ley-act"><i class="ok"></i>cumplida <i class="med"></i>parcial <i class="mal"></i>no ejecutada <i class="np"></i>sin programar</span></h3>
+      <div class="rp-grid" id="rpTorres"></div>
     </div>
-    <div class="card rp-cump">
-      <h3><span class="dot"></span>Cómo cumple MEGASIL su propia programación</h3>
-      <div class="desc">Partidas del programa del día: cumplidas al 100 %, parciales y no ejecutadas; la línea es el porcentaje de metrado ejecutado. Emparejado con la programación del día anterior, igual que en el reporte diario.</div>
-      <div class="rp-graf" id="rpGraf"></div>
-    </div>
-    <div class="card rp-gente">
+    <div class="card rp-lado">
       <h3><span class="dot"></span>Personal en obra</h3>
       <div id="rpPersonal"></div>
-    </div>
-    <div class="card rp-eq">
-      <h3><span class="dot"></span>Equipos y maquinaria</h3>
+      <h3 class="rp-h3b"><span class="dot"></span>Equipos y maquinaria</h3>
       <div id="rpEquipos"></div>
+    </div>
+    <div class="card rp-cump">
+      <h3><span class="dot"></span>Cómo cumple MEGASIL su propia programación<span class="rp-cab-sub">partidas del programa de cada día · la línea es el % de metrado ejecutado</span></h3>
+      <div class="rp-graf" id="rpGraf"></div>
+    </div>
+    <div class="card rp-texto">
+      <details><summary><span class="dot"></span>Texto del reporte del día</summary><div id="rpResumen"></div></details>
     </div>
   </section>
 
@@ -15924,56 +15928,78 @@ html body #v-bim > .bim-stages{grid-row:7!important}
      v72.20 (pedido del usuario): dos columnas con scroll propio. v72.21: se llaman «Eventos» (no son hitos esperados), sin avances de obra,
      duraciones en días (indicadores, gráficas y cada evento), gráficas arriba a la izquierda y tira fija arriba a la derecha. -->
 <style>
-/* ===== Reportes diarios (v72.48) ===== */
-#v-rep.view.on{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:min-content;align-content:start}
+/* ===== Reportes diarios (v72.48 · rediseño v72.49) ===== */
+#v-rep.view.on{grid-template-columns:minmax(0,2fr) minmax(300px,1fr);grid-auto-rows:min-content;align-content:start;gap:10px}
 #v-rep .card{min-height:0}
-#v-rep .rp-dias{grid-column:1 / -1}
-#v-rep .rp-torres{grid-column:1 / -1}
-.rp-tira{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
-.rp-dia{flex:1 1 92px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:10px;padding:6px 4px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}
-.rp-dia b{font-size:.72rem;color:var(--ink)} .rp-dia small{font-size:.6rem;opacity:.75} .rp-dia em{font-style:normal;font-weight:700;font-size:.78rem}
+#v-rep .rp-cab-card,#v-rep .rp-cump,#v-rep .rp-texto{grid-column:1 / -1}
+#v-rep .rp-torres{grid-column:1} #v-rep .rp-lado{grid-column:2;grid-row:2}
+#v-rep .rp-torres{grid-row:2}
+.rp-cab-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.rp-cab-top h3{margin:0}
+.rp-cab-sub{font-size:.66rem;color:var(--ink-mut);font-weight:400}
+#v-rep h3 .rp-cab-sub{margin-left:8px}
+.rp-tira{display:flex;gap:5px;margin:8px 0 10px}
+.rp-dia{flex:1 1 0;min-width:0;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:9px;padding:5px 2px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;line-height:1.1}
+.rp-dia b{font-size:.7rem;color:var(--ink)} .rp-dia small{font-size:.56rem;opacity:.7;text-transform:lowercase} .rp-dia em{font-style:normal;font-weight:700;font-size:.74rem;margin-top:2px}
 .rp-dia.ok em{color:var(--green,#4b7f2f)} .rp-dia.med em{color:#b8860b} .rp-dia.mal em{color:var(--red,#b4342b)}
 .rp-dia.on{border-color:var(--accent,#2f6f4f);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#2f6f4f) 28%,transparent);background:var(--panel)}
-.rp-cab{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
-.rp-rep{font-weight:700;font-size:.74rem} .rp-fe{font-size:.68rem;color:var(--ink-mut)}
-.rp-tx{font-size:.72rem;line-height:1.45;margin:4px 0 0} .rp-clima{color:var(--ink-mut)}
-.rp-t{border-top:1px solid var(--line-2);padding:7px 0}
-.rp-t:first-child{border-top:0}
-.rp-t-cab{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.rp-t-n{border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink);border-radius:7px;padding:1px 8px;font:inherit;font-weight:700;font-size:.72rem;cursor:pointer}
-.rp-act{font-size:.66rem;border-radius:999px;padding:1px 8px;border:1px solid var(--line-2);color:var(--ink-2)}
-.rp-act.ok{background:color-mix(in srgb,var(--green,#4b7f2f) 16%,transparent);border-color:transparent}
-.rp-act.med{background:color-mix(in srgb,#d8a200 22%,transparent);border-color:transparent}
-.rp-act.mal{background:color-mix(in srgb,var(--red,#b4342b) 16%,transparent);border-color:transparent}
-.rp-t-tx{font-size:.7rem;line-height:1.45;margin:3px 0 0;color:var(--ink-2)}
-.rp-t-sig{font-size:.68rem;margin:2px 0 0;color:var(--ink-mut)}
-.rp-t-res{font-size:.66rem;margin:2px 0 0;color:var(--red,#b4342b)}
-.rp-otras{font-size:.68rem;margin-top:6px;color:var(--ink-mut)}
+.rp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rp-kpi{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;line-height:1.15}
+.rp-kpi b{font-size:1.35rem;font-weight:800;letter-spacing:-.02em} .rp-kpi span{font-size:.66rem;color:var(--ink-2);font-weight:600;text-transform:uppercase;letter-spacing:.03em} .rp-kpi small{font-size:.62rem;color:var(--ink-mut);margin-top:2px}
+.rp-kpi.ok b{color:var(--green,#4b7f2f)} .rp-kpi.med b{color:#b8860b} .rp-kpi.mal b{color:var(--red,#b4342b)}
+.rp-ley-act{margin-left:auto;font-size:.6rem;font-weight:400;color:var(--ink-mut);display:inline-flex;gap:8px;align-items:center}
+.rp-ley-act i,.rp-ley i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
+.rp-ley-act i.ok,.rp-ley i.ok,.rp-b-col i.ok{background:var(--green,#4b7f2f)} .rp-ley-act i.med,.rp-ley i.med,.rp-b-col i.med{background:#d8a200} .rp-ley-act i.mal,.rp-ley i.mal,.rp-b-col i.mal{background:var(--red,#b4342b)} .rp-ley-act i.np{background:#8a8f99}
+.rp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.rp-t{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:4px;min-width:0}
+.rp-t.rp-t-sin{border-style:dashed}
+.rp-t-cab{display:flex;gap:6px;align-items:flex-start}
+.rp-t-n{flex:0 0 auto;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);border-radius:7px;padding:2px 9px;font:inherit;font-weight:800;font-size:.76rem;cursor:pointer}
+.rp-chips{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.rp-act{font-size:.62rem;border-radius:999px;padding:2px 8px;border:1px solid transparent;color:var(--ink);display:inline-flex;align-items:baseline;gap:4px;line-height:1.2;background:var(--panel)}
+.rp-act small{font-size:.56rem;color:var(--ink-mut)}
+.rp-act.ok{background:color-mix(in srgb,var(--green,#4b7f2f) 18%,var(--panel))} .rp-act.med{background:color-mix(in srgb,#d8a200 26%,var(--panel))} .rp-act.mal{background:color-mix(in srgb,var(--red,#b4342b) 16%,var(--panel))} .rp-act.np{background:var(--panel);border-color:var(--line-2);color:var(--ink-2)}
+.rp-hoy{font-size:.68rem;line-height:1.4;margin:0;color:var(--ink)}
+.rp-t-sig{font-size:.64rem;margin:0;color:var(--ink-mut)} .rp-t-sig b{color:var(--ink-2);font-weight:700}
+.rp-t-res{font-size:.63rem;margin:0;color:var(--red,#b4342b)}
+.rp-t-tx{font-size:.64rem;line-height:1.4;margin:0;color:var(--ink-2);display:none}
+.rp-t-tx.open{display:block;border-top:1px dashed var(--line-2);padding-top:4px}
+.rp-mas{align-self:flex-start;border:0;background:none;color:var(--accent,#2f6f4f);font:inherit;font-size:.6rem;cursor:pointer;padding:0;text-decoration:underline dotted}
+.rp-otras{grid-column:1 / -1;font-size:.64rem;color:var(--ink-mut)}
 .rp-vacio{font-size:.7rem;color:var(--ink-mut)}
-.rp-barras{display:flex;gap:8px;align-items:flex-end;margin:4px 0 2px}
+.rp-h3b{margin-top:12px}
+.rp-cifras{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:4px 0 6px}
+.rp-cifras > div{border:1px solid var(--line-2);border-radius:9px;padding:6px 4px;text-align:center;background:var(--panel-2);line-height:1.1}
+.rp-cifras b{display:block;font-size:1.15rem;font-weight:800} .rp-cifras span{font-size:.58rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.03em} .rp-cifras i{font-style:normal;color:#b8860b}
+.rp-cifras .tot{background:var(--panel);border-color:var(--accent,#2f6f4f)} .rp-cifras .tot b{color:var(--accent,#2f6f4f)}
+.rp-falta{font-size:.62rem;color:var(--red,#b4342b);margin:0 0 4px}
+.rp-det summary{font-size:.64rem;color:var(--ink-mut);cursor:pointer;list-style:none;padding:3px 0}
+.rp-det summary::before{content:'▸ ';} .rp-det[open] summary::before{content:'▾ ';}
+.rp-tab{width:100%;border-collapse:collapse;font-size:.66rem}
+.rp-tab td{padding:2px 6px;border-bottom:1px solid var(--line-2)} .rp-tab td:last-child{text-align:right;white-space:nowrap}
+.rp-sub td{font-weight:600} .rp-detrow td{color:var(--ink-mut);font-size:.62rem}
+.rp-eq{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rp-eq li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;column-gap:7px;align-items:center;font-size:.66rem;padding:3px 0;border-bottom:1px solid var(--line-2)}
+.rp-eq li i{width:8px;height:8px;border-radius:50%;background:var(--green,#4b7f2f);display:block}
+.rp-eq li.parado i{background:var(--red,#b4342b)} .rp-eq li.fuera i{background:#8a8f99}
+.rp-eq li.fuera .nm,.rp-eq li.fuera .ct{color:var(--ink-mut)}
+.rp-eq li .ct{font-weight:700;white-space:nowrap} .rp-eq li.parado .ct{color:var(--red,#b4342b)}
+.rp-eq li small{grid-column:2 / -1;font-size:.6rem;color:var(--ink-mut);line-height:1.3}
+.rp-barras{display:flex;gap:8px;align-items:flex-end;margin:6px 0 2px}
 .rp-b{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border-radius:8px;padding:3px 2px}
 .rp-b.on{background:var(--panel-2);box-shadow:0 0 0 1px var(--line-2) inset}
-.rp-b-col{width:100%;max-width:46px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;border-radius:5px 5px 0 0;overflow:hidden;background:var(--panel-2)}
+.rp-b-col{width:100%;max-width:54px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;border-radius:5px 5px 0 0;overflow:hidden;background:var(--panel-2)}
 .rp-b-col i{display:block;width:100%}
-.rp-b-col i.ok{background:var(--green,#4b7f2f)} .rp-b-col i.med{background:#d8a200} .rp-b-col i.mal{background:var(--red,#b4342b)}
 .rp-b-col u{position:absolute;left:0;right:0;height:2px;background:#1f5f8f;text-decoration:none}
-.rp-b-ppc{font-size:.66rem;font-weight:700} .rp-b-fe{font-size:.62rem;color:var(--ink-mut)} .rp-b-pr{font-size:.58rem;color:var(--ink-mut)}
-.rp-ley{display:flex;gap:12px;flex-wrap:wrap;font-size:.62rem;color:var(--ink-mut);margin-top:4px}
-.rp-ley i,.rp-ley u{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:3px;vertical-align:-1px;text-decoration:none}
-.rp-ley i.ok{background:var(--green,#4b7f2f)} .rp-ley i.med{background:#d8a200} .rp-ley i.mal{background:var(--red,#b4342b)} .rp-ley u{background:#1f5f8f;height:2px;width:14px;vertical-align:4px}
-.rp-tab{width:100%;border-collapse:collapse;font-size:.7rem}
-.rp-tab td,.rp-tab th{padding:2px 6px;border-bottom:1px solid var(--line-2);text-align:left}
-.rp-tab th{font-size:.64rem;color:var(--ink-mut);font-weight:600}
-.rp-tab td:last-child{text-align:right;white-space:nowrap}
-.rp-eqt td:nth-child(2),.rp-eqt td:nth-child(3){text-align:right;white-space:nowrap} .rp-eqt td:last-child{text-align:left;white-space:normal}
-.rp-gr td{background:var(--panel-2);font-weight:700;font-size:.66rem;color:var(--ink-2)}
-.rp-sub td{font-weight:600} .rp-det td{color:var(--ink-mut);font-size:.66rem}
-.rp-tot td{font-weight:700;border-top:2px solid var(--line-2)}
-.rp-arr{font-style:normal;font-size:.6rem;color:var(--ink-mut)}
-.rp-falta{font-size:.66rem;color:var(--red,#b4342b);margin:4px 0 0}
-.rp-eqt tr.rp-fuera td{color:var(--ink-mut)} .rp-eqt tr.rp-parado td:nth-child(3){color:var(--red,#b4342b);font-weight:700}
-.rp-eqt em{font-style:normal;color:var(--ink-mut);font-size:.64rem}
-@media(max-width:860px){ #v-rep.view.on{display:flex!important;flex-direction:column;gap:10px} .rp-dia{flex:1 1 70px} .rp-barras{gap:4px} }
+.rp-b-ppc{font-size:.66rem;font-weight:700} .rp-b-ppc.ok{color:var(--green,#4b7f2f)} .rp-b-ppc.med{color:#b8860b} .rp-b-ppc.mal{color:var(--red,#b4342b)}
+.rp-b-fe{font-size:.62rem;color:var(--ink-mut)} .rp-b-pr{font-size:.56rem;color:var(--ink-mut)}
+.rp-ley{display:flex;gap:12px;flex-wrap:wrap;font-size:.6rem;color:var(--ink-mut);margin-top:4px}
+.rp-ley u{display:inline-block;background:#1f5f8f;height:2px;width:14px;vertical-align:4px;margin-right:3px;text-decoration:none}
+.rp-texto details summary{cursor:pointer;font-weight:700;font-size:.78rem;list-style:none;display:flex;align-items:center;gap:6px}
+.rp-texto details summary::after{content:'▸';color:var(--ink-mut);font-size:.7rem} .rp-texto details[open] summary::after{content:'▾'}
+.rp-tx{font-size:.7rem;line-height:1.5;margin:6px 0 0} .rp-clima{color:var(--ink-mut)}
+@media(max-width:1200px){ .rp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:860px){ #v-rep.view.on{display:flex!important;flex-direction:column;gap:10px} .rp-tira{flex-wrap:wrap} .rp-dia{flex:1 1 60px} .rp-barras{gap:4px} .rp-grid{grid-template-columns:1fr} .rp-ley-act{display:none} }
 
 #v-hit.view.on{grid-template-columns:minmax(360px,42fr) minmax(0,58fr);grid-template-rows:minmax(0,1fr)}
 #v-hit .card{min-height:0;overflow:auto;overscroll-behavior:contain}
@@ -16058,109 +16084,136 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 </style>
 <script id="reportes7-data">window.REPORTES_7D = ⟦bloque:REPORTES_7D⟧;</script>
 <script>
-// ===== Reportes diarios · últimos 7 días (v72.48) =====
+// ===== Reportes diarios · últimos 7 días (v72.48 · rediseño v72.49) =====
 (function(){
   const R = window.REPORTES_7D || {dias:[]};
   const D = R.dias || [];
   if (!D.length) return;
   let sel = D.length - 1;                                  // abre en el día del corte
+  const abiertos = new Set();                              // torres con el estado desplegado
   const n = v => (v === null || v === undefined || v === '') ? '—' : v;
-  const pc = v => (v === null || v === undefined) ? '—' : Math.round(v * 100) + ' %';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  // los textos de los hechos del día vienen con **negritas** de markdown: se escapan primero y luego se convierten,
-  // para no dejar los asteriscos a la vista (se vieron en la T-16 al revisar la pestaña)
-  const mk = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  const mk = s => esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');   // **negritas** de los hechos → <b>
   const num = v => (v === null || v === undefined) ? '—' : (Math.round(v * 100) / 100).toLocaleString('es-PE');
+  const und = u => ({m3:'m³', m2:'m²', kg:'kg', und:'und', unid:'und', ml:'ml', km:'km', glb:'glb'})[String(u || '').toLowerCase()] || (u || '');
+  // resultados tal como los escribe programacion.registro(): Cumplido · Parcial · No ejecutado · No programado
+  const rN = r => String(r || '').toLowerCase();
+  const esNoEj = a => rN(a.resultado).startsWith('no ejec');
+  const kRes = r => { const x = rN(r); return x.startsWith('cumpl') ? 'ok' : (x.startsWith('parc') ? 'med' : (x.startsWith('no ejec') ? 'mal' : 'np')); };
+  const pct = v => (v === null || v === undefined) ? null : Math.round(v * 100);
+  const clPPC = p => p === null ? '' : (p >= 50 ? 'ok' : (p >= 25 ? 'med' : 'mal'));
 
   function tira(){
     document.getElementById('rpTira').innerHTML = D.map((d, i) => {
-      const c = d.cumplimiento || {};
-      const p = c.ppc === null || c.ppc === undefined ? null : Math.round(c.ppc * 100);
-      const cl = p === null ? '' : (p >= 50 ? 'ok' : (p >= 25 ? 'med' : 'mal'));
-      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${cl}" data-i="${i}">
-        <b>${esc(d.fecha_txt)}</b><small>${esc(d.dia_semana)}</small>
+      const p = pct((d.cumplimiento || {}).ppc);
+      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${clPPC(p)}" data-i="${i}" title="${esc(d.reporte || '')}">
+        <b>${esc(d.fecha_txt.slice(0, 6))}</b><small>${esc(d.dia_semana.slice(0, 3))}</small>
         <em>${p === null ? '—' : p + ' %'}</em></button>`;
     }).join('');
     document.querySelectorAll('#rpTira .rp-dia').forEach(b => b.onclick = () => { sel = +b.dataset.i; pinta(); });
   }
 
-  function pinta(){
-    const d = D[sel]; if (!d) return;
-    tira();
-    const c = d.cumplimiento || {};
-    document.getElementById('rpResumen').innerHTML =
-      `<div class="rp-cab"><span class="rp-rep">${esc(d.reporte || '')}</span>
-         <span class="rp-fe">${esc(d.fecha_txt)} · ${esc(d.dia_semana)}</span></div>
-       ${d.resumen ? `<p class="rp-tx">${mk(d.resumen)}</p>` : ''}
-       ${d.clima ? `<p class="rp-tx rp-clima">${mk(d.clima)}</p>` : ''}`;
+  function kpis(d){
+    const c = d.cumplimiento || {}, p = d.personal || {}, eq = d.equipos || [];
+    const enObra = eq.filter(e => !e.fuera);
+    const parados = enObra.filter(e => e.parado).length;
+    const ppc = pct(c.ppc);
+    const tz = (d.torres || []).filter(t => (t.actividades || []).some(a => !esNoEj(a))).length;
+    return `
+      <div class="rp-kpi"><b>${(d.torres || []).length}</b><span>torres en el programa</span><small>${tz} con trabajo ejecutado</small></div>
+      <div class="rp-kpi ${clPPC(ppc)}"><b>${ppc === null ? '—' : ppc + ' %'}</b><span>programa cumplido</span><small>${n(c.cumplidas)} de ${n(c.programadas)} partidas al 100 %${c.no_programadas ? ` · ${c.no_programadas} fuera de programa` : ''}</small></div>
+      <div class="rp-kpi"><b>${n(p.total_obra)}</b><span>personas en obra</span><small>MEGASIL ${n(p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null)} · supervisión ${n(p.conenhua_staff)} · arqueología ${n(p.arqueologia)}</small></div>
+      <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length ? ` · ${eq.length - enObra.length} fuera de obra` : ''}</small></div>`;
+  }
 
-    // --- torres del día
-    document.getElementById('rpTorresTit').textContent = `Torres y actividades del ${d.fecha_txt}`;
-    document.getElementById('rpTorres').innerHTML = (d.torres || []).length ? (d.torres || []).map(t => `
-      <div class="rp-t">
-        <div class="rp-t-cab"><button class="rp-t-n" data-t="${esc(t.t)}">${esc(t.t)}</button>
-          ${(t.actividades || []).map(a => {
-            const k = a.resultado === 'cumplida' ? 'ok' : (a.resultado === 'parcial' ? 'med' : (a.resultado === 'no ejecutada' ? 'mal' : ''));
-            return `<span class="rp-act ${k}">${esc(a.partida)}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(a.und || '')}` : ''}</span>`;
-          }).join('')}
+  function hoyDe(t){
+    // una línea con lo ejecutado ese día en la torre, a partir de las partidas (sin repetir el texto largo del estado)
+    const A = (t.actividades || []).filter(a => !esNoEj(a) && (a.ejec || kRes(a.resultado) === 'ok'));
+    if (!A.length) return (t.actividades || []).length ? 'Programada, sin ejecución registrada.' : '';
+    return A.map(a => `${a.partida}${a.ejec ? ` ${num(a.ejec)}${a.prog ? ` de ${num(a.prog)}` : ''} ${und(a.und)}` : ''}`).join(' · ');
+  }
+
+  function torres(d){
+    const T = d.torres || [];
+    if (!T.length) return '<p class="rp-vacio">Sin torres intervenidas registradas ese día.</p>';
+    return T.map(t => {
+      const key = d.fecha + '|' + t.t, open = abiertos.has(key);
+      const noEj = (t.actividades || []).filter(esNoEj);
+      return `<div class="rp-t ${noEj.length && noEj.length === (t.actividades || []).length ? 'rp-t-sin' : ''}">
+        <div class="rp-t-cab"><button class="rp-t-n" data-t="${esc(t.t)}" title="Ver en el BIM 4D">${esc(t.t)}</button>
+          <div class="rp-chips">${(t.actividades || []).map(a => `<span class="rp-act ${kRes(a.resultado)}" title="${esc(a.resultado || '')}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(und(a.und))}` : ''}">${esc(a.partida)}${a.prog ? `<small>${num(a.ejec)}/${num(a.prog)} ${esc(und(a.und))}</small>` : ''}</span>`).join('')}</div>
         </div>
-        ${t.estado ? `<p class="rp-t-tx">${mk(t.estado)}</p>` : ''}
-        ${t.siguiente ? `<p class="rp-t-sig"><b>Sigue:</b> ${mk(t.siguiente)}</p>` : ''}
-        ${(t.actividades || []).filter(a => a.restriccion).map(a => `<p class="rp-t-res">Restricción de MEGASIL: ${mk(a.restriccion)}</p>`).join('')}
-      </div>`).join('') + ((d.otras_actividades || []).length ? `<div class="rp-otras"><b>Fuera de torre:</b> ${(d.otras_actividades).map(a => esc(a.partida)).join(' · ')}</div>` : '')
-      : '<p class="rp-vacio">Sin torres intervenidas registradas ese día.</p>';
-    document.querySelectorAll('#rpTorres .rp-t-n').forEach(b => b.onclick = () => {
-      if (window.dcGoTower) window.dcGoTower(b.dataset.t);
-    });
+        ${hoyDe(t) ? `<p class="rp-hoy">${esc(hoyDe(t))}</p>` : ''}
+        ${noEj.map(a => `<p class="rp-t-res">${esc(a.partida)} sin ejecutar${a.restriccion ? ` · ${mk(a.restriccion)}` : ' · sin restricción declarada'}</p>`).join('')}
+        ${t.siguiente ? `<p class="rp-t-sig"><b>Sigue</b> ${mk(t.siguiente)}</p>` : ''}
+        ${t.estado ? `<p class="rp-t-tx ${open ? 'open' : ''}">${mk(t.estado)}</p><button class="rp-mas" data-k="${esc(key)}">${open ? 'menos' : 'estado de la torre…'}</button>` : ''}
+      </div>`;
+    }).join('') + ((d.otras_actividades || []).length ? `<div class="rp-otras"><b>Fuera de torre</b> ${(d.otras_actividades).map(a => esc(a.partida)).join(' · ')}</div>` : '');
+  }
 
-    // --- cumplimiento: barras apiladas de los 7 días, con el día elegido resaltado
-    const alto = 128;
-    document.getElementById('rpGraf').innerHTML = `<div class="rp-barras">` + D.map((x, i) => {
+  function personal(d){
+    const p = d.personal || {}, det = p.detalle || {}, arr = p.arrastrado || [];
+    const meg = (p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null) ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null;
+    const fila = (lab, v, cl) => `<tr class="${cl || ''}"><td>${esc(lab)}</td><td>${n(v)}</td></tr>`;
+    return `
+      <div class="rp-cifras">
+        <div><b>${n(meg)}</b><span>MEGASIL</span></div>
+        <div><b>${n(p.conenhua_staff)}</b><span>supervisión${arr.includes('conenhua_staff') ? ' <i title="último dato registrado">·últ.</i>' : ''}</span></div>
+        <div><b>${n(p.arqueologia)}</b><span>arqueología${arr.includes('arqueologia') ? ' <i title="último dato registrado">·últ.</i>' : ''}</span></div>
+        <div class="tot"><b>${n(p.total_obra)}</b><span>en obra</span></div>
+      </div>
+      ${(p.sin_cubrir || []).length ? `<p class="rp-falta">Sin cubrir: ${p.sin_cubrir.map(esc).join(' · ')}</p>` : ''}
+      <details class="rp-det"><summary>Detalle de MEGASIL por cargo</summary>
+        <table class="rp-tab">
+          ${fila('Staff', p.megasil_staff, 'rp-sub')}
+          ${fila('Operativos', p.operativos, 'rp-sub')}
+          ${Object.keys(det).map(k => fila('· ' + k, det[k], 'rp-detrow')).join('')}
+          ${fila('Operadores y conductores', p.operadores_choferes, 'rp-sub')}
+        </table>
+      </details>`;
+  }
+
+  function equipos(d){
+    const eq = d.equipos || [];
+    if (!eq.length) return '<p class="rp-vacio">Sin registro de equipos ese día.</p>';
+    const ord = eq.slice().sort((a, b) => (a.fuera - b.fuera) || (b.parado - a.parado));
+    return `<ul class="rp-eq">${ord.map(e => `<li class="${e.fuera ? 'fuera' : (e.parado ? 'parado' : 'ok')}" title="${esc(e.nota || '')}">
+      <i></i><span class="nm">${esc(e.eq)}</span><span class="ct">${e.fuera ? 'fuera' : `${n(e.operativos)}/${n(e.total)}`}</span>
+      ${(e.parado || e.fuera) && e.nota ? `<small>${esc(e.nota)}</small>` : ''}</li>`).join('')}</ul>`;
+  }
+
+  function grafico(){
+    const alto = 110;
+    return `<div class="rp-barras">` + D.map((x, i) => {
       const k = x.cumplimiento || {}; const tot = k.programadas || 0;
       const h = v => tot ? Math.round((v || 0) / tot * alto) : 0;
-      const am = k.avance_metrado === null || k.avance_metrado === undefined ? null : Math.round(k.avance_metrado * 100);
-      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas, ${n(k.parciales)} parciales, ${n(k.no_ejecutadas)} sin ejecutar">
-        <span class="rp-b-ppc">${k.ppc === undefined || k.ppc === null ? '—' : Math.round(k.ppc * 100) + ' %'}</span>
+      const am = pct(k.avance_metrado), p = pct(k.ppc);
+      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${k.no_programadas ? ` · ${k.no_programadas} fuera de programa` : ''}">
+        <span class="rp-b-ppc ${clPPC(p)}">${p === null ? '—' : p + ' %'}</span>
         <div class="rp-b-col" style="height:${alto}px">
-          <i class="mal" style="height:${h(k.no_ejecutadas)}px"></i>
-          <i class="med" style="height:${h(k.parciales)}px"></i>
-          <i class="ok"  style="height:${h(k.cumplidas)}px"></i>
-          ${am === null ? '' : `<u style="bottom:${Math.round(am / 100 * alto)}px" title="metrado ejecutado ${am} %"></u>`}
+          <i class="mal" style="height:${h(k.no_ejecutadas)}px"></i><i class="med" style="height:${h(k.parciales)}px"></i><i class="ok" style="height:${h(k.cumplidas)}px"></i>
+          ${am === null ? '' : `<u style="bottom:${Math.round(am / 100 * alto)}px"></u>`}
         </div>
-        <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span>
-        <span class="rp-b-pr">${n(k.programadas)} prog.${k.no_programadas ? ` +${k.no_programadas}` : ''}</span>
+        <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span><span class="rp-b-pr">${n(k.programadas)} prog.${k.no_programadas ? ` +${k.no_programadas}` : ''}</span>
       </div>`;
     }).join('') + `</div>
       <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span></div>`;
+  }
+
+  function pinta(){
+    const d = D[sel]; if (!d) return;
+    tira();
+    document.getElementById('rpCabSub').textContent = `${d.reporte || ''} · ${d.fecha_txt} · ${d.dia_semana}`;
+    document.getElementById('rpKpis').innerHTML = kpis(d);
+    document.getElementById('rpTorresTit').textContent = `Torres intervenidas el ${d.fecha_txt}`;
+    document.getElementById('rpTorres').innerHTML = torres(d);
+    document.getElementById('rpPersonal').innerHTML = personal(d);
+    document.getElementById('rpEquipos').innerHTML = equipos(d);
+    document.getElementById('rpGraf').innerHTML = grafico();
+    document.getElementById('rpResumen').innerHTML = `${d.resumen ? `<p class="rp-tx">${mk(d.resumen)}</p>` : ''}${d.clima ? `<p class="rp-tx rp-clima">${mk(d.clima)}</p>` : ''}`;
+    document.querySelectorAll('#rpTorres .rp-t-n').forEach(b => b.onclick = () => { if (window.dcGoTower) window.dcGoTower(b.dataset.t); });
+    document.querySelectorAll('#rpTorres .rp-mas').forEach(b => b.onclick = () => { abiertos.has(b.dataset.k) ? abiertos.delete(b.dataset.k) : abiertos.add(b.dataset.k); pinta(); });
     document.querySelectorAll('#rpGraf .rp-b').forEach(b => b.onclick = () => { sel = +b.dataset.i; pinta(); });
-
-    // --- personal (solo cargos y cantidades)
-    const p = d.personal || {}, det = p.detalle || {};
-    const arr = (p.arrastrado || []);
-    const fila = (lab, v, cl, nota) => `<tr class="${cl || ''}"><td>${esc(lab)}</td><td>${n(v)}${nota ? ` <em class="rp-arr">${esc(nota)}</em>` : ''}</td></tr>`;
-    document.getElementById('rpPersonal').innerHTML = `
-      <table class="rp-tab">
-        <tr class="rp-gr"><td colspan="2">CONENHUA · supervisión</td></tr>
-        ${fila('Staff', p.conenhua_staff, '', arr.includes('conenhua_staff') ? 'último dato' : '')}
-        <tr class="rp-gr"><td colspan="2">MEGASIL</td></tr>
-        ${fila('Staff', p.megasil_staff)}
-        ${fila('Operativos', p.operativos, 'rp-sub')}
-        ${Object.keys(det).map(k => fila('· ' + k, det[k], 'rp-det')).join('')}
-        ${fila('Operadores y conductores', p.operadores_choferes, 'rp-sub')}
-        <tr class="rp-gr"><td colspan="2">AYAC · arqueología</td></tr>
-        ${fila('Monitor en campo', p.arqueologia, '', arr.includes('arqueologia') ? 'último dato' : '')}
-        <tr class="rp-tot"><td>Total personas en obra</td><td>${n(p.total_obra)}</td></tr>
-      </table>
-      ${(p.sin_cubrir || []).length ? `<p class="rp-falta">Sin cubrir: ${p.sin_cubrir.map(esc).join(' · ')}</p>` : ''}`;
-
-    // --- equipos
-    const eq = d.equipos || [];
-    document.getElementById('rpEquipos').innerHTML = eq.length ? `<table class="rp-tab rp-eqt">
-      <tr><th>Equipo</th><th>En obra</th><th>Operativos</th><th>Estado</th></tr>
-      ${eq.map(e => `<tr class="${e.fuera ? 'rp-fuera' : (e.parado ? 'rp-parado' : '')}">
-        <td>${esc(e.eq)}</td><td>${n(e.total)}</td><td>${n(e.operativos)}</td>
-        <td>${e.fuera ? 'fuera de obra' : (e.parado ? 'con unidades inoperativas' : 'operativo')}${e.nota ? ` <em>${esc(e.nota)}</em>` : ''}</td></tr>`).join('')}
-    </table>` : '<p class="rp-vacio">Sin registro de equipos ese día.</p>';
   }
 
   window.rpPinta = pinta;
