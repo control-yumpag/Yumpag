@@ -4,6 +4,7 @@
 // Cota del patio (y = 0) = 4 447,00 m s.n.m. (NPT sala de control 4 447,03; base TP-385 4 447,248).
 import * as THREE from 'three';
 import * as P from './lib.js';
+import { construirInterior, construirCables } from './interior.js';
 const { V, M } = P;
 
 export const ORIGEN = { X: 73400, Y: 24900, cota: 4447.0 };
@@ -23,6 +24,15 @@ function reg(obj, capa, info = null) {
 }
 const p3 = (X, Y, h = 0) => V(X, h, -Y);
 export const NUMS = []; // rótulos numerados de la sala de control
+export const OBST_EXTRA = []; // cajas de colisión adicionales (cerco)
+export const HUECOS = []; // rectángulos [x0,y0,x1,y1] (plano) donde el terreno se recorta: canaletas, base del TP-385, pozos
+function huecoSeg(pts, semiAncho) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    HUECOS.push([Math.min(x0, x1) - semiAncho, Math.min(y0, y1) - semiAncho, Math.max(x0, x1) + semiAncho, Math.max(y0, y1) + semiAncho]);
+  }
+}
+export const CTX = { reg, NUMS, en, p3, L: null, F: null, y2: 0, puertas: [], HUECOS: null };
 function en(obj, X, Y, h = 0, rotDeg = 0) { obj.position.set(X, h, -Y); obj.rotation.y = (rotDeg * Math.PI) / 180; return obj; }
 
 // Estados (leyenda de los planos): E existente · P proyectado (equipo nuevo) · C nueva obra civil
@@ -94,6 +104,7 @@ const F = {
     datos: { Exterior: 'Tapa a dos aguas, curvas horizontal y vertical, rieles Unistrut sobre soportes de piso', Interior: '5 tramos en la sala de control' }, planos: ['OE-612', 'OE-614'] },
 };
 
+CTX.L = L; CTX.F = F; CTX.HUECOS = HUECOS;
 // ------------------------------------------------------------------ terreno
 const PLATAFORMA = [[-3.3, 7.6], [1.8, 5.8], [8.2, 3.5], [10.2, 1.2], [19.5, -7.8], [46, -7.8], [58, -7.8], [58, 21.5],
   [52.2, 21.5], [52.2, 34.0], [47.2, 34.0], [47.2, 44.6], [6.6, 44.6], [0.6, 42.9], [-3.3, 39.2]];
@@ -157,7 +168,13 @@ function crearTerreno() {
   mat.map = tT;
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.mapG = { value: tG }; sh.uniforms.mapA = { value: tA };
-    sh.fragmentShader = 'uniform sampler2D mapG;\nuniform sampler2D mapA;\n' + sh.fragmentShader
+    const MAXH = 64; const arr = [];
+    for (let i = 0; i < MAXH; i++) { const h = HUECOS[i]; arr.push(h ? new THREE.Vector4(h[0], h[1], h[2], h[3]) : new THREE.Vector4(0, 0, 0, 0)); }
+    sh.uniforms.huecos = { value: arr }; sh.uniforms.nHuecos = { value: Math.min(MAXH, HUECOS.length) };
+    sh.vertexShader = 'varying vec3 vPosW;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vPosW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = 'uniform sampler2D mapG;\nuniform sampler2D mapA;\nuniform vec4 huecos[' + MAXH + '];\nuniform int nHuecos;\nvarying vec3 vPosW;\n' + sh.fragmentShader
+      .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+        for (int i = 0; i < ${MAXH}; i++) { if (i >= nHuecos) break; vec4 h = huecos[i]; float Y = -vPosW.z; if (vPosW.x > h.x && vPosW.x < h.z && Y > h.y && Y < h.w) discard; }`)
       .replace('#include <map_fragment>', `
         vec2 uvT = vMapUv;
         vec4 cT = texture2D(map, uvT * 1.0);
@@ -175,6 +192,23 @@ function crearTerreno() {
   return m;
 }
 
+// altura del piso bajo los pies en (X,Y) para el recorrido; yPie = altura actual de los pies (elige el nivel más cercano)
+export function pisoEn(X, Y, yPie = 0) {
+  const s = L.sala; const c = [alturaTerreno(X, Y)]; const piso = 0.12, y2 = s.h1 + 0.32;
+  const dentro = X > s.x0 && X < s.x1 && Y > s.y0 && Y < s.y1;
+  if (dentro) c.push(piso);
+  if (dentro && X > s.x2p) c.push(y2);
+  // escalera exterior en U (norte): tramo norte sube hacia el este (X 41,4→43,4, Y 1,75–2,75), descanso al este (X 43,4–44,6), tramo sur sube hacia el oeste pegado al muro (Y 0,75–1,75)
+  const hM = (y2 - piso) / 2;
+  if (Y > s.y1 + 1.05 && Y < s.y1 + 2.1 && X > 41.3 && X < 43.5) c.push(piso + Math.max(0, Math.min(1, (X - 41.4) / 2.0)) * hM);
+  if (Y > s.y1 + 0.05 && Y < s.y1 + 2.1 && X >= 43.4 && X < 44.7) c.push(piso + hM);
+  if (Y > s.y1 + 0.05 && Y < s.y1 + 1.05 && X > 41.3 && X < 43.4) c.push(piso + hM + Math.max(0, Math.min(1, (43.4 - X) / 2.0)) * hM);
+  if (Y > s.y1 - 0.2 && Y < s.y1 + 1.05 && X > 40.7 && X <= 41.3) c.push(y2);
+  // elige el candidato más cercano a los pies, sin subir más de 0,9 m de golpe
+  let mejor = c[0], dm = 1e9;
+  for (const h of c) { const d = Math.abs(h - yPie); if (h - yPie < 0.9 && d < dm) { dm = d; mejor = h; } }
+  return mejor;
+}
 // ------------------------------------------------------------------ piezas compuestas
 function conectar(a, b, f = 0.25, r = 0.016, mat = M.aluminio) { return P.catenaria(a, b, f, r, mat, 16); }
 function grupo(...hijos) { const g = new THREE.Group(); hijos.forEach((h) => h && g.add(h)); return g; }
@@ -196,7 +230,6 @@ export function construir(escena) {
   edificaciones();
   salaDeControl();
   redDeTierra();
-  cablesMT();
   cerco();
   return { terreno: TER };
 }
@@ -278,7 +311,7 @@ function patio138() {
     LL.add(conectar(p3(X, y.SB - 1.0, 4.85), p3(X, fb, hb - 0.7), 0.4));
   });
   reg(LL, 'patio138', { id: 'Bahía L-1123', nombre: 'Bahía de llegada de línea L-1123 desde SE Paragsha II', estado: 'E',
-    datos: { Línea: 'L-1123, 138 kV, 47,86 km', 'Equipos (norte → sur)': 'PR-380 pararrayos · TT-380 transformador de tensión capacitivo + B-380 trampa de onda · SL-380 seccionador de línea con PAT · IN-380 interruptor · TC-380 transformadores de corriente · SB-380 seccionador de barra', Separación: 'Equipos a 3,00–3,20 m entre fases' },
+    datos: { Línea: 'L-1123, 138 kV, 47,83 km', 'Equipos (norte → sur)': 'PR-380 pararrayos 120 kV MCOV 98 kV · TT-380 Arteche DDB-245 + B-380 trampa de onda · SL-380 MESA 1 250 A con cuchilla ST-380 · IN-380 General Electric GL313F3/4031P 3 150 A, 40 kA · TC-380 ABB IMB170 400/1/1/1 A · SB-380 MESA 1 250 A', Protección: 'Tablero 14: SEL 421 (21/21N, 79) · SEL 351A (27) · KCEG 140 (67N) · DFR Qualitrol', Separación: 'Equipos a 3,00–3,20 m entre fases' },
     planos: ['OE-602 (2/2)', 'OE-604'], aprox: true });
   etiqueta(LL, 'L-1123 · llegada SE Paragsha II', 7.5, 26.7, 37.0);
   // conductores de la línea saliendo al norte (hacia la última estructura, fuera del plano)
@@ -305,7 +338,7 @@ function patio138() {
   });
   B4.add(en(P.caja(0.8, 1.1, 0.5, M.gabinete), 28.2, y4.IN, 0.55));
   reg(B4, 'patio138', { id: 'Bahía TP-384', nombre: 'Bahía de transformador TP-384', estado: 'E',
-    datos: { Equipos: 'Seccionador de barra · interruptor (3 polos) · pararrayos 138 kV (base existente)', Transformador: 'TP-384 138/22,9/10 kV' }, planos: ['OE-602', 'OE-604'], aprox: true });
+    datos: { Equipos: 'SB-382 AEG 1 250 A · IN-382 AEG 3 150 A, 40 kA/3 s · PR-380 120 kV · TC 100–200/1/1/1 A (base de pararrayos existente)', Transformador: 'TP-384 ABB 138+2/−14×1,25 % / 22 / 10 kV · 18/6/18 MVA ONAN · 22/8/22 MVA ONAF · YNyn0d5', Protección: 'Tablero 9: R32 SEL 351A (50/51, 50N/51N, 27/59) · R31 SEL 387E (87T) · R33 86' }, planos: ['OE-602', 'OE-603', 'OE-604'], aprox: true });
 
   // ---- bahía TP-383 (al oeste)
   const b3 = L.b383; const B3 = new THREE.Group();
@@ -327,7 +360,7 @@ function patio138() {
   // cadenas de la viga oeste hacia la bahía
   for (const Y of Object.values(L.barra)) B3.add(P.cadena(p3(G.xs[0] - 0.45, Y, hb - 0.45), p3(G.xs[0] - 1.9, Y, hb - 0.45)));
   reg(B3, 'patio138', { id: 'Bahía TP-383', nombre: 'Bahía de transformador TP-383 (138/33 kV)', estado: 'E',
-    datos: { Equipos: 'Seccionador de barra · interruptor · pararrayos 138 kV', Fases: 'Horizontales a 3,00 m (Y 29,2 · 26,2 · 23,2)' }, planos: ['OE-602', 'OE-604'], aprox: true });
+    datos: { Equipos: 'SB-381 MESA 1 250 A · IN-381 Magrini Galileo 2 000 A, 31,5 kA · PR-381 120 kV · TC 100–200/1/1/1 A', Transformador: 'TP-383 WEG 127,65 ± 10×1 % / 34,5 / 4,16 kV · 20/18/20 MVA ONAN · 25/22/25 MVA ONAF · YNyn0d5', Protección: 'Tablero 9: R22 KCGG 140 (50/51, 50N/51N) · R21 SEL 387E (87T) · R23 86 · R41 KCGG 140 lado 33 kV', Fases: 'Horizontales a 3,00 m (Y 29,2 · 26,2 · 23,2)' }, planos: ['OE-602', 'OE-603', 'OE-604'], aprox: true });
 }
 
 // ---------- bahía TP-385 (proyectada)
@@ -377,15 +410,18 @@ function bahia385() {
   const tp = P.transformadorPotencia({ L: 5.6, W: 2.3, H: 3.15, radiadores: 7, nuevo: true, hTotal: 7.0, sepAT: 2.44 });
   en(tp, b.ejeAT, b.ejeRuedas, 0.25, 0);
   reg(tp, 'transformadores', F.TP385); etiqueta(tp, 'TP-385 · 30/36 MVA', 8.3);
-  // tablero de regulación T1 se registra en la sala; cajuela 10 kV y bandeja
-  const ban = new THREE.Group();
-  const bpts = [[43.4, 13.0, 1.2], [43.4, 14.2, 1.2], [43.4, 15.3, 0.5]];
-  for (let i = 0; i < bpts.length - 1; i++) {
-    const [x0, y0, h0] = bpts[i], [x1, y1, h1] = bpts[i + 1];
-    const s = P.barra(p3(x0, y0, h0), p3(x1, y1, h1), 0.15, M.acero); s.scale.set(1, 1, 0.35); ban.add(s);
-  }
-  for (let k = 0; k < 4; k++) ban.add(en(P.caja(0.05, 1.2, 0.05, M.acero), 43.4, 13.1 + k * 0.6, 0.6));
-  reg(ban, 'cables', F.BANDEJA);
+  // bandeja exterior 300×100 con tapa a dos aguas, sobre soportes de piso (metrado 6.2; OE-612 BPC1/CVE1): del gabinete de
+  // mando del transformador (lado norte de la base) hacia el oeste y baja a la canaleta C1
+  const ban = new THREE.Group(); const yB = b.base.y1 + 0.3, hB = 0.45;
+  const tramo = (x0, x1) => { const Lx = x1 - x0, cx = (x0 + x1) / 2; ban.add(en(P.caja(Lx, 0.1, 0.03, M.acero), cx, yB - 0.15, hB), en(P.caja(Lx, 0.1, 0.03, M.acero), cx, yB + 0.15, hB));
+    const n = Math.round(Lx / 0.3); for (let i = 0; i <= n; i++) ban.add(en(P.caja(0.025, 0.02, 0.27, M.acero), x0 + (i * Lx) / n, yB, hB - 0.03));
+    const tapa = new THREE.Group(); tapa.userData.tapa = true;
+    tapa.add(en(P.caja(Lx, 0.012, 0.18, M.aceroOsc), cx, yB - 0.085, hB + 0.08).rotateX(0.35), en(P.caja(Lx, 0.012, 0.18, M.aceroOsc), cx, yB + 0.085, hB + 0.08).rotateX(-0.35)); ban.add(tapa); };
+  tramo(38.9, 41.3); tramo(41.3, 43.7);
+  for (const X of [39.1, 40.3, 41.5, 42.7, 43.6]) { ban.add(en(P.caja(0.1, hB - 0.05, 0.15, M.acero), X, yB, (hB - 0.05) / 2), en(P.caja(0.15, 0.03, 0.4, M.acero), X, yB, hB - 0.06)); }
+  ban.add(P.tubo([p3(38.9, yB, hB), p3(38.6, yB, hB - 0.05), p3(38.45, yB + 0.3, 0.1), p3(38.4, 15.45, -0.3)], 0.06, M.acero, 20)); // curva vertical externa a C1
+  ban.add(en(P.caja(0.3, 0.6, 0.25, M.gabinete), 43.9, yB, 0.55)); // caja de paso del transformador (tubería liquid tight)
+  reg(ban, 'cables', Object.assign({}, F.BANDEJA, { datos: Object.assign({}, F.BANDEJA.datos, { Exterior: '2 tramos 300×100×2 400 mm con tapa a dos aguas, curva horizontal y curva vertical externa; rieles Unistrut sobre 30 soportes de piso F2941', Recorrido: 'Del gabinete de mando del TP-385 (lado norte de la base) a la canaleta C1' }) }));
 }
 
 // ---------- patio 33 kV
@@ -444,7 +480,7 @@ function transformadoresExistentes() {
   const T4 = new THREE.Group(); T4.add(t4, b4, g4);
   for (const z of [4.9, 6.7]) T4.add(en(P.caja(15.6, 0.12, 0.1, M.aceroOsc), 22.8, z, 0.3));
   reg(T4, 'transformadores', { id: 'TP-384', nombre: 'Transformador de potencia TP-384 (existente)', estado: 'E',
-    datos: { Relación: '138 / 22,9 / 10 kV', Alimenta: 'Barra 10 kV: celdas C01–C05 (Casa Fuerza, Planta Concentradora, Mina Carmen)', Base: 'Con rieles de traslado hacia el oeste' }, planos: ['OE-602', 'OE-604'], aprox: true });
+    datos: { Marca: 'ABB', Relación: '138 + 2 / −14 × 1,25 % / 22 / 10 kV', Potencia: '18/6/18 MVA ONAN · 22/8/22 MVA ONAF · YNyn0d5', Impedancias: 'X12 4,8 % · X13 7,5 % · X23 2,28 % (18 MVA)', Alimenta: 'Barra 10 kV: celdas C01–C05 (casa fuerza, planta concentradora, mina Carmen)', Base: 'Con rieles de traslado hacia el oeste' }, planos: ['OE-602', 'OE-603', 'OE-604'], aprox: true });
   etiqueta(T4, 'TP-384', 8.0, 26.7, 5.8);
 
   const t3 = P.transformadorPotencia({ L: 5.2, W: 2.2, H: 2.9, radiadores: 6, ladoRad: 1, nuevo: false, hTotal: 6.4, sepAT: 2.0 });
@@ -454,10 +490,10 @@ function transformadoresExistentes() {
   T3.add(P.losa([[4.4, 10.3], [10.6, 10.3], [10.6, 21.8], [4.4, 21.8]], -0.2, 0.08, M.concreto));
   for (const x of [6.3, 8.1]) T3.add(en(P.caja(0.1, 0.12, 19.2, M.aceroOsc), x, 20.0, 0.3));
   reg(T3, 'transformadores', { id: 'TP-383', nombre: 'Transformador de potencia TP-383 (existente)', estado: 'E',
-    datos: { Relación: '138 / 33 kV', Alimenta: 'Patio 33 kV (salidas a Iscaycruz y Raura)', Base: 'Con rieles de traslado hacia el sur (2 × 5,50 m)' }, planos: ['OE-602', 'OE-604'], aprox: true });
+    datos: { Marca: 'WEG', Relación: '127,65 ± 10 × 1 % / 34,5 / 4,16 kV', Potencia: '20/18/20 MVA ONAN · 25/22/25 MVA ONAF · YNyn0d5', Impedancias: 'Vcc12 7,81 % · Vcc13 11,83 % · Vcc23 3,79 % (20 MVA)', Alimenta: 'Patio 33 kV (salidas a Iscaycruz y Raura)', Base: 'Con rieles de traslado hacia el sur (2 × 5,50 m)' }, planos: ['OE-602', 'OE-603', 'OE-604'], aprox: true });
   etiqueta(T3, 'TP-383', 7.6, 7.2, 25.6);
   // muro cortafuego entre TP-384 y TP-385
-  const mc = P.caja(0.25, 6.0, 7.2, M.muro); en(mc, 34.85, 9.7, 3.0);
+  const mc = P.caja(0.25, 6.0, 7.2, M.muro); en(mc, 34.85, 9.7, 3.0); mc.userData.obstaculo = true;
   reg(mc, 'obraCivil', { id: 'Muro cortafuego', nombre: 'Muro cortafuego', estado: 'E', datos: { Altura: '≈ 6,0 m', Función: 'Separa el TP-385 del patio del TP-384' }, planos: ['OE-606', 'OE-612'], aprox: true });
 }
 
@@ -482,13 +518,14 @@ function obrasCiviles() {
     ['C-90', [[33.45, 3.2], [33.45, 1.0], [38.6, 1.0]], 0.9, 0.9, 'E'],
   ];
   const G = new THREE.Group();
-  for (const [n, pts, a, p] of can) G.add(P.canaleta(pts, a, p, 0.02, M.concreto, true, M.concreto));
+  for (const [n, pts, a, p] of can) { G.add(P.canaleta(pts, a, p, 0.02, M.concreto, true, M.concreto)); huecoSeg(pts, a / 2 + 0.15); }
   reg(G, 'obraCivil', { id: 'Canaletas', nombre: 'Canaletas de cables existentes (C-1, C-2, C-3, C-90)', estado: 'E',
     datos: { 'C-1': '0,70 × 0,70 m', 'C-2 / C-3': 'Canaletas secundarias de control', Tapas: 'Concreto prefabricado' }, planos: ['OE-604', 'OE-605', 'OE-611'], aprox: true });
 
   // ---- base del TP-385 (nueva): losa con poza, grava y rejilla, sardinel, rieles
   const b = L.b385.base; const B = new THREE.Group();
   const e = 0.25, prof = 1.0;
+  HUECOS.push([b.x0 + 0.1, b.y0 + 0.1, b.x1 - 0.1, b.y1 - 0.1]);
   // muros perimetrales de la poza (de −1,45 a +0,25)
   B.add(P.muro([[b.x0, b.y0], [b.x1, b.y0], [b.x1, b.y1], [b.x0, b.y1], [b.x0, b.y0]], 1.7, e, M.concretoNuevo, -1.45));
   B.add(P.losa([[b.x0, b.y0], [b.x1, b.y0], [b.x1, b.y1], [b.x0, b.y1]], -1.7, -1.45, M.concretoNuevo));
@@ -504,16 +541,17 @@ function obrasCiviles() {
   B.add(grv);
   // tubo de drenaje al buzón
   B.add(P.barra(p3(b.x0 + 0.5, b.y0 + 0.4, -1.5), p3(b.x0 - 1.5, b.y0 - 2.0, -1.6), 0.1, M.pvc, true));
+  B.userData.obstaculo = true;
   reg(B, 'obraCivil', F.BASE385); etiqueta(B, 'Base TP-385 (nueva)', 1.2, 45.6, 9.0, true);
 
   // ---- canaleta de control C1 0,70×0,70 (nueva) + ductos 4×Ø2" desde el gabinete del interruptor
   const C1 = new THREE.Group();
-  C1.add(P.canaleta([[37.2, 15.5], [43.65, 15.5]], 0.7, 0.7, 0.02, M.concretoNuevo, true, M.concretoNuevo));
-  for (let k = 0; k < 4; k++) C1.add(P.tubo([p3(40.6 + k * 0.1, 17.0, 0.6), p3(40.6 + k * 0.1, 16.9, -0.35), p3(40.5 + k * 0.1, 16.3, -0.45), p3(40.4 + k * 0.1, 15.85, -0.4)], 0.03, M.pvcGris, 12));
+  C1.add(P.canaleta([[37.2, 15.5], [43.65, 15.5]], 0.7, 0.7, 0.02, M.concretoNuevo, true, M.concretoNuevo)); huecoSeg([[37.2, 15.5], [43.65, 15.5]], 0.5);
+  for (let k = 0; k < 4; k++) C1.add(P.tubo([p3(40.55 + k * 0.1, 16.58, 1.1), p3(40.55 + k * 0.1, 16.58, 0.2), p3(40.5 + k * 0.1, 16.2, -0.2), p3(40.45 + k * 0.1, 15.85, -0.3)], 0.03, M.pvcGris, 12));
   reg(C1, 'obraCivil', F.C1);
   // ---- canal de cable 10 kV (nuevo) desde la cajuela 10 kV hacia la canaleta existente
   const CT = new THREE.Group();
-  CT.add(P.canaleta([[38.55, 8.2], [38.55, 4.0], [36.2, 4.0]], 0.9, 0.9, 0.02, M.concretoNuevo, true, M.concretoNuevo));
+  CT.add(P.canaleta([[38.55, 8.2], [38.55, 4.0], [36.2, 4.0]], 0.9, 0.9, 0.02, M.concretoNuevo, true, M.concretoNuevo)); huecoSeg([[38.55, 8.2], [38.55, 4.0], [36.2, 4.0]], 0.6);
   reg(CT, 'obraCivil', F.CT10);
   // buzón de drenaje y caja de paso
   const bz = new THREE.Group();
@@ -572,42 +610,56 @@ function edificaciones() {
 // ---------- sala de control (dos pisos) con tableros y celdas
 function salaDeControl() {
   const s = L.sala; const g = new THREE.Group(); const e = 0.25;
-  const h1 = s.h1, h2 = s.h2;
-  const pts = [[s.x0, s.y0], [s.x1, s.y0], [s.x1, s.y1], [s.x0, s.y1]];
-  // piso
-  g.add(P.losa(pts, -0.05, 0.12, M.piso));
-  // muros primer piso con vanos (puerta principal al sur X 38,5–40,6; ventanas)
+  const h1 = s.h1, h2 = s.h2; const piso = 0.12;
+  const y2 = h1 + 0.32; // nivel del piso del 2.º piso
+  CTX.y2 = y2;
+  // muros primer piso con vanos (puerta doble al sur X 38,5–40,65; puerta oeste Y 0,0–0,9; ventanas)
   const muros = new THREE.Group(); muros.userData.muros = true;
   const W = (x0, y0, x1, y1, h = h1, y = 0.12, mat = M.muro) => muros.add(P.muro([[x0, y0], [x1, y1]], h, e, mat, y));
-  W(s.x0, s.y0, 38.5, s.y0); W(40.65, s.y0, s.x1, s.y0); W(38.5, s.y0, 40.65, s.y0, 1.0, h1 - 0.88);
-  W(s.x0, s.y1, s.x1, s.y1); W(s.x0, s.y0, s.x0, 0.0); W(s.x0, 0.0, s.x0, s.y1, 1.0, h1 - 0.88);
+  W(s.x0, s.y0, 38.5, s.y0); W(40.65, s.y0, s.x1, s.y0); W(38.5, s.y0, 40.65, s.y0, 1.0, piso + 2.6);
+  W(s.x0, s.y1, s.x1, s.y1); W(s.x0, s.y0, s.x0, -0.2); W(s.x0, -0.2, s.x0, s.y1, 1.2, piso + 2.2); W(s.x0, 0.7 - 0.0, s.x0, s.y1, h1, piso); 
   W(s.x1, s.y0, s.x1, s.y1);
-  // tabiques interiores (baño / baterías)
-  W(42.3, s.y0, 42.3, s.y1, h1, 0.12, M.muroInt); W(42.3, -1.25, s.x1, -1.25, h1, 0.12, M.muroInt);
+  // tabiques interiores (baterías / baño) con sus puertas
+  W(42.3, s.y0, 42.3, -3.9, h1, 0.12, M.muroInt); W(42.3, -3.0, 42.3, s.y1, h1, 0.12, M.muroInt); W(42.3, -3.9, 42.3, -3.0, 1.0, piso + 2.2, M.muroInt);
+  W(42.3, -1.25, 43.5, -1.25, h1, 0.12, M.muroInt); W(44.4, -1.25, s.x1, -1.25, h1, 0.12, M.muroInt); W(43.5, -1.25, 44.4, -1.25, 1.0, piso + 2.2, M.muroInt);
   // ventanas (franja alta en muro sur y norte)
   for (const X of [21, 24.5, 28, 31.5, 35]) {
     muros.add(en(P.caja(1.6, 0.9, 0.06, M.vidrio), X, s.y0, 2.2));
     muros.add(en(P.caja(1.6, 0.9, 0.06, M.vidrio), X, s.y1, 2.2));
   }
-  // puertas
-  muros.add(en(P.caja(2.1, 2.6, 0.06, M.puerta), 39.6, s.y0 - 0.05, 1.42));
-  muros.add(en(P.caja(0.06, 2.2, 1.0, M.puerta), s.x0 - 0.05, 0.12 + 0.0 - 0.5 + 0.35, 1.22));
   g.add(muros);
-  // losa del segundo piso y muros del segundo piso (sobre X 36,8–46,0)
+  // losa del segundo piso (con el agujero de cables junto a la escalera interior) y muros del segundo piso (X 36,8–46,0)
   const p2 = new THREE.Group(); p2.userData.piso2 = true;
-  p2.add(P.losa([[s.x2p, s.y0], [s.x1, s.y0], [s.x1, s.y1], [s.x2p, s.y1]], h1 + 0.12, h1 + 0.32, M.concreto));
-  const y2 = h1 + 0.32;
+  const fl = new THREE.Shape([new THREE.Vector2(s.x2p, s.y0), new THREE.Vector2(s.x1, s.y0), new THREE.Vector2(s.x1, s.y1), new THREE.Vector2(s.x2p, s.y1)]);
+  fl.holes.push(new THREE.Path([new THREE.Vector2(40.3, -5.0), new THREE.Vector2(40.9, -5.0), new THREE.Vector2(40.9, -4.6), new THREE.Vector2(40.3, -4.6)]));
+  const geoL = new THREE.ExtrudeGeometry(fl, { depth: 0.2, bevelEnabled: false }); geoL.rotateX(-Math.PI / 2); geoL.translate(0, h1 + 0.12, 0);
+  const losa2 = new THREE.Mesh(geoL, M.concreto); losa2.receiveShadow = true; losa2.castShadow = true; p2.add(losa2);
   const W2 = (x0, y0, x1, y1, mat = M.muro, h = h2) => p2.add(P.muro([[x0, y0], [x1, y1]], h, e, mat, y2));
-  W2(s.x2p, s.y0, s.x1, s.y0); W2(s.x2p, s.y1, 41.0, s.y1); W2(42.2, s.y1, s.x1, s.y1); W2(s.x2p, s.y0, s.x2p, s.y1); W2(s.x1, s.y0, s.x1, s.y1);
-  W2(41.95, s.y0, 41.95, s.y1, M.muroInt); W2(s.x2p, -2.1, 41.95, -2.1, M.muroInt);
+  W2(s.x2p, s.y0, s.x1, s.y0); W2(s.x2p, s.y1, 41.0, s.y1); W2(42.2, s.y1, s.x1, s.y1); W2(41.0, s.y1, 42.2, s.y1, M.muro, 0.9); p2.children[p2.children.length - 1].position.y = 2.1;
+  W2(s.x2p, s.y0, s.x2p, s.y1); W2(s.x1, s.y0, s.x1, s.y1);
+  W2(41.95, s.y0, 41.95, -3.6, M.muroInt); W2(41.95, -2.7, 41.95, s.y1, M.muroInt); W2(s.x2p, -2.1, 40.3, -2.1, M.muroInt);
   for (const X of [38.6, 43.9]) p2.add(en(P.caja(1.6, 1.0, 0.06, M.vidrio), X, s.y0, y2 + 1.4));
-  p2.add(en(P.caja(1.0, 2.1, 0.06, M.puerta), 41.6, s.y1, y2 + 1.05));
-  // escalera exterior al segundo piso (norte)
-  const esc = new THREE.Group();
-  for (let k = 0; k < 16; k++) esc.add(en(P.caja(1.0, 0.18, 0.28, M.concreto), 41.6 + 0, 3.6 - k * 0.0, 0.1 + k * 0.23).translateX(0));
-  esc.children.forEach((st, k) => { st.position.set(45.4 - k * 0.27, 0.12 + (k + 1) * 0.23 - 0.09, -(s.y1 + 1.1)); st.rotation.y = Math.PI / 2; });
-  esc.add(en(P.caja(1.6, 0.2, 1.2, M.concreto), 41.1, s.y1 + 1.1, h1 + 0.22));
-  for (let k = 0; k <= 4; k++) esc.add(en(P.caja(0.06, 1.0, 0.06, M.acero), 45.4 - k * 1.07, s.y1 + 1.65, 0.6 + k * 0.92));
+  // escalera exterior al segundo piso (norte, en U según OE-607: peldaños 1–7 subiendo hacia el este por el tramo norte,
+  // descanso al este y peldaños 8–16 subiendo hacia el oeste pegados al muro, hasta la puerta del 2.º piso en X 41,6)
+  const esc = new THREE.Group(); const hM = (y2 - piso) / 2; const yN = s.y1 + 1.55, yS = s.y1 + 0.55; const paso = hM / 8;
+  // peldaños macizos (huella 0,25 · contrahuella 0,24) sobre vigas inclinadas
+  for (let k = 0; k < 8; k++) esc.add(en(P.caja(0.25, paso, 1.0, M.concreto), 41.5 + k * 0.25, yN, piso + (k + 0.5) * paso));
+  esc.add(en(P.caja(1.2, 0.2, 2.0, M.concreto), 44.0, s.y1 + 1.05, piso + hM - 0.1)); // descanso
+  for (let k = 0; k < 8; k++) esc.add(en(P.caja(0.25, paso, 1.0, M.concreto), 43.3 - k * 0.25, yS, piso + hM + (k + 0.5) * paso));
+  esc.add(en(P.caja(0.6, 0.2, 1.0, M.concreto), 41.1, yS, y2 - 0.1)); // rellano en la puerta
+  for (const dz of [-0.45, 0.45]) { // vigas inclinadas (zancas) y apoyos
+    esc.add(P.barra(V(41.4, piso + 0.05, -(yN + dz)), V(43.4, piso + hM - 0.15, -(yN + dz)), 0.08, M.concreto));
+    esc.add(P.barra(V(43.4, piso + hM - 0.05, -(yS + dz)), V(41.4, y2 - 0.25, -(yS + dz)), 0.08, M.concreto));
+  }
+  for (const [X, Y] of [[44.5, s.y1 + 0.2], [44.5, s.y1 + 1.9], [43.5, s.y1 + 1.9]]) esc.add(en(P.caja(0.25, piso + hM - 0.2, 0.25, M.concreto), X, Y, (piso + hM - 0.2) / 2));
+  // barandas
+  const bar = (a, b_) => { esc.add(P.barra(a, b_, 0.02, M.acero, true)); };
+  for (let k = 0; k <= 4; k++) esc.add(en(P.caja(0.04, 0.95, 0.04, M.acero), 41.5 + k * 0.5, yN + 0.47, piso + 0.5 + k * (paso * 2)));
+  bar(V(41.5, piso + 1.0, -(yN + 0.47)), V(43.5, piso + hM + 1.0, -(yN + 0.47)));
+  for (let k = 0; k <= 4; k++) esc.add(en(P.caja(0.04, 0.95, 0.04, M.acero), 43.3 - k * 0.5, yS - 0.47, piso + hM + 0.5 + k * (paso * 2)));
+  bar(V(43.3, piso + hM + 1.0, -(yS - 0.47)), V(41.3, y2 + 1.0, -(yS - 0.47)));
+  for (const Y of [yS - 0.47, s.y1 + 1.05, yN + 0.47]) esc.add(en(P.caja(0.04, 0.95, 0.04, M.acero), 44.58, Y, piso + hM + 0.5));
+  bar(V(44.58, piso + hM + 1.0, -(yN + 0.47)), V(44.58, piso + hM + 1.0, -(yS - 0.47)));
   p2.add(esc);
   g.add(p2);
   // techos (a una agua, sube hacia el sur)
@@ -620,58 +672,27 @@ function salaDeControl() {
   };
   t1.add(techo(s.x0 - 0.4, s.x2p, s.y1 + 0.5, s.y0 - 0.5, h1 + 0.15, h1 + 0.75));
   t1.add(techo(s.x2p, s.x1 + 0.4, s.y1 + 0.6, s.y0 - 0.6, y2 + h2, y2 + h2 + 0.9));
-  // tímpanos
+  // cielorraso del 1.er piso (para el recorrido interior)
+  t1.add(P.losa([[s.x0, s.y0], [s.x2p, s.y0], [s.x2p, s.y1], [s.x0, s.y1]], h1 + 0.1, h1 + 0.14, M.muroInt));
   g.add(t1);
-  // interior: celdas, tableros, baterías
-  const I = new THREE.Group(); I.userData.interior = true;
-  const tab = (X, Y, w, d, rot, mat = M.tablero, h = 2.2) => { const t = new THREE.Group(); t.add(P.caja(w, h, d, mat, 0, h / 2 + 0.12, 0)); t.add(P.caja(w * 0.8, 0.5, 0.02, M.vidrio, 0, 1.6, d / 2 + 0.01)); t.add(P.caja(w * 0.15, 0.08, 0.02, M.negro, w * 0.3, 1.1, d / 2 + 0.01)); en(t, X, Y, 0, rot); return t; };
-  const ficha = (obj, id, nombre, X, Y, h = 2.6) => { reg(obj, 'sala', { id, nombre, estado: 'E', datos: { Ubicación: 'Sala de control, primer piso' }, planos: ['OE-607 (1/2)'], lista: false }); NUMS.push({ obj, txt: id.replace('Tablero ', ''), X, Y, h }); };
-  // celdas C01–C05 (TP-384)
-  const CEL = ['Celda de llegada 10 kV', 'Celda de seccionador 10 kV', 'Celda de salida 10 kV a casa fuerza', 'Celda de salida a planta concentradora', 'Celda de salida 10 kV a mina Carmen'];
-  for (let k = 0; k < 5; k++) { const X = 19.7 + k * 1.12; ficha(tab(X, -2.6, 1.08, 2.0, 180, M.celda, 2.3), `C0${k + 1}`, CEL[k] + ' (bahía TP-384)', X, -2.6); }
-  const TAB = { 1: 'Tablero de telecomunicaciones (TCC)', 2: 'Tablero SCADA (TAS-SEL)', 3: 'Mando y supervisión llegada 138 kV y salida 33 kV Raura e Iscaycruz (TSM)', 4: 'Mando y supervisión llegada 138 kV y salida 10 kV Uchucchacua (TSM)',
-    5: 'Protección y medida Uchucchacua 138/10 kV (TPM)', 6: 'SS.AA. 220/48 V Uchucchacua (TSA)', 7: 'Automatización SAS (=E1A01.CS01)', 8: 'Rectificadores 48 Vcc de Iscaycruz y Uchucchacua',
-    9: 'Protección llegada 138 kV y salida 33 kV Iscaycruz y Raura (TP)', 10: 'Medición de Iscaycruz, Raura y Uchucchacua (TM)', 11: 'SS.AA. 220/48 V Iscaycruz (TSA)', 12: 'Regulación del transformador TP-384',
-    13: 'Regulación del transformador TP-383', 14: 'Protección de línea 138 kV L-1123', 15: 'Rectificador 220 Vca / 110–48 Vcc PMI', 16: 'Servicios auxiliares 220 Vca / 110 Vcc / 48 Vcc',
-    17: 'Protección diferencial de barra 138 kV (CP-02)', 18: 'Protección y control del transformador TP-385 (E1-A01-CP01)', 19: 'Registrador de fallas (TLRF-01)', 20: 'Comunicaciones Internexa', 21: 'Gabinete de comunicaciones Buenaventura' };
-  const pos = { 1: [26.03, -3.42, 0], 2: [26.88, -3.42, 0], 3: [27.79, -3.42, 0], 4: [28.79, -3.42, 0], 5: [29.94, -3.42, 0], 6: [30.8, -3.42, 0], 7: [31.65, -3.42, 0], 8: [32.52, -3.42, 0],
-    9: [32.6, -2.68, -90], 10: [32.6, -1.85, -90], 11: [32.6, -1.0, -90], 12: [34.7, -1.23, 90], 13: [34.7, -2.06, 90], 14: [34.7, -2.91, 90], 15: [34.7, -3.69, 90],
-    16: [36.55, -3.69, -90], 17: [36.55, -2.88, -90], 18: [36.55, -2.02, -90], 19: [36.55, -1.17, -90], 20: [24.2, 0.15, 180], 21: [25.2, 0.2, 180] };
-  for (const [n, [X, Y, r]] of Object.entries(pos)) {
-    const w = n == 4 ? 1.05 : n >= 20 ? 0.6 : 0.82, d = n <= 8 ? 0.64 : n >= 20 ? 0.45 : 0.75;
-    ficha(tab(X, Y, w, d, r, M.tablero, n == 21 ? 1.2 : 2.2), `Tablero ${n}`, TAB[n], X, Y);
-  }
-  // celdas K01–K05 (bahía TP-385; K03 llegada del nuevo transformador)
-  const ks = [-1.13, -1.75, -2.37, -3.03, -3.65];
-  const KN = ['Celda de enlace 10 kV (con celdas del TP-384)', 'Celda de salida a planta concentradora 1', '', 'Celda de salida a planta concentradora 2', 'Celda de reserva 10 kV'];
-  ks.forEach((Y, k) => { if (k !== 2) ficha(tab(41.25, Y, 0.6, 1.3, -90, M.celda, 2.3), `K0${k + 1}`, KN[k] + ' · Siemens NXPLUS C', 41.25, Y); });
-  // escritorio de operación y sillas
-  I.add(en(P.caja(3.4, 0.05, 0.8, M.madera), 27.6, -0.75, 0.78)); I.add(en(P.caja(3.4, 0.7, 0.05, M.madera), 27.6, -0.4, 0.45));
-  for (const X of [26.5, 28.6]) I.add(en(P.cil(0.25, 0.25, 0.08, M.negro, 12), X, -1.5, 0.52));
-  // baterías
+  // mobiliario
+  const I = new THREE.Group();
+  I.add(en(P.caja(3.4, 0.05, 0.8, M.madera), 27.6, -0.75, 0.9)); I.add(en(P.caja(3.4, 0.7, 0.05, M.madera), 27.6, -0.4, 0.55));
+  for (const X of [26.5, 28.6]) { I.add(en(P.cil(0.25, 0.25, 0.08, M.negro, 12), X, -1.5, 0.52)); I.add(en(P.caja(0.45, 0.5, 0.06, M.negro), X, -1.75, 1.0)); I.add(en(P.cil(0.03, 0.03, 0.4, M.aceroOsc, 8), X, -1.5, 0.3)); }
+  for (const X of [26.6, 27.6, 28.6]) I.add(en(P.caja(0.5, 0.32, 0.05, M.negro), X, -0.75, 1.1)); // monitores
   I.add(en(P.caja(0.7, 1.2, 2.2, M.bateria), 42.85, -3.5, 0.72)); I.add(en(P.caja(1.8, 1.0, 0.6, M.bateria), 43.3, -1.6, 0.62));
   I.add(en(P.caja(0.6, 1.4, 1.8, M.bateria), 45.35, -3.8, 0.82));
-  // baño
   I.add(en(P.caja(0.4, 0.45, 0.6, M.muroInt), 43.0, 0.1, 0.35), en(P.caja(0.5, 0.15, 0.4, M.muroInt), 44.2, 0.35, 0.95));
-  // foso de cables con tapas (entre 16–19 y K01–K05)
-  I.add(P.losa([[38.8, -4.1], [40.45, -4.1], [40.45, -0.48], [38.8, -0.48]], 0.12, 0.14, M.aceroOsc));
-  // canaletas interiores (franjas)
-  I.add(P.losa([[19.2, -1.52], [28.3, -1.52], [28.3, -1.13], [19.2, -1.13]], 0.12, 0.135, M.rejilla));
-  I.add(P.losa([[19.2, -4.71], [33.8, -4.71], [33.8, -3.94], [19.2, -3.94]], 0.12, 0.135, M.rejilla));
-  // segundo piso: mesa de reuniones y oficina
   I.add(en(P.caja(1.0, 0.05, 2.4, M.madera), 44.0, -2.4, y2 + 0.75));
+  for (const Y of [-1.6, -2.4, -3.2]) for (const X of [43.4, 44.6]) I.add(en(P.caja(0.45, 0.45, 0.45, M.negro), X, Y, y2 + 0.4));
   I.add(en(P.caja(1.6, 0.05, 0.7, M.madera), 38.6, -0.4, y2 + 0.75));
-  reg(g, 'sala', F.SALA); etiqueta(g, 'Sala de control', 8.6);
   g.add(I);
-  // equipos nuevos de la sala: K03 y tablero 22 (T1)
-  const k3 = tab(41.25, ks[2], 0.6, 1.3, -90, M.celda, 2.3); reg(k3, 'sala', F.K03); NUMS.push({ obj: k3, txt: 'K03', X: 41.25, Y: ks[2], h: 2.6, nuevo: true });
-  const t22 = tab(38.6, -4.55, 0.8, 0.6, 0, M.tableroNuevo, 2.0); t22.position.y = y2 - 0.12; reg(t22, 'sala', F.T1); etiqueta(t22, 'Tablero 22 (T1) · 2.º piso', 6.4, undefined, undefined, true);
-  // bandejas interiores (5 tramos, segundo piso)
-  const bi = new THREE.Group();
-  bi.add(en(P.caja(6.0, 0.1, 0.3, M.acero), 39.6, -4.75, y2 + 2.5));
-  reg(bi, 'cables', { ...F.BANDEJA, id: 'Bandeja interior', nombre: 'Bandeja portacables interior (sala de control)' });
-  // referencias para el modo «sala»
+  reg(g, 'sala', F.SALA); etiqueta(g, 'Sala de control', 8.6);
   g.userData.techo = t1; g.userData.piso2 = p2;
+  // interior: tableros, celdas, piso con foso, bandejas, luces, puertas; y el cableado
+  CTX.sala = g;
+  construirInterior(CTX);
+  construirCables(CTX);
 }
 
 // ---------- red de tierra (profunda y superficial)
@@ -696,6 +717,7 @@ function redDeTierra() {
   for (const X of L.b385.xIn) N.add(cu([[X, b.y1 + o], [X, L.b385.ySec + 1.5]], 0.012, M.tierraNueva));
   // pozos PT1 (varilla Cu Ø3/4"×2,4 m, caja de registro)
   for (const [X, Y] of [[b.x1 + o + 5.5, b.y1 + 9.0], [b.x1 + o + 5.5, b.y0 + 2.2]]) {
+    HUECOS.push([X - 0.19, Y - 0.19, X + 0.19, Y + 0.19]);
     N.add(en(P.cil(0.4, 0.4, 2.35, M.excav, 16), X, Y, -2.35 / 2 - 0.1));
     N.add(en(P.cil(0.012, 0.012, 2.4, M.tierraNueva, 8), X, Y, -1.3));
     N.add(en(P.caja(0.4, 0.3, 0.4, M.concretoNuevo), X, Y, -0.1));
@@ -712,17 +734,6 @@ function redDeTierra() {
   reg(S, 'tierra', F.TSUP);
 }
 
-// ---------- cable 10 kV TP-385 → celda K03
-function cablesMT() {
-  const g = new THREE.Group();
-  const ruta = [[37.0, 11.4, 1.0], [37.0, 10.6, 0.4], [38.55, 9.6, -0.2], [38.55, 8.2, -0.5], [38.55, 4.0, -0.55], [37.5, 3.0, -0.55], [37.6, 1.0, -0.55], [38.6, 0.0, -0.4], [40.5, -1.5, -0.25], [41.0, -2.37, 0.3]];
-  for (let k = 0; k < 3; k++) {
-    const d = (k - 1) * 0.07;
-    g.add(P.tubo(ruta.map(([X, Y, h]) => p3(X + d, Y, h + Math.abs(d) * 0.5)), 0.023, M.cableMT, 80));
-  }
-  reg(g, 'cables', F.CAB10);
-}
-
 // ---------- cerco perimétrico
 function cerco() {
   const tramo1 = [[-3.3, 7.6], [-3.3, 39.2], [0.6, 42.9], [6.6, 44.6], [40.3, 44.6]];
@@ -731,6 +742,11 @@ function cerco() {
   const g = new THREE.Group();
   g.add(P.cerco(tramo1, 2.1, 3.07, yF));
   g.add(P.cerco(tramo2, 2.1, 3.07, (X, Y) => 1.09));
+  for (const [tr, h0] of [[tramo1, 0], [tramo2, 1.09]]) for (let i = 0; i < tr.length - 1; i++) {
+    const [x0, y0] = tr[i], [x1, y1] = tr[i + 1]; const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2);
+    for (let k = 0; k < n; k++) { const xa = x0 + ((x1 - x0) * k) / n, ya = y0 + ((y1 - y0) * k) / n, xb = x0 + ((x1 - x0) * (k + 1)) / n, yb = y0 + ((y1 - y0) * (k + 1)) / n;
+      OBST_EXTRA.push(new THREE.Box3(V(Math.min(xa, xb) - 0.15, h0, -Math.max(ya, yb) - 0.15), V(Math.max(xa, xb) + 0.15, h0 + 2.2, -Math.min(ya, yb) + 0.15))); }
+  }
   // gaviones al pie del talud norte y oeste (escalonados)
   const gav = new THREE.Group();
   const esc = (pts, off, h, w) => {

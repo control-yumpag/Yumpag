@@ -281,8 +281,9 @@ export function interruptor({ sep = 2.6, hEstruct = 2.43, mat = M.aisladorGris, 
     p.add(caja(0.12, 0.03, 0.14, M.aluminio, 0.22, 0.42 + h1 + 0.16, 0)); // terminal inferior
     g.add(p);
   }
-  // gabinete central de mando (BLK)
-  g.add(caja(0.8, 1.1, 0.5, M.gabinete, 0, hEstruct - 0.75, 0.42));
+  // gabinete central de mando (BLK): hueco, sin la cara frontal (+z), para verlo abierto al destapar
+  const mG = M.gabinete.clone(); mG.side = THREE.DoubleSide; const mNo = new THREE.MeshBasicMaterial({ visible: false });
+  const gab = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.5), [mG, mG, mG, mG, mNo, mG]); gab.position.set(0, hEstruct - 0.75, 0.42); gab.castShadow = true; g.add(gab);
   g.add(caja(0.82, 0.04, 0.52, M.aceroOsc, 0, hEstruct - 0.18, 0.42));
   g.userData.term = { sup: hEstruct + 0.11 + 0.42 + h1 + 0.32 + h2 - 0.15, inf: hEstruct + 0.11 + 0.42 + h1 + 0.16 };
   return g;
@@ -448,7 +449,7 @@ export function transformadorPotencia({ L = 5.4, W = 2.4, H = 3.1, radiadores = 
   // cambiador de tomas OLTC (+x) y gabinete de mando (+z, extremo +x)
   g.add(caja(0.8, 1.3, 0.7, pint, L / 2 + 0.4, yb + H * 0.55, -W * 0.1));
   g.add(cil(0.1, 0.1, 0.2, M.aceroOsc, 10, L / 2 + 0.4, yb + H + 0.25, -W * 0.1));
-  g.add(caja(0.8, 1.6, 0.45, M.gabinete, L * 0.38, yb + 1.0, W / 2 + 0.95));
+  g.add(caja(0.8, 1.6, 0.45, M.gabinete, L * 0.38, yb + 1.0, -(W / 2 + 0.95)));
   // placa de características
   g.add(caja(0.5, 0.35, 0.02, M.aluminio, -L * 0.3, yb + H * 0.6, W / 2 + 0.01));
   g.userData.yBushTop = yb + H + bushH + 0.18;
