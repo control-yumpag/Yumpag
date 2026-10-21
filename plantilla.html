@@ -8847,7 +8847,7 @@ window.TEX = (function(){
   return T; })();
 const VIS = {
   tBrillo: 1.0, tContraste: 1.0, tSaturacion: 1.0,   // terreno en Realista
-  caminos: true,           // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (eran líneas rojas que confundían) · v72.50: encendidos, ya son caminos de tierra sobre el relieve (pedido del usuario: «ruta de caminos de acceso de acuerdo a carreteras»)
+  caminos: false,          // caminos de acceso reales (KMZ) · v72.13: apagados por defecto (eran líneas rojas que confundían) · v72.52 (21-Oct-26, pedido del usuario): apagados otra vez por defecto (se encienden en el panel) · v72.50: encendidos, ya son caminos de tierra sobre el relieve (pedido del usuario: «ruta de caminos de acceso de acuerdo a carreteras»)
   resalte: 0.0,            // v71: franja del eje apagada por defecto (se confundía con un camino)
   aislador: 'vidrio',      // el modelo trae cadena de discos: vidrio o porcelana
   aceroRough: 0.42,        // rugosidad del galvanizado
@@ -8863,8 +8863,10 @@ const VIS = {
   exposicion: 0.80,          // v72.50: luz de altura (antes 0,40, todo apagado)
   sombras: true,             // v72.50: sombras encendidas por defecto (se apagan en Render)
   vegetacion: true,          // v72.50: ichu y tropilla en el detalle de torre
-  texturas: true             // v72.50: texturas de obra sacadas de las fotos (portal/tex)
+  texturas: true,            // v72.50: texturas de obra sacadas de las fotos (portal/tex)
+  rutaTexturas: false        // v72.52 (21-Oct-26, pedido del usuario: «dejarlo en la vista tipo malla azul que estaba antes»): la vista de ruta vuelve al terreno esquemático translúcido con la malla de cotas; las texturas, el ichu y la tropilla siguen solo en el detalle de torre
 };
+const TEXR = () => TEX.on() && VIS.rutaTexturas !== false;   // v72.52: texturas en la vista de ruta
 let bimComposer = null, bimBloom = null, bimEnvMap = null;
 let bimRouteMode = true;
 let GLB_STAGES = null;          // {clave: BufferGeometry fusionada}
@@ -8916,7 +8918,7 @@ function bimThemeColors(){
   }
   const light = document.documentElement.getAttribute('data-theme') === 'light';
   return light
-    ? { bg:0xf2f7f5, fog:0xe3efeb, ground:0x8c9a6a, wire:0x6f7d58, ghost: (TEX.on() ? 0x3f4a54 : 0x8593a0) }   // v72.50: grafito sobre la puna texturizada (el gris claro se perdía)
+    ? { bg:0xf2f7f5, fog:0xe3efeb, ground:0x8c9a6a, wire:0x6f7d58, ghost: (TEXR() ? 0x3f4a54 : 0x8593a0) }   // v72.50: grafito sobre la puna texturizada (el gris claro se perdía)
     : { bg:0x0b1714, fog:0x0b1714, ground:0x3b4a36, wire:0x4c5d47, ghost:0xa9b6c2 };
 }
 
@@ -10169,7 +10171,7 @@ function resaltarLinea(){
           return;
         }
         const b0 = mt.userData.base0; mt.metalness = b0.met; mt.roughness = b0.rou; mt.envMapIntensity = b0.env;
-        mt.opacity = Math.min(1, Math.max(mt.userData.baseOp, TEX.on() && bimRouteMode ? 0.78 : 0) + 0.42 * k);   // v72.50: más cuerpo sobre la puna
+        mt.opacity = Math.min(1, Math.max(mt.userData.baseOp, TEXR() && bimRouteMode ? 0.78 : 0) + 0.42 * k);   // v72.50: más cuerpo sobre la puna
         if (mt.color) mt.color.copy(base).lerp(claro, 0.75 * k);
         if (mt.emissive){ mt.emissive.setHex(0xffffff); mt.emissiveIntensity = 0.32 * k; }
       });
@@ -10259,7 +10261,7 @@ function updateBIM4D(){
     ln.visible = strung || ghostOn;
     const CC = cableColors();
     ln.material.color.setHex(ln.userData.kind==='opgw' ? CC.opgw : CC.cond);
-    ln.material.opacity = strung ? 0.98 : (paletaOrtoActiva() ? PALETA_ORTO.cableOp : (realista ? 0.55 : (TEX.on() ? 0.72 : 0.40)));   // v72.50
+    ln.material.opacity = strung ? 0.98 : (paletaOrtoActiva() ? PALETA_ORTO.cableOp : (realista ? 0.55 : (TEXR() ? 0.72 : 0.40)));   // v72.50 · v72.52: solo con texturas de ruta
   });
 }
 
@@ -10779,12 +10781,12 @@ function buildRouteBIM(){
   } else {
     // v55: el terreno de proyecto también lleva la textura altoandina (pasto, ichu, ladera, roca)
     // vista de proyecto: terreno esquemático (color plano translúcido + malla de cotas); la textura solo en Realista
-    groundMat = TEX.on()
+    groundMat = TEXR()
       ? new THREE.MeshStandardMaterial({ map: TEX.rep(TEX.puna, 90), vertexColors: true, color: 0xcfcfcf, roughness: 1, metalness: 0, side: THREE.DoubleSide })   // v72.50: pasto de las fotos × verde/paja por cotas
       : new THREE.MeshStandardMaterial({ color:TC.ground, roughness:1, transparent:true, opacity:.55, side:THREE.DoubleSide, flatShading:false });
   }
   // v55d: cúpula de cielo con gradiente (azul arriba, pálido en el horizonte) + neblina de distancia (solo Realista)
-  if (bimScene) bimScene.fog = (!realista && TEX.on()) ? new THREE.Fog(0xdfe3dc, 900, 2600) : null;   // v72.50: bruma solo lejos del corredor (como en Realista); la exponencial blanqueaba toda la ruta
+  if (bimScene) bimScene.fog = (!realista && TEXR()) ? new THREE.Fog(0xdfe3dc, 900, 2600) : null;   // v72.50: bruma solo lejos del corredor (como en Realista); la exponencial blanqueaba toda la ruta
   if (realista) try {
     const TCc = bimThemeColors();
     const skyG = new THREE.SphereGeometry(1400, 24, 12);
@@ -10807,11 +10809,11 @@ function buildRouteBIM(){
   gmesh.receiveShadow = VIS.sombras;          // el terreno recibe la sombra de las torres
   gmesh.castShadow = false;
   bimGroundGroup.add(gmesh);
-  if (TEX.on()) [600, 1600].forEach(ms => setTimeout(() => window.bimInvalidate && bimInvalidate(200), ms));   // v72.50: redibujar cuando las texturas ya están en la GPU
+  if (TEXR()) [600, 1600].forEach(ms => setTimeout(() => window.bimInvalidate && bimInvalidate(200), ms));   // v72.50: redibujar cuando las texturas ya están en la GPU
   if (!realista){
     const wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
       color:TC.wire, wireframe:true, transparent:true, opacity:.16 }));
-    wire.position.y=-0.35; wire.name='terrenoMalla'; wire.visible=!ortoActiva() && !TEX.on(); bimGroundGroup.add(wire);   // v72.11: la malla de cotas no va sobre la ortofoto · v72.50: ni sobre la puna texturizada
+    wire.position.y=-0.35; wire.name='terrenoMalla'; wire.visible=!ortoActiva() && !TEXR(); bimGroundGroup.add(wire);   // v72.11: la malla de cotas no va sobre la ortofoto · v72.50: ni sobre la puna texturizada
   }
 
 
