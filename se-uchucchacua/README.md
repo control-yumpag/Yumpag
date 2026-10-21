@@ -12,6 +12,8 @@ Página: https://control-yumpag.github.io/Yumpag/se-uchucchacua/
 | `lib.js` | Biblioteca de piezas paramétricas: celosías, aisladores, interruptor, seccionador, pararrayos, transformador, canaletas, cerco… |
 | `interior.js` | Interior de la sala de control: tableros y celdas con frente (OE-607/608/609), relés por tablero (OE-603), foso y trincheras, bandejas, luces, puertas; ductos y cableado de control, fuerza, comunicaciones, 10 kV y tierra |
 | `recorrer.js` | Modo «Recorrer»: primera persona con colisiones, escaleras, teletransporte por doble clic y joystick táctil |
+| `pelicula.js` | «Película»: recorrido cinematográfico de 13 paradas (~2 min) con subtítulos y grabación a MP4/WebM desde el navegador |
+| `AGENTS.md` | Reglas y contexto para cualquier agente de código (Antigravity, Claude Code, Gemini CLI) que trabaje en esta carpeta |
 | `cad.json` | Líneas del plano de planta general (DWG OE-204/604) para superponer sobre el terreno |
 
 Coordenadas: las del DWG de planta general, en metros, con origen desplazado (X − 73 400, Y − 24 900); y = 0 es el patio a 4 447,00 m s.n.m.

@@ -1,0 +1,68 @@
+# SE Uchucchacua · modelo 3D en código — reglas para agentes
+
+Este archivo es el contexto de trabajo para cualquier agente (Claude en claude.ai, Antigravity, Claude Code, Gemini CLI)
+que toque la carpeta `se-uchucchacua/`. Léelo entero antes de cambiar algo. El dueño del proyecto es el usuario
+(Melquiades); responde en español, sin rodeos, y no inventes datos.
+
+## Qué es
+Modelo 3D de la subestación Uchucchacua (Buenaventura, Perú; 138 / 33 / 22,9 / 10 kV) con la implementación del
+transformador TP-385 de 30/36 MVA, hecho **todo en código con Three.js r160** (importmap a jsdelivr, módulos ES, sin
+modelos glTF importados). Publicado por GitHub Pages en https://control-yumpag.github.io/Yumpag/se-uchucchacua/ .
+Es independiente del portal del tablero BIM 4D que vive en la raíz de este repositorio: **no toques `index.html`,
+`tablero.html`, `plantilla.html`, `datos.json`, `visita.html`, `fotos/` ni `tex/` de la raíz** (los genera otro flujo).
+
+## Archivos
+| Archivo | Contenido |
+|---|---|
+| `index.html` | Visor: vistas (isométrica, planta, bahía, TP-385, secciones A-A/B-B, sala, subsuelo), modo Recorrer, Película, capas, etapas, cortes, color realista / por estado, fichas, plano CAD, brújula, tema, celular |
+| `se3d.js` | Disposición: `L` (coordenadas de todo), fichas `F`, terreno, patio 138 kV, bahía TP-385, patio 33 kV, transformadores, obras civiles, edificaciones, sala, red de tierra, cerco; `pisoEn()`, `HUECOS`, `OBST_EXTRA`, `ETAPAS` |
+| `lib.js` | Piezas paramétricas: materiales `M`, celosías (angulares L), aisladores, interruptor, seccionador, pararrayos, TC/TT, trampa de onda, transformador, catenarias, cadenas, canaletas, losas, muros, cerco |
+| `interior.js` | Sala de control: tableros y celdas con frente (canvas), relés por tablero, foso y trincheras, bandejas, luces, puertas; ductos y cableado (control, fuerza, comunicaciones, 10 kV, tierra); gabinete del IN-385 |
+| `recorrer.js` | Primera persona: colisiones (cajas), escaleras, teletransporte, joystick táctil |
+| `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
+| `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
+
+## Convenciones que no se cambian
+- **Coordenadas**: las del DWG de planta general (CN-EIU-25-03ED-CNH-SE-OE-204), en metros, con origen desplazado:
+  `X = Xdwg − 73 400`, `Y = Ydwg − 24 900`. En Three.js: `x = X`, `z = −Y`, `y` = altura sobre el patio
+  (patio = 4 447,00 m s.n.m. = y 0). Helper: `p3(X, Y, h)` y `en(obj, X, Y, h, rotDeg)`. Norte del plano: `NORTE`.
+- **Todo elemento se registra** con `reg(obj, capa, info)`; `info` = ficha `{id, nombre, estado, datos, planos, aprox}`.
+  `estado`: `E` existente · `P` proyectado · `C` nueva obra civil (leyenda de los planos). `aprox: true` = lo que los
+  planos no detallan (alturas de pórticos existentes, equipos de bahías existentes, edificaciones vecinas): la ficha
+  lo dice y se corrige cuando lleguen planos. **Nunca inventes un dato de placa**: si no está en los planos, déjalo
+  fuera o márcalo referencial.
+- Capas: `patio138 · transformadores · patio33 · cables · obraCivil · sala · edificaciones · tierra · cerco · terreno`.
+- Tapas, rejillas y grava llevan `userData.tapa / rejilla / gravaBase` (las oculta «Destapar»); puertas de gabinetes
+  en `CTX.puertas` con `userData.puerta = {cerrada, abierta}`; obstáculos del recorrido con `userData.obstaculo`.
+- El terreno se recorta (`discard` en el shader) dentro de los rectángulos de `HUECOS` (canaletas, base, pozos,
+  trincheras): si añades una canaleta nueva, llama `huecoSeg(pts, semiAncho)`.
+- Realismo con geometría, no con texturas de IA. Texturas solo procedurales (canvas) o de fotos de campo propias.
+- Nada del proyecto se sube a servicios de IA de terceros (renders, video). Solo herramientas gratuitas con uso
+  comercial permitido.
+
+## Fuentes de verdad
+Carpeta de Drive «Proyecto TP 36 MVA» (Archivos CAD · Archivos PDF · `Proy TP 36 MVA_Metrado OE_ID_Rev0.xlsx`):
+planos CN-EIU-25-04/ID-CNH-SE-OE-601…615 (unifilares 601–603, planta general 604, disposición de equipos 605 planta y
+606 secciones, sala de control 607 1/2 y 2/2, frente de tablero 608, frente de celdas 609, tierra profunda 610 Rev.1,
+tierra superficial 611, montaje del transformador 612 1/2 y 2/2, SS.AA. 613, ductos 614, conectores 615). Los DWG
+se convierten con `dwg2dxf` (LibreDWG) y se leen con `ezdxf`. Pendiente: planos funcionales por tablero (nota 2 del
+OE-608) y planos de estructuras / cimentaciones de pórticos.
+
+## Cómo probar
+```bash
+cd se-uchucchacua && python3 -m http.server 8765   # abrir http://127.0.0.1:8765/index.html
+```
+Sin red a jsdelivr: descarga `three@0.160.0` (npm pack) y redirige las URLs del importmap a `three/` local (en
+Playwright se intercepta `**/cdn.jsdelivr.net/npm/three@0.160.0/**`). Antes de publicar: cero errores JS en PC y en
+390 px de ancho; capturas de las vistas tocadas; en el recorrido, comprobar que no se atraviesan muros.
+
+## Cómo publicar
+Commit directo a `main` en `control-yumpag/Yumpag`, solo archivos de `se-uchucchacua/`. **No empujar mientras el
+carril de fotos (repositorio `Yumpag-fotos`) está corriendo**: revisa que el último commit «Fotos automáticas…» no
+sea de hace unos minutos y que no haya un «pages build» en curso; si hay duda, espera. Mensajes de commit en
+español, con lo que cambió y por qué.
+
+## Memoria del equipo
+La memoria larga (decisiones, historial, fuentes) vive en el Proyecto «AI ENGINNER» de claude.ai, no en este
+repositorio. Si trabajas desde otra herramienta, anota los cambios en `README.md` de esta carpeta y díselo al usuario
+para que se registren allá.
