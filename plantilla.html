@@ -16058,6 +16058,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-dia{flex:1 1 0;min-width:0;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:9px;padding:5px 2px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;line-height:1.1}
 .rp-dia b{font-size:.7rem;color:var(--ink)} .rp-dia small{font-size:.56rem;opacity:.7;text-transform:lowercase} .rp-dia em{font-style:normal;font-weight:700;font-size:.74rem;margin-top:2px}
 .rp-dia.ok em{color:var(--green,#4b7f2f)} .rp-dia.med em{color:#b8860b} .rp-dia.mal em{color:var(--red,#b4342b)}
+.rp-dia i{font-style:normal;font-size:.52rem;color:var(--ink-mut);line-height:1.1;margin-top:1px;white-space:nowrap}
+.rp-kpi-res i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:0} .rp-kpi-res i.ok{background:var(--green,#4b7f2f)} .rp-kpi-res i.med{background:#e0a800} .rp-kpi-res i.mal{background:var(--red,#b4342b)}
 .rp-dia.on{border-color:var(--accent,#2f6f4f);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#2f6f4f) 28%,transparent);background:var(--panel)}
 .rp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .rp-kpi{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;line-height:1.15}
@@ -16221,10 +16223,12 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 
   function tira(){
     document.getElementById('rpTira').innerHTML = D.map((d, i) => {
-      const p = pct((d.cumplimiento || {}).ppc);
-      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${clPPC(p)}" data-i="${i}" title="${esc(d.reporte || '')}">
+      // v72.51 (21-Oct-26, pedido del usuario: «0 % se ve muy preocupante cuando también hay parciales»): el % del día es el
+      // metrado ejecutado sobre el programado (la línea del gráfico de abajo); el PPC estricto va debajo como «c/p al 100 %».
+      const c = d.cumplimiento || {}, am = pct(c.avance_metrado), p = pct(c.ppc);
+      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${clPPC(am === null ? p : am)}" data-i="${i}" title="${esc(d.reporte || '')}${p === null ? '' : ` · PPC ${p} %`}">
         <b>${esc(d.fecha_txt.slice(0, 6))}</b><small>${esc(d.dia_semana.slice(0, 3))}</small>
-        <em>${p === null ? '—' : p + ' %'}</em></button>`;
+        <em>${am === null ? (p === null ? '—' : p + ' %') : am + ' %'}</em><i>${c.programadas ? `${n(c.cumplidas)}/${n(c.programadas)} al 100 %` : ''}</i></button>`;
     }).join('');
     document.querySelectorAll('#rpTira .rp-dia').forEach(b => b.onclick = () => { sel = +b.dataset.i; pinta(); });
   }
@@ -16233,11 +16237,11 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     const c = d.cumplimiento || {}, p = d.personal || {}, eq = d.equipos || [];
     const enObra = eq.filter(e => !e.fuera);
     const parados = enObra.filter(e => e.parado).length;
-    const ppc = pct(c.ppc);
+    const ppc = pct(c.ppc), am = pct(c.avance_metrado);   // v72.51: la cifra grande es el metrado ejecutado; el PPC va en la línea pequeña
     const tz = (d.torres || []).filter(t => (t.actividades || []).some(a => !esNoEj(a))).length;
     return `
       <div class="rp-kpi"><b>${(d.torres || []).length}</b><span>torres en el programa</span><small>${tz} con trabajo ejecutado</small></div>
-      <div class="rp-kpi ${clPPC(ppc)}"><b>${ppc === null ? '—' : ppc + ' %'}</b><span>programa cumplido</span><small>${n(c.cumplidas)} de ${n(c.programadas)} partidas al 100 %${c.no_programadas ? ` · ${c.no_programadas} fuera de programa` : ''}</small></div>
+      <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplidas · <i class="med"></i>${n(c.parciales)} parciales · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · PPC ${ppc === null ? '—' : ppc + ' %'}${c.no_programadas ? ` · ${c.no_programadas} fuera de programa` : ''}</small></div>
       <div class="rp-kpi"><b>${n(p.total_obra)}</b><span>personas en obra</span><small>MEGASIL ${n(p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null)} · supervisión ${n(p.conenhua_staff)} · arqueología ${n(p.arqueologia)}</small></div>
       <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length ? ` · ${eq.length - enObra.length} fuera de obra` : ''}</small></div>`;
   }
