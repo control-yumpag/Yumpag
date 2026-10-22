@@ -7549,6 +7549,38 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 }
 </style>
 
+<style id="b4p-style">
+/* v72.53 · panel «Avance a la fecha de la barra» bajo el visor BIM 4D */
+.b4p{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.b4p-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 10px;font-size:.62rem;color:var(--ink-mut);margin-bottom:6px}
+.b4p-head b{font-family:"Archivo";font-weight:800;font-size:.8rem;color:var(--ink)}
+.b4p-head #b4Fecha{font-family:"Archivo";font-weight:800;font-size:.8rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.b4p-grid{display:grid;grid-template-columns:214px minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}
+.b4p-gauges{display:flex;flex-direction:column;gap:6px}
+.b4g{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:6px 8px;display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:8px}
+.b4g svg{width:76px;height:43px;display:block}
+.b4g .l{font-size:.56rem;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.3px;line-height:1.15}
+.b4g .v{font-family:"Archivo";font-weight:800;font-size:1.08rem;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.b4g .s{font-size:.55rem;color:var(--ink-mut);line-height:1.25}
+.b4p-box{min-width:0}
+.b4p-tit{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2px 8px;font-size:.64rem;font-weight:700;color:var(--ink-2);margin-bottom:3px;min-height:20px}
+.b4p-read{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.b4p-acc button{cursor:pointer;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);border-radius:6px;font-family:inherit;font-size:.6rem;font-weight:600;line-height:1.2;padding:2px 7px}
+.b4p-acc button:hover{border-color:var(--sky);color:var(--ink)}
+.b4p-svg{min-width:0}
+.b4p-svg svg{display:block;width:100%;height:auto}
+.b4p-vacio{font-size:.62rem;color:var(--ink-mut);padding:10px 0}
+.b4p-fte{font-size:.55rem;color:var(--ink-mut);margin-top:3px;line-height:1.3}
+.b4p-ley{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:.58rem;color:var(--ink-2);margin-top:3px}
+.b4p-ley i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.b4p-ley i.ln{height:2px;width:13px;border-radius:1px;vertical-align:2px}
+.b4p-tip{position:fixed;z-index:80;pointer-events:none;background:var(--panel);border:1px solid var(--line-2);border-radius:7px;box-shadow:var(--shadow);padding:5px 8px;font-size:.62rem;color:var(--ink);max-width:270px;line-height:1.4}
+.b4p-tip .m{color:var(--ink-mut)}
+@media(max-width:1250px){.b4p-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.b4p-gauges{grid-column:1/-1;flex-direction:row}.b4g{flex:1 1 0;min-width:0}}
+@media(max-width:760px){.b4p-grid{grid-template-columns:minmax(0,1fr)}.b4p-gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .b4g{grid-template-columns:1fr;text-align:center;padding:5px 4px;gap:2px}.b4g svg{width:100%;max-width:76px;margin:0 auto}.b4g .v{font-size:.92rem}.b4p-nota{display:none}}
+</style>
+
 <style id="mt-style">
 .mt-corte{font-size:.6rem;color:var(--ink-2);margin:2px 0 4px}
 .mt-corte .mt-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:2px 0}
@@ -8144,6 +8176,25 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
           <div class="d4-layers" id="d4Layers"></div>
         </div>
       </div>
+      <!-- v72.53: avance a la fecha de la barra de tiempo (medidores · Gantt LB1 por torre · personal en obra); fuera del 3D -->
+      <div class="b4p" id="b4p">
+        <div class="b4p-head"><b>Avance a la fecha de la barra</b><span id="b4Fecha">—</span><span class="b4p-nota">se mueve con la barra de tiempo y ▶ · clic en el Gantt o en el personal para cambiar la fecha</span></div>
+        <div class="b4p-grid">
+          <div class="b4p-gauges" id="b4Gauges"></div>
+          <div class="b4p-box">
+            <div class="b4p-tit"><span id="b4GanttTit">Programa LB1 por torre</span><span class="b4p-acc" id="b4GanttAcc"></span></div>
+            <div class="b4p-svg" id="b4Gantt"></div>
+            <div class="b4p-fte" id="b4GanttFte"></div>
+          </div>
+          <div class="b4p-box">
+            <div class="b4p-tit"><span>Personal de MEGASIL en obra por día</span><span class="b4p-read" id="b4HistRead"></span></div>
+            <div class="b4p-svg" id="b4Hist"></div>
+            <div class="b4p-ley" id="b4HistLey"></div>
+            <div class="b4p-fte" id="b4HistFte"></div>
+          </div>
+        </div>
+      </div>
+      <div class="b4p-tip" id="b4Tip" hidden></div>
     </div>
   </section>
 
@@ -12631,6 +12682,322 @@ function drawLinkedCurve(){
 }
 
 
+/* =========================================================================
+   v72.53 · AVANCE A LA FECHA DE LA BARRA (panel bajo el visor BIM 4D, fuera de la imagen)
+   Tres medidores (físico · programado · valorizado), Gantt de la LB1 por torre y personal de MEGASIL en obra
+   por día. Todo sigue a la barra de tiempo (d4i, también con ▶) y a la torre elegida (d4sel). Fuentes:
+   · Físico     = obra civil real de la serie 4D a la fecha (ocRealAt: media simple de las 23 torres; en el corte
+                  es DATA.ocGlobal, del Resumen «Avance Acumulado LT»).
+   · Programado = BASE_MS.diario.lb1 (LB1 vigente) y .lb0 a la fecha · Base MS (todo el proyecto).
+   · Valorizado = BASE_MS.diario.ev, último dato ≤ fecha · Base MS; US$ = ev % × BAC LB1 (BASE_MS.totales.lb1),
+                  solo si el corte trae montos (en la visita no).
+   · Gantt      = ventanas ini–fin de la LB1 de BASE_MS.torres[].acts (hoja «Avance», fila Reprogramado);
+                  relleno = % real de la torre (o de la actividad) a la fecha, de la serie 4D del Resumen.
+   · Personal   = bloque PERSONAL (personal_build.py: Datos de campo, hojas Staff, Op. columna Ejec. y Eq.,
+                  mismos lectores que el Word); línea = dotación del PdR (PDR.dotacion.hist). Un corte sin
+                  bloque PERSONAL usa PDR.dotacion.real (operativos) y los 7 días de REPORTES_7D.
+   Ningún número se calcula fuera de esas series: si falta el dato, el panel lo dice.
+   ========================================================================= */
+let b4Modo = 'torres';                                   // 'torres' | 'acts' (actividades de la torre elegida)
+const B4_CIV = ['02A','04','06','07','08','09','10','11','12','13','14','15','16','18','19'];
+const B4_ELM = ['21','22','23','24','25','26','27'];
+const B4_CAPA = {'02A':'Caminos','04':'Excavación','06':'Solado','07':'Stub','08':'Acero','09':'Encofrado','10':'Concreto','22':'Montaje'};
+// actividades sin serie 4D: valor del Resumen (DATA.actividades, hoja Avance Acumulado LT) SOLO en el corte; [sección, nombre]
+const B4_RES = {'11':['relleno compactado','Relleno compactado'], '12':[null,'Excavación para sistema puesta a tierra'],
+  '13':[null,'Instalación contrapeso'], '15':[null,'Relleno con material de préstamo para PAT'],
+  '16':[null,'Medición de resistividad y resistencia PAT'], '18':[null,'Muro de mampostería de piedra (banca)'],
+  '19':['muros de proteccion','Relleno compactado'], '24':[null,'Tendido de conductor, CG y OPGW']};
+const b4Esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const b4Ms = iso => Date.parse(iso + 'T00:00:00Z');
+const b4Dia = 86400000;
+function b4Fd(iso){ if (!iso) return '—'; const [y,m,d] = iso.split('-'); return `${+d} ${MONTHS[+m-1]}`; }
+function b4Corte(){ return DATA.tl_weeks[DATA.tl_weeks.length - 1]; }
+
+/* valor de una serie diaria de la Base MS a la fecha (ev: el último dato ≤ fecha) */
+function b4Diario(k, iso){
+  const B = window.BASE_MS, D = B && B.diario; if (!D || !D.fechas || !D[k]) return null;
+  const F = D.fechas, n = F.length;
+  if (iso < F[0]) return { v: 0, f: null, antes: true };
+  let i = F.indexOf(iso);
+  if (i < 0) { i = n - 1; while (i > 0 && F[i] > iso) i--; }
+  let j = i; while (j >= 0 && D[k][j] == null) j--;
+  return j < 0 ? null : { v: D[k][j], f: F[j], atrasado: F[j] !== iso };
+}
+
+function b4Gauge(lbl, v, col, val, sub, tick){
+  const p = v == null ? 0 : Math.max(0, Math.min(100, v));
+  const tk = (tick == null) ? '' : (() => { const a = Math.PI * (1 - Math.max(0, Math.min(100, tick)) / 100), c = Math.cos(a), s = Math.sin(a);
+    return `<line x1="${(50 + 35 * c).toFixed(1)}" y1="${(50 - 35 * s).toFixed(1)}" x2="${(50 + 50 * c).toFixed(1)}" y2="${(50 - 50 * s).toFixed(1)}" stroke="${css('--ink')}" stroke-width="2"/>`; })();
+  return `<div class="b4g"><svg viewBox="0 0 100 56" aria-hidden="true">
+      <path d="M8 50 A42 42 0 0 1 92 50" fill="none" stroke="${css('--panel-3')}" stroke-width="10"/>
+      <path d="M8 50 A42 42 0 0 1 92 50" fill="none" stroke="${col}" stroke-width="10" pathLength="100" stroke-dasharray="${p.toFixed(2)} 100"/>${tk}
+    </svg><div><div class="l">${lbl}</div><div class="v">${val}</div><div class="s">${sub}</div></div></div>`;
+}
+
+function b4Medidores(){
+  const el = $('b4Gauges'); if (!el) return;
+  const f = DATA.tl_weeks[d4i], CUT = DATA.tl_weeks.length - 1, B = window.BASE_MS || {};
+  const fis = ocRealAt(d4i);
+  const lb1 = b4Diario('lb1', f), lb0 = b4Diario('lb0', f), ev = b4Diario('ev', f);
+  const spi = (ev && lb1 && lb1.v > 0) ? ev.v / lb1.v : null;
+  const bac = B.totales && B.totales.lb1;   // en la visita viene vacío: sin montos
+  let usd = '';
+  if (ev && bac) {
+    const al = B.al_corte || {};
+    const m = (al.evUSD != null && ev.f && al.ev_fecha === ev.f) ? al.evUSD : ev.v / 100 * bac;
+    usd = ` · US$ ${F(m / 1000, 0)} k de ${F(bac / 1e6, 2)} M`;
+  }
+  el.innerHTML =
+    b4Gauge('Físico · obra civil', fis, css('--c-civ'), F(fis) + ' %',
+      'media de las 23 torres · Resumen' + (d4i === CUT && DATA.ocGlobalPond != null ? ` · ponderado ${F(DATA.ocGlobalPond)} %` : '')) +
+    b4Gauge('Programado · LB1', lb1 ? lb1.v : null, css('--ink-mut'), lb1 ? F(lb1.v) + ' %' : '—',
+      lb1 ? `proyecto · Base MS${lb0 ? ` · LB0 ${F(lb0.v)} %` : ''}` : 'sin Base MS en este corte') +
+    b4Gauge('Valorizado · EV', ev ? ev.v : null, css('--c-acc'), ev ? F(ev.v) + ' %' : '—',
+      ev ? `proyecto · Base MS${ev.atrasado && ev.f ? ` al ${b4Fd(ev.f)}` : ''}${spi != null ? ` · SPI ${F(spi, 2)}` : ''}${usd}` : 'sin Base MS en este corte',
+      lb1 ? lb1.v : null);
+}
+
+/* ventana LB1 (primer inicio → último fin) de las actividades de un grupo, con monto programado */
+function b4Ventana(acts, gs){
+  let a = null, b = null;
+  (acts || []).forEach(x => { if (!gs.includes(x.g) || !x.ini || !x.fin || !(x.pvT > 0)) return; if (!a || x.ini < a) a = x.ini; if (!b || x.fin > b) b = x.fin; });
+  return a ? [a, b] : null;
+}
+function b4ResCorte(g, k){
+  const m = B4_RES[g]; if (!m) return null;
+  const norm = s => String(s || '').toLowerCase();
+  const A = (DATA.actividades || []).find(a => norm(a.nm) === norm(m[1]) && (!m[0] || norm(a.sec) === m[0]));
+  const v = A && A.vals ? A.vals[k] : null;
+  return (v === undefined) ? null : v;
+}
+
+function b4Gantt(){
+  const el = $('b4Gantt'); if (!el) return;
+  const B = window.BASE_MS || {}, T = B.torres || [];
+  const tit = $('b4GanttTit'), acc = $('b4GanttAcc'), fte = $('b4GanttFte');
+  if (!T.length) { el.innerHTML = '<div class="b4p-vacio">Sin Base MS en este corte: no hay ventanas de la LB1.</div>'; if (acc) acc.innerHTML = ''; return; }
+  const f = DATA.tl_weeks[d4i], CUT = DATA.tl_weeks.length - 1, tSel = DATA.towers[d4sel];
+  const bt = k => T.find(x => x.t === DATA.towers[k].t) || {};
+  // filas
+  let filas = [];
+  if (b4Modo === 'acts') {
+    const acts = (bt(d4sel).acts || []).filter(x => x.ini && x.fin && x.pvT > 0).sort((a, b) => a.ini < b.ini ? -1 : a.ini > b.ini ? 1 : 0);
+    filas = acts.map(x => {
+      const capa = B4_CAPA[x.g]; let v = null, nota = '';
+      if (capa) { const r = tSel.d && tSel.d[capa] === 'NA' ? 'NA' : lval(tSel, capa, d4i); v = r; nota = 'serie 4D del Resumen'; }
+      else if (d4i === CUT) { v = b4ResCorte(x.g, d4sel); nota = v == null ? 'sin dato en el Resumen' : 'Resumen, al corte'; }
+      else nota = 'sin serie diaria por torre (el Resumen la da solo al corte)';
+      return { lab: x.nombre, w: [x.ini, x.fin], v, nota, g: x.g };
+    });
+    if (tit) tit.textContent = `Programa LB1 de ${tSel.t} por actividad`;
+    if (acc) acc.innerHTML = `<button type="button" data-b4="torres">← 23 torres</button>`;
+  } else {
+    filas = DATA.towers.map((t, k) => ({ lab: t.t, k, w: b4Ventana(bt(k).acts, B4_CIV), w2: b4Ventana(bt(k).acts, B4_ELM),
+      v: towerCivilAt(t, d4i), v2: lval(t, 'Montaje', d4i) }));
+    if (tit) tit.textContent = 'Programa LB1 por torre · obra civil real';
+    if (acc) acc.innerHTML = `<button type="button" data-b4="acts">Actividades de ${b4Esc(tSel.t)} →</button>`;
+  }
+  // dominio de tiempo: inicio de la Base MS → fin de la Base MS (o el corte, o la última ventana, si es posterior)
+  let x0 = B.inicio || '2026-06-01', x1 = B.fin || b4Corte();
+  filas.forEach(r => { [r.w, r.w2].forEach(w => { if (w) { if (w[0] < x0) x0 = w[0]; if (w[1] > x1) x1 = w[1]; } }); });
+  if (b4Corte() > x1) x1 = b4Corte();
+  const W = Math.max(300, el.clientWidth || 600), acts = b4Modo === 'acts';
+  const rowH = acts ? 13 : 11, mL = acts ? Math.min(150, Math.max(96, W * 0.26)) : 30, mR = 34, mT = 16, mB = 4;
+  const H = mT + filas.length * rowH + mB, pw = W - mL - mR;
+  const t0 = b4Ms(x0), t1 = b4Ms(x1) + b4Dia, X = iso => mL + (b4Ms(iso) - t0) / (t1 - t0) * pw;
+  const cCiv = css('--c-civ'), cElm = css('--c-elm'), cTrack = css('--panel-3'), cLine = css('--line'), cInk = css('--ink'), cMut = css('--ink-mut'), cInk2 = css('--ink-2');
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans,system-ui,sans-serif">`;
+  const xF = (f >= x0 && f <= x1) ? X(f) + pw * b4Dia / (t1 - t0) / 2 : null;
+  // meses (el rótulo que caería bajo la fecha de la barra se omite)
+  const d0 = new Date(t0); let m = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1));
+  while (m.getTime() <= t1) {
+    if (m.getTime() >= t0) { const x = mL + (m.getTime() - t0) / (t1 - t0) * pw;
+      s += `<line x1="${x.toFixed(1)}" y1="${mT - 3}" x2="${x.toFixed(1)}" y2="${H - mB}" stroke="${cLine}" stroke-width="1"/>`; }
+    const xm = mL + (Math.max(m.getTime(), t0) - t0) / (t1 - t0) * pw;
+    if (xm < W - mR - 12 && (xF == null || Math.abs(xm + 10 - xF) > 34)) s += `<text x="${(xm + 3).toFixed(1)}" y="${mT - 5}" font-size="9" fill="${cMut}">${MONTHS[m.getUTCMonth()]}</text>`;
+    m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1));
+  }
+  // franja de cabecera: clic = mover la barra de tiempo a esa fecha
+  s += `<rect class="b4seek" x="${mL}" y="0" width="${pw}" height="${mT - 2}" fill="transparent" style="cursor:ew-resize"/>`;
+  filas.forEach((r, i) => {
+    const y = mT + i * rowH, sel = !acts && r.k === d4sel;
+    s += `<g class="b4row" data-i="${i}"${acts ? '' : ` data-k="${r.k}" style="cursor:pointer"`}>`;
+    s += `<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${sel ? cTrack : 'transparent'}" opacity="${sel ? .55 : 1}"/>`;
+    const lab = acts ? (r.lab.length > 24 ? r.lab.slice(0, 23) + '…' : r.lab) : r.lab;
+    s += `<text x="${mL - 5}" y="${y + rowH - 3}" text-anchor="end" font-size="${acts ? 9 : 8.5}" font-weight="${sel ? 700 : 500}" fill="${sel ? cInk : cInk2}">${b4Esc(lab)}</text>`;
+    const bh = acts ? rowH - 5 : rowH - 5;
+    if (r.w) {
+      const xa = X(r.w[0]), xb = X(r.w[1]) + pw * b4Dia / (t1 - t0), ww = Math.max(2, xb - xa);
+      s += `<rect x="${xa.toFixed(1)}" y="${y + 1.5}" width="${ww.toFixed(1)}" height="${bh}" rx="2" fill="${cTrack}"/>`;
+      if (typeof r.v === 'number' && r.v > 0) s += `<rect x="${xa.toFixed(1)}" y="${y + 1.5}" width="${(ww * Math.min(100, r.v) / 100).toFixed(1)}" height="${bh}" rx="2" fill="${acts && r.g >= '21' ? cElm : cCiv}"/>`;
+    }
+    if (!acts && r.w2) {
+      const xa = X(r.w2[0]), xb = X(r.w2[1]) + pw * b4Dia / (t1 - t0), ww = Math.max(2, xb - xa), yy = y + rowH - 2.5;
+      s += `<rect x="${xa.toFixed(1)}" y="${yy}" width="${ww.toFixed(1)}" height="2" fill="${css('--line-2')}"/>`;
+      if (r.v2 > 0) s += `<rect x="${xa.toFixed(1)}" y="${yy}" width="${(ww * Math.min(100, r.v2) / 100).toFixed(1)}" height="2" fill="${cElm}"/>`;
+    }
+    const vt = r.v === 'NA' ? 'N/A' : (typeof r.v === 'number' ? F(r.v, 0) + ' %' : '—');
+    s += `<text x="${W - 2}" y="${y + rowH - 3}" text-anchor="end" font-size="8.5" font-weight="${sel ? 700 : 600}" fill="${typeof r.v === 'number' ? cInk : cMut}" style="font-variant-numeric:tabular-nums">${vt}</text>`;
+    s += `</g>`;
+  });
+  // fecha de la barra
+  if (xF != null) {
+    const xf = xF;
+    s += `<line x1="${xf.toFixed(1)}" y1="${mT - 2}" x2="${xf.toFixed(1)}" y2="${H - mB}" stroke="${cInk}" stroke-width="1.3"/>`;
+    s += `<text x="${Math.min(W - mR - 2, xf + 3).toFixed(1)}" y="${mT - 5}" font-size="9" font-weight="700" fill="${cInk}" text-anchor="${xf > W - mR - 40 ? 'end' : 'start'}">${b4Fd(f)}</text>`;
+  }
+  s += `</svg>`;
+  el.innerHTML = s;
+  el._filas = filas; el._eje = { t0, t1, mL, pw };
+  if (fte) fte.textContent = acts
+    ? `Barra = ventana inicio–fin de la LB1 (Base MS, hoja Avance, fila Reprogramado); relleno = % real a la fecha (serie 4D del Resumen). Relleno, PAT y muros solo tienen dato del Resumen en el corte.`
+    : `Barra = obra civil en la LB1 (accesos a muros; Base MS, fila Reprogramado) y, abajo, montaje y tendido; relleno = obra civil real de la torre a la fecha (Resumen). Clic en una torre: la elige en el BIM.`;
+}
+
+/* serie de personal: bloque PERSONAL (completo) o, en cortes anteriores, respaldo con lo que traen PDR y REPORTES_7D */
+function b4SeriePersonal(){
+  const P = window.PERSONAL;
+  if (P && P.dias && P.dias.length) return { dias: P.dias, fuente: P.fuente || 'Datos de campo', completa: true };
+  const m = new Map();
+  (((window.PDR || {}).dotacion || {}).real || []).forEach(r => { if (r && r.f && r.tot != null) m.set(r.f, { f: r.f, op: r.tot, staff: null, cond: null }); });
+  (((window.REPORTES_7D || {}).dias) || []).forEach(d => { const p = d.personal || {}; if (p.operativos == null) return;
+    m.set(d.fecha, { f: d.fecha, op: p.operativos, staff: p.megasil_staff == null ? null : p.megasil_staff, cond: p.operadores_choferes == null ? null : p.operadores_choferes }); });
+  const dias = [...m.values()].filter(d => d.f <= b4Corte()).sort((a, b) => a.f < b.f ? -1 : 1);
+  return { dias, fuente: 'Datos de campo (operativos, vía el bloque del PdR) y Reportes diarios (staff y operadores/conductores de los últimos 7 días)', completa: false };
+}
+
+function b4Hist(){
+  const el = $('b4Hist'); if (!el) return;
+  const S = b4SeriePersonal(), dias = S.dias, plan = (((window.PDR || {}).dotacion || {}).hist || []).filter(h => h && h.f && h.tot != null);
+  const read = $('b4HistRead'), ley = $('b4HistLey'), fte = $('b4HistFte'), f = DATA.tl_weeks[d4i];
+  if (!dias.length && !plan.length) { el.innerHTML = '<div class="b4p-vacio">Sin datos de personal en este corte.</div>'; if (read) read.textContent = ''; return; }
+  let x0 = [dias[0] && dias[0].f, plan[0] && plan[0].f].filter(Boolean).sort()[0];
+  let x1 = [b4Corte(), plan.length && plan[plan.length - 1].f, dias.length && dias[dias.length - 1].f].filter(Boolean).sort().pop();
+  const tot = d => (d.op || 0) + (d.staff || 0) + (d.cond || 0);
+  const ymaxD = Math.max(10, ...dias.map(tot), ...plan.map(h => h.tot));
+  const paso = ymaxD > 80 ? 25 : (ymaxD > 40 ? 20 : 10), ymax = Math.ceil(ymaxD * 1.08 / paso) * paso;
+  const g = $('b4Gantt'), W = Math.max(300, el.clientWidth || 500);
+  const H = (window.innerWidth > 1250 && g && g.querySelector('svg')) ? Math.max(170, +g.querySelector('svg').getAttribute('height') || 0) : 180;
+  const mL = 26, mR = 8, mT = 16, mB = 16, pw = W - mL - mR, ph = H - mT - mB;
+  const t0 = b4Ms(x0), t1 = b4Ms(x1) + b4Dia, nD = Math.round((t1 - t0) / b4Dia), step = pw / nD;
+  const X = iso => mL + (b4Ms(iso) - t0) / b4Dia * step, Y = v => mT + ph - v / ymax * ph;
+  const cOp = css('--c-civ'), cRest = css('--line-2'), cPlan = css('--ink-2'), cInk = css('--ink'), cMut = css('--ink-mut'), cLine = css('--line');
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans,system-ui,sans-serif" style="cursor:ew-resize">`;
+  for (let v = 0; v <= ymax; v += paso) {
+    s += `<line x1="${mL}" y1="${Y(v).toFixed(1)}" x2="${W - mR}" y2="${Y(v).toFixed(1)}" stroke="${cLine}" stroke-width="1"/>`;
+    s += `<text x="${mL - 4}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="8.5" fill="${cMut}">${v}</text>`;
+  }
+  // meses (abajo)
+  const d0 = new Date(t0); let m = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1));
+  while (m.getTime() <= t1) {
+    const xm = mL + (Math.max(m.getTime(), t0) - t0) / b4Dia * step;
+    if (m.getTime() >= t0) s += `<line x1="${xm.toFixed(1)}" y1="${mT + ph}" x2="${xm.toFixed(1)}" y2="${mT + ph + 4}" stroke="${cMut}" stroke-width="1"/>`;
+    if (xm < W - mR - 14) s += `<text x="${(xm + 3).toFixed(1)}" y="${H - 4}" font-size="9" fill="${cMut}">${MONTHS[m.getUTCMonth()]}</text>`;
+    m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1));
+  }
+  const bw = Math.max(1, step - (step > 4 ? 1.5 : 0.6));
+  dias.forEach(d => {
+    const x = X(d.f) + (step - bw) / 2, fut = d.f > f, op = d.op || 0, rest = (d.staff || 0) + (d.cond || 0);
+    const y1 = Y(op), y2 = Y(op + rest);
+    s += `<g opacity="${fut ? .28 : 1}">`;
+    if (op > 0) s += `<rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${(Y(0) - y1).toFixed(1)}" rx="${bw > 4 ? 1.5 : 0}" fill="${cOp}"/>`;
+    if (rest > 0) s += `<rect x="${x.toFixed(1)}" y="${y2.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, y1 - y2 - 1).toFixed(1)}" rx="${bw > 4 ? 1.5 : 0}" fill="${cRest}"/>`;
+    s += `</g>`;
+  });
+  if (plan.length) {
+    let dp = ''; plan.forEach((h, i) => { dp += (i ? 'L' : 'M') + (X(h.f) + step / 2).toFixed(1) + ' ' + Y(h.tot).toFixed(1) + ' '; });
+    s += `<path d="${dp}" fill="none" stroke="${cPlan}" stroke-width="1.8" stroke-linejoin="round"/>`;
+    const u = [...plan].reverse().find(h => h.tot > 0) || plan[plan.length - 1];
+    s += `<text x="${Math.min(W - mR - 2, X(u.f) + step / 2 + 4).toFixed(1)}" y="${(Y(u.tot) - 4).toFixed(1)}" font-size="8.5" font-weight="700" fill="${cPlan}" text-anchor="${X(u.f) > W - 60 ? 'end' : 'start'}">PdR</text>`;
+  }
+  if (f >= x0 && f <= x1) {
+    const xf = X(f) + step / 2;
+    s += `<line x1="${xf.toFixed(1)}" y1="${mT - 2}" x2="${xf.toFixed(1)}" y2="${mT + ph}" stroke="${cInk}" stroke-width="1.3"/>`;
+    s += `<text x="${Math.min(W - mR - 2, xf + 3).toFixed(1)}" y="${mT - 5}" font-size="9" font-weight="700" fill="${cInk}" text-anchor="${xf > W - mR - 40 ? 'end' : 'start'}">${b4Fd(f)}</text>`;
+  } else if (f < x0) s += `<text x="${mL + 2}" y="${mT - 5}" font-size="9" fill="${cMut}">${b4Fd(f)}: antes del primer registro de personal</text>`;
+  s += `</svg>`;
+  el.innerHTML = s;
+  el._eje = { t0, t1, mL, pw, step, dias, plan };
+  const hoy = dias.find(d => d.f === f), ph0 = plan.find(h => h.f === f);
+  if (read) read.textContent = hoy
+    ? (hoy.staff == null ? `${b4Fd(f)}: ${hoy.op} operativos${ph0 ? ` · PdR ${ph0.tot}` : ''}` : `${b4Fd(f)}: ${tot(hoy)} de MEGASIL · ${hoy.op} operativos${ph0 ? ` · PdR ${ph0.tot}` : ''}`)
+    : `${b4Fd(f)}: sin registro${ph0 ? ` · PdR ${ph0.tot}` : ''}`;
+  if (ley) ley.innerHTML = `<span><i style="background:${cOp}"></i>Operativos (hoja Op., Ejec.)</span><span><i style="background:${cRest}"></i>Staff y operadores/conductores</span>${plan.length ? `<span><i class="ln" style="background:${cPlan}"></i>Dotación operativa del PdR</span>` : ''}`;
+  if (fte) fte.textContent = `Fuente: ${S.fuente}${plan.length ? `; PdR del ${b4Fd(plan[0].f)} al ${b4Fd(plan[plan.length - 1].f)}` : ''}. Solo cantidades, sin nombres.${S.completa ? '' : ' Corte anterior a la serie diaria completa: los días sin barra no traen el dato.'}`;
+}
+
+function drawPanel4D(){
+  if (!$('b4p') || !DATA.tl_weeks) return;
+  b4Enlazar();
+  const f = DATA.tl_weeks[d4i], CUT = DATA.tl_weeks.length - 1;
+  const fe = $('b4Fecha'); if (fe) fe.textContent = fmtDate(f) + (d4i === CUT ? ' · corte' : '');
+  b4Medidores(); b4Gantt(); b4Hist();
+}
+
+/* interacción: clic en torre = elegirla en el BIM (como su botón); cabecera del Gantt y personal = mover la barra; tooltip al pasar */
+function b4Buscar(iso){
+  const w = DATA.tl_weeks; let k = 0;
+  for (let i = 0; i < w.length; i++) if (w[i] <= iso) k = i;
+  const sl = $('d4Slider'), min = sl ? +sl.min || 0 : 0;
+  k = Math.max(min, k);
+  if (k !== d4i) { d4i = k; if (sl) sl.value = k; draw4D(); }
+}
+function b4Tip(ev, html){
+  const t = $('b4Tip'); if (!t) return;
+  if (!html) { t.hidden = true; return; }
+  t.innerHTML = html; t.hidden = false;
+  const r = t.getBoundingClientRect(), x = Math.min(window.innerWidth - r.width - 8, ev.clientX + 12), y = ev.clientY - r.height - 10;
+  t.style.left = Math.max(8, x) + 'px'; t.style.top = (y < 8 ? ev.clientY + 16 : y) + 'px';
+}
+function b4FechaEn(el, ev){
+  const e = el._eje, svg = el.querySelector('svg'); if (!e || !svg) return null;
+  const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * (+svg.getAttribute('width') / r.width);
+  const ms = e.t0 + (x - e.mL) / e.pw * (e.t1 - e.t0);
+  if (ms < e.t0 || ms > e.t1) return null;
+  return new Date(Math.floor(ms / b4Dia) * b4Dia).toISOString().slice(0, 10);
+}
+function b4Enlazar(){
+  const gn = $('b4Gantt'), hs = $('b4Hist'), acc = $('b4GanttAcc'), box = $('b4p');
+  if (!gn || gn.dataset.b4) return; gn.dataset.b4 = '1';
+  if (acc) acc.addEventListener('click', e => { const b = e.target.closest('button[data-b4]'); if (!b) return; b4Modo = b.dataset.b4; b4Gantt(); });
+  gn.addEventListener('click', e => {
+    if (e.target.closest('.b4seek')) { const iso = b4FechaEn(gn, e); if (iso) b4Buscar(iso); return; }
+    const g = e.target.closest('.b4row[data-k]'); if (!g) return;
+    const k = +g.dataset.k; if (k === d4sel && bimRouteMode) { focusTowerCam(k); return; }
+    selectTower(k); if (bimRouteMode) irATorreRuta(k);
+  });
+  gn.addEventListener('mousemove', e => {
+    const g = e.target.closest('.b4row'); const F_ = gn._filas; if (!g || !F_) { b4Tip(e, null); return; }
+    const r = F_[+g.dataset.i], fecha = DATA.tl_weeks[d4i];
+    if (b4Modo === 'acts') {
+      const vt = r.v === 'NA' ? 'N/A' : (typeof r.v === 'number' ? F(r.v) + ' %' : '—');
+      b4Tip(e, `<b>${b4Esc(r.lab)}</b><br>LB1: ${b4Fd(r.w[0])} → ${b4Fd(r.w[1])}<br>Real al ${b4Fd(fecha)}: <b>${vt}</b> <span class="m">(${b4Esc(r.nota)})</span>`);
+    } else {
+      b4Tip(e, `<b>${b4Esc(r.lab)}</b> · obra civil <b>${F(r.v)} %</b> al ${b4Fd(fecha)}` +
+        `<br>LB1 obra civil: ${r.w ? b4Fd(r.w[0]) + ' → ' + b4Fd(r.w[1]) : '—'}` +
+        `<br>LB1 montaje y tendido: ${r.w2 ? b4Fd(r.w2[0]) + ' → ' + b4Fd(r.w2[1]) : '—'}${r.v2 > 0 ? ` · montaje ${F(r.v2)} %` : ''}` +
+        `<br><span class="m">Clic: elegir la torre en el BIM</span>`);
+    }
+  });
+  gn.addEventListener('mouseleave', e => b4Tip(e, null));
+  hs.addEventListener('click', e => { const iso = b4FechaEn(hs, e); if (iso) b4Buscar(iso); });
+  hs.addEventListener('mousemove', e => {
+    const iso = b4FechaEn(hs, e), E = hs._eje; if (!iso || !E) { b4Tip(e, null); return; }
+    const d = E.dias.find(x => x.f === iso), p = E.plan.find(x => x.f === iso);
+    if (!d && !p) { b4Tip(e, `<b>${b4Fd(iso)}</b> · sin registro`); return; }
+    const G = d && d.g ? d.g : null, nom = { sc: 'sup. civiles', top: 'topógrafo', ast: 'asist. topografía', lab: 'laboratorio', opr: 'operarios', ofi: 'oficiales', ayu: 'ayudantes' };
+    const det = G ? Object.keys(nom).filter(k => G[k]).map(k => `${G[k]} ${nom[k]}`).join(' · ') : '';
+    b4Tip(e, `<b>${b4Fd(iso)}</b>` + (d ? (d.staff == null ? `<br><span class="m">Staff y operadores/conductores sin dato en este corte</span>` : `<br>MEGASIL en obra: <b>${(d.op || 0) + (d.staff || 0) + (d.cond || 0)}</b>`) +
+      `<br>Operativos ${d.op}${det ? ` <span class="m">(${det})</span>` : ''}` +
+      (d.staff != null ? `<br>Staff ${d.staff}` : '') + (d.cond != null ? ` · operadores y conductores ${d.cond}` : (d.staff != null ? ' · operadores y conductores sin registro' : '')) : '<br>Sin registro de personal') +
+      (p ? `<br>PdR: ${p.tot} operativos` : ''));
+  });
+  hs.addEventListener('mouseleave', e => b4Tip(e, null));
+  if (window.ResizeObserver && box) { let w0 = 0; new ResizeObserver(() => { const w = box.clientWidth; if (w && Math.abs(w - w0) > 4) { w0 = w; requestAnimationFrame(() => { try { drawPanel4D(); } catch (e) {} }); } }).observe(box); }
+}
+window.addEventListener('load', () => { try { b4Enlazar(); drawPanel4D(); } catch (e) { console.warn('panel 4D', e); } });
+
+
 function draw4D(){
   setTimeout(()=>{ try{ resaltarLinea(); }catch(e){} }, 0);
   setTimeout(()=>{ try{ pintarFotosTorre(); }catch(e){} }, 0);
@@ -12646,6 +13013,7 @@ function draw4D(){
   drawRoute();
   drawPataGrid();
   drawLinkedCurve();
+  try{ drawPanel4D(); }catch(e){ console.warn('panel 4D', e); }
   if (typeof updateBIM4D === 'function') updateBIM4D();
   const t = DATA.towers[d4sel];
   $('d4SceneTitle').textContent = `${t.t} (${t.tp})`;
@@ -13283,7 +13651,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     `<span><i class="dot"></i>ritmo requerido PdR LB1</span><span><i class="tri"></i>hitos forecast</span>` +
     `<span style="margin-left:auto;color:var(--ink-mut)">arrastra sobre la curva para mover el 4D</span>`;
   // línea de tiempo: arranca en el inicio de obra
-  try { const sl = $('d4Slider'); if (sl){ sl.min = S0; if (+sl.value < S0) sl.value = S0; } if (typeof d4i === 'number' && d4i < S0) d4i = S0; } catch(e){}
+  // v72.53: el máximo de la barra sale de la serie (el HTML traía max="39" fijo, de cuando la serie tenía 40 fechas: la barra no pasaba del 13-Set)
+  try { const sl = $('d4Slider'); if (sl){ sl.min = S0; sl.max = DATA.tl_weeks.length - 1; if (typeof d4i === 'number') sl.value = d4i; if (+sl.value < S0) sl.value = S0; } if (typeof d4i === 'number' && d4i < S0) d4i = S0; } catch(e){}
   // v42 (M-08): con el visor oculto, el cambio de tema no reconstruye la escena (solo fondo y niebla); se reconstruye al volver al BIM
   try { const _apply = window.applyBimTheme; if (typeof _apply === 'function' && !_apply.__bimx){
     const w = function(){ const v = $('v-bim');
@@ -16203,6 +16572,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 }
 </style>
 <script id="reportes7-data">window.REPORTES_7D = ⟦bloque:REPORTES_7D⟧;</script>
+<script id="personal-data">window.PERSONAL = ⟦bloque:PERSONAL⟧;</script>
 <script>
 // ===== Reportes diarios · últimos 7 días (v72.48 · rediseño v72.49) =====
 (function(){
