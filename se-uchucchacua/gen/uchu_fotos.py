@@ -144,7 +144,13 @@ def main():
     ap.add_argument('--contacto', help='carpeta para hojas de contacto de revisión (no se publica)')
     ap.add_argument('--acts', help='uchu4d.js o json con las actividades (para reconocer la actividad del pie)')
     ap.add_argument('--manual', help='json de la revisión a ojo: {"caras": {id: [[x0,y0,x1,y1] en 0–1]}, "pies": {id: texto del sello}}')
+    ap.add_argument('--dias', help='modo incremental: solo rearma estas fechas (AAAA-MM-DD,…); el resto se conserva de --previo')
+    ap.add_argument('--previo', help='fotos.json publicado (modo incremental)')
     a = ap.parse_args()
+    DIAS = set(a.dias.split(',')) if a.dias else None
+    previo = json.load(open(a.previo, encoding='utf-8')).get('fotos', []) if DIAS and a.previo else []
+    quedan = [x for x in previo if x['f'] not in DIAS] if DIAS else []
+    k0 = max((int(x['id'].split('-')[1]) for x in quedan), default=0)   # la numeración sigue después de lo que se conserva
     man = json.load(open(a.manual, encoding='utf-8')) if a.manual and os.path.exists(a.manual) else {}
     man_caras, man_pies = man.get('caras', {}), man.get('pies', {})
     excl = set()
@@ -165,6 +171,7 @@ def main():
     for fecha, fila, col, pie, b in fotos_excel(a.excel):
         try: im = Image.open(io.BytesIO(b)); im.load()
         except Exception: continue
+        if DIAS and fecha not in DIAS: continue
         ex.append(dict(fecha=fecha, pie=(pie or '').strip() or None, img=im, h=dhash(im), src='excel', orden=(fila, col)))
     # 2) Drive
     dv = []
@@ -174,6 +181,7 @@ def main():
             p = os.path.join(a.drive, i + '.jpg')
             if not os.path.exists(p): continue
             im = Image.open(p); pie, hora = pie_drive(x['t'])
+            if DIAS and f"2026-10-{x['dia']}" not in DIAS: continue
             dv.append(dict(id=i, fecha=f"2026-10-{x['dia']}", pie=pie, hora=hora, img=im, h=dhash(im), src='drive'))
     usados, fotos = set(), []
     for e in sorted(ex, key=lambda e: (e['fecha'], e['orden'])):
@@ -195,7 +203,7 @@ def main():
     os.makedirs(os.path.join(a.out, 'm'), exist_ok=True)
     idx = []
     for k, f in enumerate(sorted(unicas, key=lambda f: (f['fecha'], f['hora'] or '99', f['pie'] or f['detalle'] or ''))):
-        fid = f"{f['fecha'][5:].replace('-', '')}-{k + 1:02d}"
+        fid = f"{f['fecha'][5:].replace('-', '')}-{k0 + k + 1:02d}"
         if fid in excl or (f['drive'] and f['drive'] in excl): continue
         im = ImageOps.exif_transpose(f['img']).convert('RGB')
         im, ncar = difuminar(im, det)
@@ -207,6 +215,14 @@ def main():
         act = act_de(f['pie']) or act_de(f['detalle'])
         idx.append(dict(id=fid, f=f['fecha'], hora=f['hora'], act=act, pie=f['pie'], detalle=f['detalle'], img=f'fotos4d/{fid}.jpg',
                         th=f'fotos4d/m/{fid}.jpg', w=g.size[0], h=g.size[1], caras=ncar, origen=f['origen']))
+    if DIAS:   # incremental: borra los archivos viejos de los días rearmados que ya no existen y une con lo conservado
+        nuevos = {x['id'] for x in idx}
+        for x in previo:
+            if x['f'] in DIAS and x['id'] not in nuevos:
+                for r in (x['img'], x['th']):
+                    q = os.path.join(a.out, os.path.relpath(r, 'fotos4d'))
+                    if os.path.exists(q): os.remove(q)
+        idx = sorted(quedan + idx, key=lambda x: (x['f'], int(x['id'].split('-')[1])))
     json.dump(dict(fuente='Control diario de AXON (hoja REGISTRO FOTOGRÁFICO) y carpetas «REGISTRO FOTOGRÁFICO» de Drive · rostros difuminados',
                    fotos=idx), open(os.path.join(a.out, 'fotos.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
     print(f'OK {len(idx)} fotos ({sum(1 for x in idx if x["origen"] == "excel+drive")} Excel=Drive · '

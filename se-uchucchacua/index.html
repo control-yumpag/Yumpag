@@ -375,7 +375,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 #alzado canvas{display:block;margin:0 auto;cursor:pointer}
 #visor{position:fixed;inset:0;z-index:70;background:rgba(8,16,14,.88);display:none;place-items:center;padding:20px}
 #visor.on{display:grid}
-#visor img{max-width:96vw;max-height:84vh;border-radius:6px;background:#ccc}
+#visor img{height:84vh;width:auto;max-width:96vw;object-fit:contain;border-radius:6px} /* siempre grande: la foto ocupa el alto de la pantalla */
 #visor p{color:#fff;text-align:center;margin:10px 0 0;font-size:13px;max-width:900px}
 #cargando{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:80;font-size:14px;color:var(--ink-2)}
 #cargando div{display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -595,7 +595,7 @@ import { crearPersona, Rejilla } from './persona.js?v=1';
 import { Pelicula } from './pelicula.js?v=2';
 import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
-import { U4D } from './uchu4d.js?v=1';
+import { U4D } from './uchu4d.js?v=2';
 import { iniciar4D, axonAlCorte } from './cuatrod.js?v=3';
 import { iniciarTablero } from './tablero.js?v=3';
 const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
