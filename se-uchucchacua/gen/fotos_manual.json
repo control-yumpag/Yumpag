@@ -1,0 +1,12 @@
+{
+ "nota": "Revisión a ojo del 22-Oct-26. caras: elipses de desenfoque (x0, y0, x1, y1 en fracción del ancho y alto) para rostros de perfil que el detector no ve. pies: texto del sello de la propia foto cuando la foto no trae descripción; solo los sellos legibles.",
+ "caras": {
+  "1018-57": [[0.08, 0.28, 0.34, 0.48]],
+  "1020-97": [[0.19, 0.26, 0.39, 0.38]]
+ },
+ "pies": {
+  "1021-109": "Levantamiento de tapas de cemento en patio",
+  "1021-113": "Preparación de cables en el tablero =E01+WR01",
+  "1021-114": "Preparación de cables en el tablero =E01+WR01"
+ }
+}

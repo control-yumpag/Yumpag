@@ -18,12 +18,20 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `se3d.js` | Disposición: `L` (coordenadas de todo), fichas `F`, terreno, patio 138 kV, bahía TP-385, patio 33 kV, transformadores, obras civiles, edificaciones, sala, red de tierra, cerco; `pisoEn()`, `HUECOS`, `OBST_EXTRA`, `ETAPAS` |
 | `lib.js` | Piezas paramétricas: materiales `M`, celosías (angulares L), aisladores, interruptor, seccionador, pararrayos, TC/TT, trampa de onda, transformador, catenarias, cadenas, canaletas, losas, muros, cerco |
 | `interior.js` | Sala de control: tableros y celdas con frente (canvas), relés por tablero, foso y trincheras, bandejas, luces, puertas; ductos y cableado (control, fuerza, comunicaciones, 10 kV, tierra); gabinete del IN-385 |
-| `recorrer.js` | Primera persona: colisiones (cajas), escaleras, teletransporte, joystick táctil |
+| `recorrer.js` | Recorrido en tercera persona (por defecto) o primera: colisiones (cajas), escaleras, rutas (`irPor`), teletransporte, joystick táctil; la cámara de tercera persona se acorta contra obstáculos afuera y, adentro, el techo se recorta (`cortarTecho` en `index.html`) |
+| `persona.js` | Persona de la tercera persona (sin rasgos) y `Rejilla` A* para caminar por los pasillos |
+| `cuatrod.js` | BIM 4D del servicio de AXON (`iniciar4D`): panel, barra de tiempo, zonas por estado, Gantt, reporte y fotos del día; `axonAlCorte()` da el AXON al corte para el panel y las fichas |
+| `uchu4d.js` | Datos del BIM 4D, generado con `gen/uchu_build.py` (no editar a mano); fotos en `fotos4d/` con `gen/uchu_fotos.py` (rostros difuminados con YuNet, sin EXIF) |
 | `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
 | `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607), `frenteDe()`, `filasDe()` (filas de tableros para alzados y vecinos) y `encuadreDe()` (pose de cámara para ver un tablero completo con el plano de recorte cercano) |
-| `axon.js` | Control diario de AXON (CPM L-1123), generado con `gen/axon_gen.py`; sin nombres ni DNI del personal. Las zonas de AXON (`AX_ZONAS` en `index.html`) son ubicaciones **supuestas** y la ficha lo dice; corregirlas cuando se confirme en campo |
+| (AXON) | El control diario de AXON llega por `uchu4d.js`; sin nombres ni DNI del personal. Las zonas de AXON (`AX_ZONAS` y `ZONAS4D` en `index.html`) son ubicaciones **supuestas** y la ficha lo dice; corregirlas cuando se confirme en campo |
 | `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
+
+## Dentro del tablero
+La pestaña «BIM 4D · Construcción» del tablero tiene un selector «LT Yumpag | SE Uchucchacua» (plantilla v72.54): la SE se carga en un
+iframe con `index.html?modo=4d&embed=1&tema=<claro|oscuro>` y el tema cambia por `postMessage({tipo:'tema', tema})`. No romper esos
+parámetros. Fotos: nada se publica sin revisar la hoja de contacto (documentos, firmas, baños, rostros sin difuminar).
 
 ## Convenciones que no se cambian
 - **Coordenadas**: las del DWG de planta general (CN-EIU-25-03ED-CNH-SE-OE-204), en metros, con origen desplazado:

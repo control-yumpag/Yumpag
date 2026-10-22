@@ -29,9 +29,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 "IBM Plex Sans",system-ui,sans-serif;overflow:hidden}
-#vista{position:fixed;inset:0}
+#vista{position:fixed;left:0;right:0;top:0;bottom:var(--p4h,0px)}
 #vista canvas{display:block;touch-action:none}
-#rotulos{position:fixed;inset:0;pointer-events:none}
+#rotulos{position:fixed;left:0;right:0;top:0;bottom:var(--p4h,0px);pointer-events:none;overflow:hidden}
 .rot{font:500 11px/1.2 "IBM Plex Sans",sans-serif;color:#fff;background:rgba(18,26,35,.78);padding:3px 7px;border-radius:5px;white-space:nowrap;transform:translateY(-6px);border-left:3px solid var(--E)}
 .rot.P{border-left-color:#5b9bff}.rot.C{border-left-color:#3fcf72}
 .num{font:600 10.5px/1 "IBM Plex Mono",monospace;color:#18212b;background:rgba(255,255,255,.92);border:1px solid #9aa4ad;border-radius:4px;padding:2px 4px;text-align:center}
@@ -51,10 +51,10 @@ body.sinZonas .num.o-interv,body.sinZonas .num.o-rel{background:rgba(255,255,255
 body.dentro .num{font:600 12px/1.15 "IBM Plex Sans",sans-serif;padding:4px 8px 5px;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:auto;cursor:pointer}
 body.dentro .num b{display:block;font-size:17px;line-height:1.05}
 body.dentro .num span{display:block;font:500 11px/1.2 "IBM Plex Mono",monospace;opacity:.92;margin-top:1px}
-#mirando{position:fixed;left:50%;bottom:calc(var(--mapaH,0px) + 22px);transform:translateX(-50%);z-index:3;pointer-events:none;background:rgba(18,26,35,.86);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 11px;border-radius:9px;max-width:min(440px,90vw);text-align:center;border-left:4px solid #9aa4ad}
+#mirando{position:fixed;left:50%;bottom:calc(var(--mapaH,0px) + var(--p4h,0px) + 22px);transform:translateX(-50%);z-index:3;pointer-events:none;background:rgba(18,26,35,.86);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 11px;border-radius:9px;max-width:min(440px,90vw);text-align:center;border-left:4px solid #9aa4ad}
 #mirando b{font-size:13.5px}#mirando small{display:block;opacity:.8;font-size:11.5px}
 #mirando.oculto{display:none}
-#mapa{position:fixed;z-index:3;bottom:10px;left:286px;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);border-radius:var(--r);padding:6px 8px 8px}
+#mapa{position:fixed;z-index:3;bottom:calc(10px + var(--p4h,0px));left:286px;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);border-radius:var(--r);padding:6px 8px 8px}
 #mapa .cab{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);margin-bottom:4px}
 #mapa .cab b{color:var(--ink);font-weight:600}
 #mapa .cab button{box-shadow:none;padding:1px 8px;font-size:12px}
@@ -68,6 +68,10 @@ body.sala #izq{top:66px}
 body.sala #brujula,body.sala #coord,body.sala #pie .solo-pc{display:none!important}
 body.sala #der:not(.conFicha){display:none}
 body.sala #hud{bottom:auto;top:70px}
+body.embed .tit p,body.embed .tit .chips{display:none}body.embed .tit{padding:7px 12px}body.embed .tit h1{font-size:14px}body.embed #izq{top:66px}
+body.m4d #pie .caja.solo-pc{display:none}
+@media (max-width:820px){body.m4d .tit .chips{display:none}}
+body.m4d:not(.sala) #der:not(.conFicha){display:none}
 .salaCab{display:flex;align-items:center;gap:8px}.salaCab h2{margin:0!important;flex:1}
 .salaCab button{box-shadow:none;padding:4px 10px;font-size:12.5px}
 .ayuda{font-size:12px;color:var(--ink2);margin:8px 0 4px}
@@ -116,7 +120,7 @@ body.encuadre #mira,body.encuadre #mirando,body.encuadre #hud{display:none!impor
 #visor img{max-width:96vw;max-height:84vh;border-radius:6px;background:#ccc}
 #visor p{color:#fff;text-align:center;margin:10px 0 0;font-size:13px}
 @media (max-width: 820px){
-  #mapa{left:8px;right:8px;bottom:54px;padding:5px 6px 6px}
+  #mapa{left:8px;right:8px;bottom:calc(54px + var(--p4h,0px));padding:5px 6px 6px}
   #mapa .ley{display:none}
   body.sala #izq{top:auto}
   .ficha img.frente{max-height:180px}
@@ -134,8 +138,8 @@ button,.btn{font:inherit;font-size:13px;color:var(--ink);background:var(--panel)
 button:hover{background:var(--hover)}
 button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 aside{position:fixed;z-index:4;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);border-radius:var(--r);overflow:auto}
-#izq{left:12px;top:118px;bottom:56px;width:262px;padding:10px 12px}
-#der{right:12px;top:66px;bottom:56px;width:330px;padding:12px 14px}
+#izq{left:12px;top:118px;bottom:calc(56px + var(--p4h,0px));width:262px;padding:10px 12px}
+#der{right:12px;top:66px;bottom:calc(56px + var(--p4h,0px));width:330px;padding:12px 14px}
 aside h2{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin:12px 0 6px;font-weight:600}
 aside h2:first-child{margin-top:2px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
@@ -163,7 +167,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .lista button:hover{background:var(--hover)}
 .lista button b{font-weight:500;white-space:nowrap}
 .lista button span{color:var(--ink3);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pie{position:fixed;left:12px;right:12px;bottom:10px;display:flex;gap:10px;align-items:center;z-index:5;pointer-events:none}
+#pie{position:fixed;left:12px;right:12px;bottom:calc(10px + var(--p4h,0px));display:flex;gap:10px;align-items:center;z-index:5;pointer-events:none}
 #pie>*{pointer-events:auto}
 .caja{background:var(--panel);box-shadow:var(--shadow);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ink2)}
 #coord{font:12px "IBM Plex Mono",monospace;min-width:300px}
@@ -176,7 +180,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .cerrar{float:right;box-shadow:none;border:0;background:none;font-size:18px;line-height:1;padding:2px 6px;color:var(--ink3)}
 .oculto{display:none!important}
 #movTabs{display:none}
-#hud{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:6;pointer-events:none;background:rgba(18,26,35,.82);color:#fff;font-size:12.5px;padding:7px 12px;border-radius:14px;max-width:92vw;text-align:center;line-height:1.35}
+#hud{position:fixed;left:50%;bottom:calc(64px + var(--p4h,0px));transform:translateX(-50%);z-index:6;pointer-events:none;background:rgba(18,26,35,.82);color:#fff;font-size:12.5px;padding:7px 12px;border-radius:14px;max-width:92vw;text-align:center;line-height:1.35}
 #hud.oculto{display:none}
 #joy{position:fixed;z-index:7;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);pointer-events:none;transform:translate(-50%,-50%)}
 #joy i{position:absolute;left:50%;top:50%;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.75);transform:translate(-50%,-50%)}
@@ -206,9 +210,9 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
   .tit p{display:none}
   .tit .chips{margin-top:4px}
   .solo-pc{display:none!important}
-  #izq,#der{left:8px;right:8px;width:auto;top:auto;bottom:58px;max-height:46vh}
+  #izq,#der{left:8px;right:8px;width:auto;top:auto;bottom:calc(58px + var(--p4h,0px));max-height:min(46vh,calc(100vh - var(--p4h,0px) - 150px))}
   #izq.cerrado,#der.cerrado{display:none}
-  #pie{left:8px;right:8px;bottom:8px}
+  #pie{left:8px;right:8px;bottom:calc(8px + var(--p4h,0px))}
   #coord{display:none}
   #movTabs{display:flex;gap:6px}
 }
@@ -251,6 +255,7 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
     <button data-v="secB">Sección B-B</button>
     <button data-v="sala">Sala de control</button>
     <button data-v="sub">Subsuelo</button>
+    <button id="b4d" class="rec" style="grid-column:1/-1" title="Línea de tiempo del servicio de AXON: avance, reporte del día y fotos">📅 BIM 4D · nuevo tablero CPM L-1123</button>
     <button id="bEntrar" class="rec" style="grid-column:1/-1" title="También: doble clic sobre la sala o sobre un tablero">🚪 Entrar a la sala de control</button>
     <button id="bRec" class="rec" style="grid-column:1/-1">🚶 Recorrer el patio</button>
     <div class="pelBtns"><button id="bPel" title="Recorrido cinematográfico de ~2 min">🎬 Película</button><button id="bPelRec" title="Reproduce la película y descarga el video">⏺ Grabar video</button></div>
@@ -276,6 +281,7 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
  <div id="izqSala" class="oculto">
   <div class="salaCab"><h2>Sala de control</h2><button id="bSalir" title="Volver a la vista general (Esc)">✕ Salir</button></div>
   <div class="seg" id="pisoSel" style="margin-top:8px"><button data-p="1" class="on">1.er piso</button><button data-p="2">2.º piso</button></div>
+  <div class="seg" id="vistaSel" style="margin-top:6px" title="Tecla V"><button data-t="3" class="on">🧍 Tercera persona</button><button data-t="1">👁 Primera persona</button></div>
   <button id="bAlzados" style="width:100%;margin-top:6px;box-shadow:none">📐 Alzados de los tableros por fila</button>
   <p class="ayuda" id="ayudaSala"></p>
   <label class="capa"><input type="checkbox" id="vZon" checked> Resaltar zonas en obra</label>
@@ -284,6 +290,8 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
   <label class="capa"><input type="checkbox" id="vAx" checked> Mostrar trabajos de AXON</label>
   <div id="axonPanel"></div>
   <div class="ley2"><span><i style="background:#2f6fe4"></i>Nuevo</span><span><i style="background:#8e44ad"></i>Nuevo · AXON (CPM L-1123)</span><span><i style="background:#e07b1f"></i>Existente con intervención (cables nuevos o reconexión)</span><span><i style="background:#c9a227"></i>Existente relacionado (cables existentes)</span></div>
+  <h2>Pasillos</h2>
+  <div class="chipsObra" id="pasillos"></div>
   <h2>Zonas en obra</h2>
   <div class="chipsObra" id="obraLista"></div>
   <h2>Tableros y celdas</h2>
@@ -320,14 +328,22 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { construir, REG, CAPAS, ESTADOS, ETAPAS, etapaDe, ORIGEN, NORTE, alturaTerreno, NUMS, CTX, pisoEn, OBST_EXTRA, L as LAY } from './se3d.js?v=5';
 import { EQUIPOS, zonaObra } from './interior.js?v=5';
-import { Recorrido, obstaculosDe } from './recorrer.js?v=5';
+import { Recorrido, obstaculosDe } from './recorrer.js?v=6';
+import { crearPersona, Rejilla } from './persona.js?v=1';
 import { Pelicula } from './pelicula.js?v=2';
-import { Minimapa, frenteDe, filasDe, encuadreDe } from './sala.js?v=3';
+import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
-import { AXON } from './axon.js?v=1';
+import { U4D } from './uchu4d.js?v=1';
+import { iniciar4D, axonAlCorte } from './cuatrod.js?v=1';
+const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
 
 const $ = (s) => document.querySelector(s);
 const movil = matchMedia('(max-width: 820px)').matches;
+const QS = new URLSearchParams(location.search); const EMBED = QS.get('embed') === '1';
+if (EMBED) document.body.classList.add('embed');
+if (QS.get('tema') === 'dark' || QS.get('tema') === 'light') document.documentElement.dataset.theme = QS.get('tema');
+// dentro del tablero (iframe), el tema sigue al del tablero
+addEventListener('message', (e) => { const d = e.data; if (d && d.tipo === 'tema' && (d.tema === 'dark' || d.tema === 'light')) document.documentElement.dataset.theme = d.tema; });
 
 // ---------- renderer / escena
 const cont = $('#vista');
@@ -340,6 +356,7 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadow
 renderer.localClippingEnabled = true;
 cont.appendChild(renderer.domElement);
 const css = new CSS2DRenderer({ element: $('#rotulos') }); css.setSize(innerWidth, innerHeight);
+const tamVista = () => ({ W: cont.clientWidth || innerWidth, H: cont.clientHeight || innerHeight });
 
 const scene = new THREE.Scene();
 function cielo() {
@@ -410,13 +427,14 @@ const nums = NUMS.map((n) => {
 let enSala = false;
 const Y2 = CTX.y2;
 const cajaEdif = (p) => p.x > 17.9 && p.x < 46.1 && -p.z > -5.2 && -p.z < 0.8;
-const pisoCam = () => (enc ? enc.e.piso : camera.position.y > Y2 + 0.8 ? 2 : 1);
+const pRef = () => (rec && rec.activo && rec.tercera && !enc ? rec.pos : camera.position); // dónde «está» quien recorre
+const pisoCam = () => (enc ? enc.e.piso : pRef().y > Y2 + 0.8 ? 2 : 1);
 let enc = null; // encuadre «ver tablero completo» en curso: { e, mapaMin }
 // rótulos menores solo de cerca
 function rotulosVis() {
   const on = $('#vRot').checked;
   rotulos.forEach((r) => { r.visible = on && r.userData.de.visible && (!r.userData.menor || camera.position.distanceTo(r.position) < 40); });
-  const enEdificio = rec && rec.activo && (enc || cajaEdif(camera.position));
+  const enEdificio = rec && rec.activo && (enc || cajaEdif(pRef()));
   const pc = pisoCam();
   if (enEdificio) ocultamiento();
   if (enc) camera.getWorldDirection(_dirC);
@@ -533,16 +551,19 @@ function fijarSubsuelo(on) {
   suelo.visible = on || corte !== 'no';
   visibilidad();
 }
-const planoSala = new THREE.Plane(new THREE.Vector3(0, -1, 0), 2.75);
+const planoSala = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e5); // 2,75 m = vista «Sala de control»; 1e5 = sin corte
+const TECHO1 = 2.75; let techo = 'no'; // 'no' | 'sala' (vista general) | 'persona' (tercera persona adentro)
 const matSala = new Map();
 const conv = (mat) => { if (!matSala.has(mat)) matSala.set(mat, mat.clone()); return matSala.get(mat); };
 (CAPAS.sala || []).forEach((o) => o.traverse((m) => {
   if (!m.isMesh) return;
   m.material = m.userData.mat0 = Array.isArray(m.material) ? m.material.map(conv) : conv(m.material);
 }));
+matSala.forEach((m) => { m.clippingPlanes = [planoSala]; });
+function cortarTecho(modo_, piso = 1) { techo = modo_; planoSala.constant = modo_ === 'no' ? 1e5 : (piso === 2 ? Y2 : 0) + TECHO1; pedir(); }
 function fijarSala(on) {
   enSala = on;
-  matSala.forEach((m) => { m.clippingPlanes = on ? [planoSala] : null; m.needsUpdate = true; });
+  cortarTecho(on ? 'sala' : 'no');
   rotulosVis(); pedir();
 }
 
@@ -551,8 +572,8 @@ const P3 = (X, Y, h = 0) => new THREE.Vector3(X, h, -Y);
 let anim = null;
 function volar(pos, tgt, ms = 900) {
   const p0 = camera.position.clone(), t0_ = controls.target.clone(), ini = performance.now();
-  anim = (now) => {
-    let k = Math.min(1, (now - ini) / ms); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  anim = () => { // reloj propio: la marca de tiempo del cuadro puede ir por detrás de performance.now() (iframe, página cargando) y daba k < 0
+    let k = Math.max(0, Math.min(1, (performance.now() - ini) / ms)); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     camera.position.lerpVectors(p0, pos, k); controls.target.lerpVectors(t0_, tgt, k);
     if (k >= 1) anim = null;
   };
@@ -666,14 +687,20 @@ function pick(ev, soloTerreno = false) {
   const hits = ray.intersectObjects(objs, true).filter((h) => {
     if (!h.object.visible) return false;
     for (const p of renderer.clippingPlanes) if (p.distanceToPoint(h.point) < 0) return false;
-    if (enSala && h.point.y > 2.75 && cajaEdif(h.point)) return false; // vista «Sala de control»: el techo y el 2.º piso están recortados
+    if (techo !== 'no' && h.point.y > planoSala.constant && cajaEdif(h.point)) return false; // techo recortado (vista «Sala de control» o tercera persona)
     return true;
   });
   return hits;
 }
 renderer.domElement.addEventListener('pointerdown', (e) => (abajo = [e.clientX, e.clientY]));
 function tocar(e) {
-  const h = pick(e).find((x) => infoDe(x.object) && !(subsuelo && x.object === terreno));
+  const hits = pick(e);
+  if (rec && rec.activo && !enc && hits[0]) { // recorriendo: un clic en el piso camina hasta ahí
+    const h0 = hits[0]; const inf0 = infoDe(h0.object);
+    const nrm = h0.face ? h0.face.normal.clone().transformDirection(h0.object.matrixWorld) : null;
+    if (!(inf0 && inf0.eqKey) && nrm && nrm.y > 0.7 && Math.abs(h0.point.y - rec.pies) < 0.5) { caminarA(h0.point.x, -h0.point.z, h0.point.y); return; }
+  }
+  const h = hits.find((x) => infoDe(x.object) && !(subsuelo && x.object === terreno));
   seleccionar(h ? infoDe(h.object) : null);
 }
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -723,30 +750,43 @@ let rec = null; let camAntes = null; let obst = null; let hudT = 0;
 const hud = $('#hud'), joyEl = $('#joy'), mira = $('#mira');
 const HUD = { joy(j) { if (!j) { joyEl.classList.add('oculto'); return; } joyEl.classList.remove('oculto'); joyEl.style.left = j.x + 'px'; joyEl.style.top = j.y + 'px'; joyEl.querySelector('i').style.transform = `translate(calc(-50% + ${j.dx}px), calc(-50% + ${j.dy}px))`; } };
 function aviso(txt, ms = 7000) { hud.textContent = txt; hud.classList.remove('oculto'); clearTimeout(hudT); if (ms) hudT = setTimeout(() => hud.classList.add('oculto'), ms); }
-const AYUDA = movil ? 'Joystick abajo a la izquierda para caminar · arrastra para mirar · toca un tablero para su ficha · doble toque para ir a un punto o a un tablero'
-  : 'Flechas / WASD para caminar (Shift corre) · arrastra para mirar · clic en un tablero: ficha · doble clic: ir a un punto o al frente de un tablero · Esc: salir';
+const AYUDA = movil ? 'Toca el piso para caminar hasta ahí por los pasillos · joystick abajo a la izquierda · arrastra para girar · toca un tablero para su ficha · doble toque: frente al tablero'
+  : 'Clic en el piso: camina hasta ahí por los pasillos · WASD o flechas (Shift corre) · arrastra para girar · rueda: acercar · V: primera / tercera persona · doble clic: frente al tablero · Esc: salir';
+// vista del recorrido: tercera persona (por defecto) o primera; se recuerda en este navegador
+let vistaTercera = true; try { vistaTercera = localStorage.getItem('se_uchu_vista') !== '1'; } catch (_) {}
+const fovRec = () => (rec && rec.tercera ? (movil ? 62 : 52) : 68);
+function fijarVista(tercera) {
+  vistaTercera = tercera; try { localStorage.setItem('se_uchu_vista', tercera ? '3' : '1'); } catch (_) {}
+  $('#vistaSel').querySelectorAll('button').forEach((b) => b.classList.toggle('on', (b.dataset.t === '3') === tercera));
+  if (!rec) return; rec.fijarTercera(tercera); if (!enc) { camera.fov = fovRec(); camera.updateProjectionMatrix(); }
+  mira.classList.toggle('oculto', tercera || !rec.activo); oclKey = ''; mapaKey = ''; pedir();
+}
 function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0) {
   if (pel && pel.activa) terminarPelicula();
   if (!obst) obst = obstaculosDe(REG).concat(OBST_EXTRA);
-  if (!rec) rec = new Recorrido(camera, renderer.domElement, { pisoEn, obstaculos: obst, onCambio: pedir });
+  if (!rec) { rec = new Recorrido(camera, renderer.domElement, { pisoEn, obstaculos: obst, onCambio: pedir }); rec.avatar = crearPersona(); rec.avatar.visible = false; scene.add(rec.avatar); rec.tercera = vistaTercera;
+    if (movil) rec.boomSet = { dentro: { a: 1.0, L: 6.2 }, fuera: { a: 0.42, L: 6.4 } }; } // celular en vertical: la cámara más atrás
   if (!rec.activo) {
     camAntes = { p: camera.position.clone(), t: controls.target.clone() };
     fijarCorte('no'); if (subsuelo) fijarSubsuelo(false); fijarSala(false);
     controls.enabled = false; anim = null;
-    camera.fov = 68; camera.updateProjectionMatrix();
+    rec.dentro = cajaEdif(P3(X, Y)); rec.fijarTercera(vistaTercera);
+    rec.cortado = rec.tercera && rec.dentro; if (rec.cortado) cortarTecho('persona', yPie > Y2 - 0.6 ? 2 : 1);
+    camera.fov = fovRec(); camera.updateProjectionMatrix();
     rec.activar(X, Y, yaw, HUD, yPie);
   }
   rec.colocar(X, Y, yaw, yPie, pitch);
-  $('#bRec').classList.add('on'); mira.classList.remove('oculto');
+  $('#bRec').classList.add('on'); mira.classList.toggle('oculto', rec.tercera);
   document.body.classList.add('sala'); $('#izqNormal').classList.add('oculto'); $('#izqSala').classList.remove('oculto'); $('#mapa').classList.remove('oculto');
   aviso(AYUDA, 9000); $('#vistas').querySelectorAll('button[data-v]').forEach((x) => x.classList.remove('on'));
+  if (m4d && m4d.activo && !$('#mapa').classList.contains('min')) { $('#mapa').classList.add('min'); $('#mapaMin').textContent = '▴'; }
   if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
   ajustarMapa(); pedir();
 }
 function salirRecorrido() {
   if (!rec || !rec.activo) return;
-  const adentro = enc || cajaEdif(camera.position); salirEncuadre(false);
-  rec.desactivar(); controls.enabled = true; camera.fov = 40; camera.updateProjectionMatrix();
+  const adentro = enc || cajaEdif(pRef()); salirEncuadre(false); marcaRuta.visible = false;
+  rec.desactivar(); controls.enabled = true; camera.fov = 40; camera.updateProjectionMatrix(); if (techo === 'persona') cortarTecho('no');
   if (adentro && camAntes) { camera.position.copy(camAntes.p); controls.target.copy(camAntes.t); }
   else { const d = new THREE.Vector3(); camera.getWorldDirection(d); controls.target.copy(camera.position).addScaledVector(d, 6); } // en el patio la órbita sigue desde donde se quedó
   controls.update();
@@ -767,7 +807,7 @@ function irA(e) {
 const FOV_ENC = 55;
 const OBRA_CORTO = { nuevo: 'nuevo', interv: 'existente con intervención', rel: 'existente relacionado', axon: 'nuevo · AXON' };
 function areaLibre() {
-  const W = innerWidth, H = innerHeight; let l = 0, r = W, t = movil ? 104 : 112, b = H;
+  const { W, H } = tamVista(); let l = 0, r = W, t = movil ? 104 : 112, b = H;
   const vis = (el) => el && !el.classList.contains('oculto') && !el.classList.contains('cerrado') && getComputedStyle(el).display !== 'none';
   if (!movil && vis($('#izq'))) l = $('#izq').getBoundingClientRect().right + 8;
   if (vis($('#der')) && $('#der').classList.contains('conFicha')) { const rr = $('#der').getBoundingClientRect(); if (movil) b = Math.min(b, rr.top - 6); else r = rr.left - 8; }
@@ -787,7 +827,7 @@ function verCompleto(e) {
   $('#encIzq').disabled = i === 0; $('#encDer').disabled = i === f.eqs.length - 1;
   $('#barraEnc').classList.remove('oculto'); ajustarMapa();
   { const a = areaLibre(); const bE = $('#barraEnc'); bE.style.left = (a.l + a.r) / 2 + 'px'; bE.style.maxWidth = Math.max(260, a.r - a.l - 12) + 'px'; }
-  const p = encuadreDe(e, areaLibre(), { W: innerWidth, H: innerHeight, fov: FOV_ENC });
+  const p = encuadreDe(e, areaLibre(), { ...tamVista(), fov: FOV_ENC });
   camera.fov = FOV_ENC; camera.near = p.near; camera.updateProjectionMatrix();
   rec.encuadrar(p.x, p.y, p.z, p.yaw, p.pitch);
   oclKey = ''; mapaKey = ''; pedir();
@@ -796,7 +836,7 @@ function salirEncuadre(caminar = true) {
   if (!enc) return; const e = enc.e;
   if (!enc.mapaMin) { $('#mapa').classList.remove('min'); $('#mapaMin').textContent = '▾'; }
   enc = null; document.body.classList.remove('encuadre'); $('#barraEnc').classList.add('oculto');
-  camera.near = 0.1; camera.fov = rec && rec.activo ? 68 : 40; camera.updateProjectionMatrix();
+  camera.near = 0.1; camera.fov = rec && rec.activo ? fovRec() : 40; camera.updateProjectionMatrix();
   if (caminar && rec && rec.activo) { const f = frenteDe(e, (X, Y, yP) => rec.libre(X, Y, yP)); rec.colocar(f.X, f.Y, f.yaw, e.yPiso, f.pitch); }
   ajustarMapa(); oclKey = ''; mapaKey = ''; pedir();
 }
@@ -806,6 +846,65 @@ $('#encCam').onclick = () => salirEncuadre(true); $('#encAlz').onclick = () => e
 // en celular no abre la ficha al llegar (taparía la vista): basta la placa y el rótulo de lo que se mira
 function seleccionarSuave(e) { if (movil) { actual = e.info; if (mapa) { mapa.sel = e.key; mapa.dibujar(); } pedir(); } else seleccionar(e.info); }
 function entrarSala(e = null) { if (e) irA(e); else irPiso(1); }
+// ---------- caminar hasta un punto por los pasillos (A* en una rejilla de espacio libre por piso)
+const marcaRuta = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.26, 28), new THREE.MeshBasicMaterial({ color: 0x0b6bcb, transparent: true, opacity: 0.9, depthTest: false }));
+marcaRuta.rotation.x = -Math.PI / 2; marcaRuta.renderOrder = 5; marcaRuta.visible = false; marcaRuta.userData.noObst = true; scene.add(marcaRuta);
+const REJ = {};
+function rejilla(piso) {
+  if (REJ[piso]) return REJ[piso];
+  const S = LAY.sala; const libre = (X, Y, yP, r) => rec.libre(X, Y, yP, r);
+  const caja = piso === 2 ? { x0: S.x2p - 0.2, x1: S.x1 + 0.2, Y0: S.y0 - 0.2, Y1: S.y1 + 0.2 } : { x0: S.x0 - 4, x1: S.x1 + 4, Y0: S.y0 - 4, Y1: S.y1 + 3.5 };
+  return (REJ[piso] = new Rejilla({ caja, yPie: piso === 2 ? Y2 : 0.12, libre, pisoEn, paso: 0.15, holgura: 0.3 }));
+}
+function caminarA(X, Y, yP, alLlegar = null) {
+  if (!rec || !rec.activo) return false;
+  if (enc) salirEncuadre(false);
+  const pisoP = rec.pies > Y2 - 0.6 ? 2 : 1, pisoD = yP > Y2 - 0.6 ? 2 : 1;
+  if (pisoD !== pisoP) { const [Xl, Yl, yaw, yPl] = LLEGADA[pisoD]; rec.colocar(Xl, Yl, yaw, yPl, 0); aviso(pisoD === 2 ? 'Subiste al 2.º piso (escalera exterior norte)' : 'Bajaste al 1.er piso', 2500); }
+  const R = rejilla(pisoD); const X0 = rec.pos.x, Y0 = -rec.pos.z;
+  let ruta = null;
+  if (R.dentro(X0, Y0) && R.dentro(X, Y)) { ruta = R.camino(X0, Y0, X, Y); if (!ruta) { aviso('No encuentro un paso libre hasta ese punto', 2500); return false; } }
+  else ruta = [[X, Y]]; // en el patio: en línea recta (se desliza contra los obstáculos y se detiene si se atasca)
+  const fin = ruta[ruta.length - 1]; marcaRuta.position.set(fin[0], pisoEn(fin[0], fin[1], yP) + 0.03, -fin[1]); marcaRuta.visible = true;
+  rec.irPor(ruta, () => { marcaRuta.visible = false; if (alLlegar) alLlegar(); }); pedir(); return true;
+}
+// tercera persona: la persona queda al centro del área que no tapan los paneles ni el plano (desplaza la proyección)
+let _vo = '';
+function centrarTercera() {
+  const on = rec && rec.activo && rec.tercera && !enc;
+  if (!on) { if (_vo) { camera.clearViewOffset(); _vo = ''; } return; }
+  const a = areaLibre(); const { W, H } = tamVista();
+  const dx = Math.round(W / 2 - (a.l + a.r) / 2), dy = Math.round(H / 2 - (a.t + a.b) / 2 - (a.b - a.t) * 0.08);
+  const k = dx + ',' + dy + ',' + W + ',' + H; if (k === _vo) return; _vo = k;
+  camera.setViewOffset(W, H, dx, dy, W, H); sucio = true;
+}
+// puntos de vista por pasillo: en un extremo de cada fila de tableros, mirando a lo largo del pasillo
+function vistasPasillo() {
+  return FILAS.map((f) => {
+    const es = f.eqs, a = es[0], z = es[es.length - 1]; const { nx, ny } = rectDe(a);
+    const sep = Math.max(...es.map((e) => e.d)) / 2 + 0.75; const yP = a.yPiso;
+    let X = null, Y = null;
+    for (let k = 0; k <= 8 && X === null; k++) for (const [e0, sg] of [[a, -1], [z, 1]]) { // primero el extremo izquierdo; si está ocupado, se acerca
+      const Xc = e0.X + sg * f.dx * (e0.w / 2 + 0.5 - k * 0.25) + nx * sep, Yc = e0.Y + sg * f.dy * (e0.w / 2 + 0.5 - k * 0.25) + ny * sep;
+      if (rec.libre(Xc, Yc, yP)) { X = Xc; Y = Yc; f._sg = sg; break; }
+    }
+    if (X === null) { const fr = frenteDe(es[(es.length / 2) | 0], (Xc, Yc, y_) => rec.libre(Xc, Yc, y_)); return { f, X: fr.X, Y: fr.Y, yaw: fr.yaw, yP }; }
+    const dx = -f._sg * f.dx, dy = -f._sg * f.dy; // mira hacia el otro extremo de la fila
+    const yaw = (Math.atan2(dx - nx * 0.35, -(dy - ny * 0.35)) * 180) / Math.PI; // un poco hacia los frentes
+    return { f, X, Y, yaw, yP };
+  });
+}
+function panelPasillos() {
+  $('#pasillos').innerHTML = FILAS.map((f, i) => `<button data-pa="${i}" title="Ir al pasillo de ${esc_(f.nombre)}"><b>${f.piso === 2 ? '2.º' : '1.er'}</b>${esc_(f.nombre)}</button>`).join('');
+}
+$('#pasillos').onclick = (ev) => {
+  const b = ev.target.closest('button[data-pa]'); if (!b) return; const f = FILAS[+b.dataset.pa];
+  if (!rec || !rec.activo) irPiso(f.piso);
+  const v = vistasPasillo().find((q) => q.f === f); if (!v) return;
+  salirEncuadre(false); seleccionar(null); rec.colocar(v.X, v.Y, v.yaw, v.yP, -8); aviso(`Pasillo · ${f.nombre}`, 2500);
+  if (movil) $('#izq').classList.add('cerrado');
+};
+$('#vistaSel').onclick = (ev) => { const b = ev.target.closest('button[data-t]'); if (b) fijarVista(b.dataset.t === '3'); };
 $('#bRec').onclick = () => (rec && rec.activo ? salirRecorrido() : entrarRecorrido());
 $('#bEntrar').onclick = () => entrarSala();
 $('#bSalir').onclick = () => salirRecorrido();
@@ -840,6 +939,7 @@ addEventListener('keydown', (e) => {
     if (k === 'escape') { salirEncuadre(true); return; }
   }
   if (e.key === 'Escape' && rec && rec.activo) salirRecorrido();
+  if ((e.key === 'v' || e.key === 'V') && rec && rec.activo && !e.repeat && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) fijarVista(!vistaTercera);
   if (e.key === 'Enter' && rec && rec.activo && mirandoEq) seleccionar(mirandoEq.info);
 });
 // ---------- panel de la sala: zonas en obra y lista de tableros
@@ -867,7 +967,7 @@ function panelSala() {
 // ---------- trabajos de AXON (control diario del nuevo tablero CPM L-1123, Excel de AXON)
 // Cada «TABLERO / UBICACIÓN» del Excel se lleva a un elemento del modelo. Ningún plano disponible ubica el nuevo CPM ni las
 // rutas de AXON: las ubicaciones son SUPUESTAS a partir del propio control diario y se dicen así en la ficha.
-var axonOn = true, axRot = [];
+var axonOn = true, axRot = [], m4d = null; // m4d: BIM 4D (cuatrod.js)
 const AX_ZONAS = [
   { u: ['CPM L-1123', 'Patio → CPM'], eq: 'CPM', nombre: 'Nuevo CPM L-1123', sup: 'Se supone en el lugar del tablero 19 (registrador de fallas): AXON lo retiró al almacén el 17–18-Oct (restricción R-05) y montó el nuevo tablero el 18-Oct.' },
   { u: ['SSAA'], eq: 'T16', nombre: 'SS.AA.', sup: 'Se supone el tablero 16 (SS.AA. 220 Vca / 110 Vcc / 48 Vcc, =E1.A01.SSAA), junto al nuevo CPM; el control de AXON no dice cuáles tableros de SS.AA.' },
@@ -897,10 +997,11 @@ const axZ = new THREE.Group(); axZ.userData.noObst = true; CTX.sala.add(axZ);
   nums.forEach((n) => { const e = EQ[n.userData.n.key]; if (e && e.axonZ && e.key !== 'CPM') n.element.insertAdjacentHTML('beforeend', '<i class="ax">AXON</i>'); if (e && e.key === 'CPM') n.element.className = 'num o-axon'; });
 })();
 function axonVis() {
-  axZ.visible = axonOn;
-  if (CTX.zonas) CTX.zonas.children.forEach((z) => { if (z.userData.zona === 'CPM') z.visible = axonOn; });
+  const en4 = !!(m4d && m4d.activo);
+  axZ.visible = axonOn && !en4;
+  if (CTX.zonas) CTX.zonas.children.forEach((z) => { if (z.userData.zona === 'CPM') z.visible = axonOn && !EQ.CPM.oculto; });
   const dentro = document.body.classList.contains('dentro');
-  axRot.forEach((a) => { a.h.visible = axonOn && a.obj.visible; a.o.visible = axonOn && a.obj.visible && !dentro && $('#vRot').checked && !(pel && pel.activa); });
+  axRot.forEach((a) => { a.h.visible = axonOn && !en4 && a.obj.visible; a.o.visible = axonOn && !en4 && a.obj.visible && !dentro && $('#vRot').checked && !(pel && pel.activa); });
 }
 function fijarAxon(on) {
   axonOn = on; $('#vAx').checked = on; $('#vAx0').checked = on; document.body.classList.toggle('axon', on);
@@ -929,13 +1030,16 @@ $('#axonPanel').onclick = (ev) => {
 function seccionAxon(info) {
   if (!axonOn) return '';
   const zs = (info.eqKey && EQ[info.eqKey] ? EQ[info.eqKey].axonZ : info.axonZ) || []; if (!zs.length) return '';
-  const acts = [...new Map(zs.flatMap((z) => z.acts).map((a) => [a.n, a])).values()];
+  const en4 = m4d && m4d.activo; const AXF = en4 ? axonAlCorte(U4D, m4d.i) : AXON; const porN = Object.fromEntries(AXF.acts.map((a) => [String(a.n), a]));
+  const acts = [...new Map(zs.flatMap((z) => z.acts).map((a) => [a.n, porN[String(a.n)] || a])).values()];
   const nums_ = new Set(acts.map((a) => String(a.n)));
   const habs = AXON.habilitantes.filter((h) => nums_.has(String(h.act)) && h.estado !== 'Aprobado / cumplido');
-  const est = (a) => `<span class="pill" style="${a.estado === 'Completada' ? 'border-color:#2fae58;color:#2fae58' : a.estado === 'En curso' ? 'border-color:#e07b1f;color:#e07b1f' : ''}">${esc_(a.estado || '—')}</span>`;
+  const EST4 = { pend: ['Por iniciar', ''], curso: ['En curso', '#0b6bcb'], term: ['Terminada', '#2fae58'], atras: ['Detrás de lo programado', '#d68a00'], cond: ['Condicionada', ''] };
+  const est = (a) => { if (en4) { const [t, c] = EST4[m4d.estadoAct(a, m4d.i)]; return `<span class="pill" style="${c ? `border-color:${c};color:${c}` : ''}">${t}</span>`; }
+    return `<span class="pill" style="${a.estado === 'Completada' ? 'border-color:#2fae58;color:#2fae58' : a.estado === 'En curso' ? 'border-color:#e07b1f;color:#e07b1f' : ''}">${esc_(a.estado || '—')}</span>`; };
   const filas = acts.map((a) => `<tr><td><b>${esc_(a.n)}</b> · ${esc_(a.nombre)}<small style="display:block;color:var(--ink3)">línea base ${fAx(a.ini)} → ${fAx(a.fin)}</small></td><td style="white-space:nowrap">${pct0(a.ev)} <small style="color:var(--ink3)">/ ${pct0(a.pv)}</small><br>${est(a)}</td></tr>`).join('');
   const hb = habs.length ? `<div style="margin-top:6px"><b style="color:#c0392b">Habilitantes pendientes</b>${habs.map((h) => `<div>${esc_(h.id)} · ${esc_(h.nombre)} — ${esc_(h.estado || 'sin estado')}${h.alerta ? ' · ' + esc_(h.alerta) : ''}</div>`).join('')}</div>` : '';
-  return `<div class="axon"><b>Trabajos de AXON · control diario del ${fAx(AXON.fecha)}</b>
+  return `<div class="axon"><b>Trabajos de AXON · ${en4 ? `BIM 4D al ${fAx(m4d.fecha)}${m4d.i > m4d.corte ? ' (programado)' : ''}` : `control diario del ${fAx(AXON.fecha)}`}</b>
     <table class="axt" style="margin-top:4px">${filas}</table>${hb}
     <div style="margin-top:6px;color:var(--ink2)">${zs.map((z) => esc_(z.sup)).join(' ')}</div>
     <div class="fuente">Ejecutado / programado al corte, por actividad · fuente: ${esc_(AXON.fuente)}</div></div>`;
@@ -949,7 +1053,7 @@ $('#vZon').onchange = (e) => fijarZonas(e.target.checked); $('#vZon0').onchange 
 $('#vDes2').onchange = (e) => { $('#vDes').checked = e.target.checked; fijarDestapado(e.target.checked); };
 // ---------- alzados por fila (vista plana de los frentes, a escala, con códigos y zonas en obra)
 let FILAS = [], FILA_DE = {};
-function armarFilas() { FILAS = filasDe(EQUIPOS.filter((e) => !e.oculto)); FILA_DE = {}; FILAS.forEach((f) => f.eqs.forEach((e, i) => (FILA_DE[e.key] = { f, i }))); }
+function armarFilas() { FILAS = filasDe(EQUIPOS.filter((e) => !e.oculto)); FILA_DE = {}; FILAS.forEach((f) => f.eqs.forEach((e, i) => (FILA_DE[e.key] = { f, i }))); if (typeof panelPasillos === 'function' && $('#pasillos')) panelPasillos(); }
 armarFilas();
 const OPUESTO = { norte: 'sur', sur: 'norte', este: 'oeste', oeste: 'este' };
 let alzFila = null, alzMarca = null, alzCajas = [];
@@ -1022,7 +1126,7 @@ $('#alzPng').onclick = () => $('#alzCv').toBlob((bl) => { const a = document.cre
 // ---------- minimapa
 const mapa = new Minimapa($('#mapaCv'), { sala: LAY.sala, equipos: EQUIPOS, norte: NORTE,
   onIr: (e) => irA(e),
-  onPunto: (X, Y, p) => { if (!rec || !rec.activo) return; salirEncuadre(false); const yP = p === 2 ? Y2 : 0.12; if (rec.libre(X, Y, yP)) rec.colocar(X, Y, rec.yawDeg, yP, 0); else aviso('Ese punto está ocupado por un tablero o un muro', 2500); },
+  onPunto: (X, Y, p) => { if (!rec || !rec.activo) return; salirEncuadre(false); const yP = p === 2 ? Y2 : 0.12; if (rec.libre(X, Y, yP)) caminarA(X, Y, yP); else aviso('Ese punto está ocupado por un tablero o un muro', 2500); },
   onHover: (e) => { $('#mapaCv').title = e ? `${e.info.id}${e.cod ? ' · ' + e.cod : ''} — ${e.nombre}` : ''; } });
 $('#mapaMin').onclick = () => { $('#mapa').classList.toggle('min'); $('#mapaMin').textContent = $('#mapa').classList.contains('min') ? '▴' : '▾'; ajustarMapa(); };
 function ajustarMapa() {
@@ -1036,7 +1140,7 @@ function ajustarMapa() {
 let mapaKey = '';
 function actualizarMapa() {
   if (!rec || !rec.activo) return;
-  const p = camera.position; const dentro = !!enc || cajaEdif(p); const piso = dentro ? pisoCam() : mapa.piso;
+  const p = pRef(); const dentro = !!enc || cajaEdif(p); const piso = dentro ? pisoCam() : mapa.piso;
   const k = [p.x.toFixed(2), p.z.toFixed(2), rec.yaw.toFixed(2), piso, dentro].join('|'); if (k === mapaKey) return; mapaKey = k;
   const cambio = piso !== mapa.piso; mapa.fijar({ piso, pos: { X: p.x, Y: -p.z }, yaw: rec.yaw, dentro });
   if (cambio) { mapa.ajustar(mapa.anchoCss); $('#pisoSel').querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.p === piso)); } else mapa.dibujar();
@@ -1047,8 +1151,9 @@ let mirandoEq = null, tMira = 0, tSigue = 0; const _c0 = new THREE.Vector2(0, 0)
 function actualizarMirando(now) {
   if (!rec || !rec.activo || now - tMira < 140) return; tMira = now;
   let e = null;
-  if (cajaEdif(camera.position)) {
-    ray.setFromCamera(_c0, camera); ray.far = 7; ray.near = 0;
+  if (cajaEdif(pRef())) {
+    if (rec.tercera && !enc) { ray.set(rec.pos, new THREE.Vector3(Math.sin(rec.yaw), -0.12, Math.cos(rec.yaw))); ray.far = 2.6; }
+    else { ray.setFromCamera(_c0, camera); ray.far = 7; } ray.near = 0;
     const objs = EQUIPOS.filter((q) => q.obj.visible).map((q) => q.obj); const muros = (CAPAS.sala || []).filter((o) => o.visible);
     const h = ray.intersectObjects(muros, true)[0]; ray.far = Infinity;
     if (h) { const inf = infoDe(h.object); if (inf && inf.eqKey && objs.includes(EQ[inf.eqKey].obj)) e = EQ[inf.eqKey]; }
@@ -1077,14 +1182,14 @@ function iniciarPelicula(grabar) {
     onParada: (p) => { pelTit = p.t; pelSub = p.s; cine.querySelector('.sub b').textContent = p.t; cine.querySelector('.sub span').textContent = p.s; },
     onDestapar: (on) => { if (on !== destapado) { $('#vDes').checked = on; fijarDestapado(on); } },
     onFin: () => terminarPelicula() });
-  controls.enabled = false; anim = null; document.body.classList.add('cine'); cine.classList.add('on');
+  controls.enabled = false; anim = null; document.body.classList.add('cine'); cine.classList.add('on'); redimensionar();
   cine.querySelector('.rec').classList.toggle('on', !!grabar);
   pel.iniciar(!!grabar); if (grabar && !pel.grabando) cine.querySelector('.rec').classList.remove('on');
   pedir();
 }
 function terminarPelicula() {
   if (!pel) return; if (pel.activa) pel.detener();
-  document.body.classList.remove('cine'); cine.classList.remove('on'); controls.enabled = true;
+  document.body.classList.remove('cine'); cine.classList.remove('on'); controls.enabled = true; redimensionar();
   if (pelAntes) { camera.position.copy(pelAntes.p); controls.target.copy(pelAntes.t); if (pelAntes.des !== destapado) { $('#vDes').checked = pelAntes.des; fijarDestapado(pelAntes.des); } }
   controls.update(); pedir();
 }
@@ -1096,31 +1201,89 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && pel && pel.activa
 // ---------- bucle (dibuja solo cuando algo cambia)
 let sucio = true; function pedir() { sucio = true; }
 controls.addEventListener('change', pedir);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); css.setSize(innerWidth, innerHeight); ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); });
+function redimensionar() { const { W, H } = tamVista(); camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); css.setSize(W, H); _vo = ''; ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); }
+addEventListener('resize', redimensionar);
 const aguja = $('#aguja'); const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 let tAnt = performance.now();
 function bucle(now) {
   requestAnimationFrame(bucle);
-  const dt = (now - tAnt) / 1000; tAnt = now;
+  const dt = Math.max(0, (now - tAnt) / 1000); tAnt = now;
   if (anim) { anim(now); sucio = true; }
   if (rec && rec.activo && rec.update(dt)) sucio = true;
-  if (rec && rec.activo) { if (enc && rec.mov.lengthSq() > 0.05) salirEncuadre(true); actualizarMapa(); actualizarMirando(now); }
+  if (rec && rec.activo) {
+    if (enc && rec.mov.lengthSq() > 0.05) salirEncuadre(true);
+    const den = cajaEdif(rec.pos); if (den !== rec.dentro) { rec.dentro = den; sucio = true; }
+    const quiere = rec.tercera && den && !enc ? 'persona' : 'no'; const pisoP = rec.pies > Y2 - 0.6 ? 2 : 1;
+    if (quiere !== techo && techo !== 'sala') { cortarTecho(quiere, pisoP); rec.cortado = quiere === 'persona'; rec._apuntar(); }
+    else if (techo === 'persona' && planoSala.constant !== (pisoP === 2 ? Y2 : 0) + TECHO1) cortarTecho('persona', pisoP);
+    if (marcaRuta.visible && !rec.ruta) marcaRuta.visible = false;
+    centrarTercera(); actualizarMapa(); actualizarMirando(now);
+  } else centrarTercera();
   if (pel && pel.activa && pel.update(dt)) sucio = true;
   const mov = controls.enabled ? controls.update() : false;
   if (!(sucio || mov)) return;
+  if (!renderer.domElement.clientWidth || !renderer.domElement.clientHeight) return; // oculta (p. ej. en el tablero se eligió la LT)
   sucio = false; ajustarLuces();
   rotulosVis(); if (pel && pel.activa) rotulos.forEach((r) => (r.visible = false));
   renderer.render(scene, camera); css.render(scene, camera);
   if (pel && pel.grabando) pel.componer(pelTit, pelSub);
   // brújula: proyecta el norte del plano (bloque NM) a la pantalla
   _a.copy(controls.target).project(camera); _b.copy(controls.target).addScaledVector(NORTE, 5).project(camera);
-  const ang = Math.atan2(_b.x - _a.x, (_b.y - _a.y) * (innerHeight / innerWidth));
+  const ang = Math.atan2(_b.x - _a.x, (_b.y - _a.y) * (renderer.domElement.clientHeight / renderer.domElement.clientWidth));
   aguja.setAttribute('transform', `rotate(${(ang * 180) / Math.PI})`);
 }
-fijarAxon(true); aplicarColor();
+// ---------- BIM 4D del servicio de AXON (cuatrod.js): zonas del modelo por estado a la fecha, panel bajo la vista
+const sup = (eq, reg) => (AX_ZONAS.find((z) => (eq && z.eq === eq) || (reg && z.reg === reg)) || {}).sup;
+const ZONAS4D = {
+  cpm: { eq: 'CPM', corto: 'CPM', nombre: 'Nuevo CPM L-1123', sup: sup('CPM') },
+  t19: { eq: 'T19', corto: 'Tablero RF', nombre: 'Tablero 19 · registrador de fallas', sup: 'El tablero 19 sale de la sala el 17–18-Oct (restricción R-05) y en su lugar se supone el nuevo CPM.' },
+  ssaa: { eq: 'T16', corto: 'SS.AA.', nombre: 'SS.AA. (tablero 16)', sup: sup('T16') },
+  scada: { eq: 'T2', corto: 'SCADA', nombre: 'SCADA (tablero 2)', sup: sup('T2') },
+  patio: { reg: 'Bahía L-1123', corto: 'Patio', nombre: 'Patio · bahía L-1123', sup: sup(null, 'Bahía L-1123') },
+  almacen: { reg: 'Almacén', corto: 'Almacén', nombre: 'Almacén', sup: sup(null, 'Almacén') },
+};
+const objZona = (z) => (z.eq ? EQ[z.eq]?.obj : REG.find((x) => x.info && x.info.id === z.reg)?.obj);
+const infoZona = (z) => (z.eq ? EQ[z.eq]?.info : REG.find((x) => x.info && x.info.id === z.reg)?.info);
+function volarCaja(b, dir = new THREE.Vector3(-0.59, 0.6, 0.55)) {
+  const c = b.getCenter(new THREE.Vector3()); const r = Math.max(3, b.getSize(new THREE.Vector3()).length() / 2);
+  const d = Math.min(150, r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * 0.95);
+  volar(c.clone().addScaledVector(dir.normalize(), d), c);
+}
+m4d = iniciar4D({ U4D, scene, $, esc_, movil, ZONAS: ZONAS4D, pedir,
+  objDe: objZona, visibleZona: (z) => !(z.eq && EQ[z.eq].oculto),
+  equiposEnFecha(e) {
+    const cpm = e ? e.cpm : axonOn, t19 = e ? e.t19 && !e.cpm : !axonOn;
+    if (EQ.CPM.oculto === !cpm && EQ.T19.oculto === !t19) return;
+    EQ.CPM.oculto = !cpm; EQ.T19.oculto = !t19; armarFilas(); panelSala(); visibilidad(); if (mapa) mapa.dibujar();
+    if (enc && enc.e.oculto) salirEncuadre(true); if (actual && actual.eqKey && EQ[actual.eqKey].oculto) seleccionar(null);
+  },
+  irZona(zs) {
+    if (!zs.length) return; const z0 = zs[0]; const inf = infoZona(z0);
+    if (rec && rec.activo) { if (zs.every((z) => z.eq)) { irA(EQ[z0.eq]); return; } salirRecorrido(); }
+    const b = new THREE.Box3(); zs.forEach((z) => b.expandByObject(z.obj));
+    fijarSala(zs.some((z) => z.eq)); if (inf && !movil) seleccionar(inf); volarCaja(b.expandByScalar(1.5));
+  },
+  visor(src, txt) { $('#visor img').src = src; $('#visor p').textContent = txt; $('#visor').classList.add('on'); },
+  onFecha() { if (actual && !movil && $('#der').classList.contains('conFicha') && seccionAxon(actual)) { const a = actual; seleccionar(a); } },
+  alCambiar(on) {
+    $('#b4d').classList.toggle('on', on); axonVis(); redimensionar();
+    // las franjas de «zonas en obra» del TP-385 se apagan en el 4D (el color es el estado de AXON) y vuelven al salir
+    if (on) { alCambiar4D.zonas = $('#vZon0').checked; fijarZonas(false); } else if (alCambiar4D.zonas !== undefined) fijarZonas(alCambiar4D.zonas);
+    if (on && !(rec && rec.activo) && !alCambiar4D.ya) { alCambiar4D.ya = true; vista4D(); }
+    if (on && rec && rec.activo && !$('#mapa').classList.contains('min')) $('#mapaMin').click(); // poco alto: el plano de la sala se pliega
+    if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
+  },
+  salir: () => m4d.activar(false),
+});
+function alCambiar4D() {}
+// vista inicial del 4D: la sala sin techo (CPM, SS.AA. y SCADA) con el patio detrás
+function vista4D() { fijarSala(true); const b = new THREE.Box3(); ['cpm', 'ssaa', 'scada'].forEach((k) => { const o = objZona(ZONAS4D[k]); if (o) b.expandByObject(o); }); volarCaja(b.expandByScalar(5), new THREE.Vector3(-0.35, 0.8, 0.62)); }
+$('#b4d').onclick = () => m4d.activar(!m4d.activo);
+fijarAxon(true); aplicarColor(); fijarVista(vistaTercera);
+if (QS.get('modo') === '4d') m4d.activar(true);
 requestAnimationFrame(bucle);
 $('#cargando').remove();
-window.__se = { EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
+window.__se = { vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
 </script>
 </body>
 </html>

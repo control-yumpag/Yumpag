@@ -1,0 +1,7 @@
+# Fotos que NO se publican (revisión a ojo del 22-Oct-26). Ids = MMDD-NN que asigna uchu_fotos.py.
+1016-08   # documento firmado (Anexo 05)
+1016-09   # documento firmado (Anexo 05)
+1016-12   # gestión del cambio: documento con firmas
+1016-13   # gestión del cambio: documento con firmas
+1016-14   # gestión del cambio: documento con firmas
+1018-58   # permiso de trabajo (documento)
