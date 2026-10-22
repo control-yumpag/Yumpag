@@ -164,3 +164,42 @@ export class Minimapa {
     this.sobre = eq; this.cv.style.cursor = eq ? 'pointer' : 'crosshair'; this.dibujar(); this.onHover?.(eq, e);
   }
 }
+
+// ------------------------------------------------------------------ filas de tableros (para alzados y vecinos)
+// Agrupa los equipos que comparten piso, orientación y línea; los ordena de izquierda a derecha vistos desde el frente.
+export function filasDe(equipos) {
+  const grupos = new Map();
+  for (const e of equipos) {
+    const r = rectDe(e); const porX = Math.abs(r.nx) > 0.5; const lin = Math.round((porX ? e.X : e.Y) * 2) / 2;
+    const k = `${e.piso}|${Math.round(e.rot)}|${lin}`; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e);
+  }
+  const filas = [];
+  for (const [k, es] of grupos) {
+    const { nx, ny } = rectDe(es[0]); const dx = -ny, dy = nx; // derecha del observador que mira el frente
+    es.sort((a, b) => a.X * dx + a.Y * dy - (b.X * dx + b.Y * dy));
+    const nums = es.map((e) => e.n); const celdas = es[0].tipo === 'celda';
+    const ord = [...nums].sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true }));
+    const nombre = es.length === 1 ? `Tablero ${nums[0]}` : celdas ? `Celdas ${ord[0]}–${ord[ord.length - 1]}` : `Tableros ${ord[0]}–${ord[ord.length - 1]}`;
+    const rumbo = ny > 0.5 ? 'norte' : ny < -0.5 ? 'sur' : nx > 0.5 ? 'este' : 'oeste';
+    filas.push({ k, nombre, rumbo, piso: es[0].piso, eqs: es, dx, dy });
+  }
+  const orden = (f) => (f.piso - 1) * 1000 + (typeof f.eqs[0].n === 'number' ? Math.min(...f.eqs.map((e) => (typeof e.n === 'number' ? e.n : 99))) : f.eqs[0].n.startsWith('C') ? 100 : 200);
+  return filas.sort((a, b) => orden(a) - orden(b));
+}
+
+// pose de cámara para ver un equipo completo dentro del área libre de la pantalla (fracciones 0–1 de ancho y alto)
+// libre = { l, r, t, b } en px; vista = { W, H, fov (vertical, grados) }
+export function encuadreDe(e, libre, vista) {
+  const { nx, ny } = rectDe(e); const z0 = e.zocalo ?? 0.1;
+  const Fx = e.X + nx * (e.d / 2), Fy = e.Y + ny * (e.d / 2); // centro del frente en planta
+  const alto = z0 + e.h + 0.5, ancho = e.w + 0.5; // tablero + placa flotante + margen
+  const yc = e.yPiso + alto / 2;
+  const tv = Math.tan(((vista.fov / 2) * Math.PI) / 180), th = tv * (vista.W / vista.H);
+  const fh = Math.max(0.3, (libre.b - libre.t) / vista.H), fw = Math.max(0.3, (libre.r - libre.l) / vista.W);
+  const D = Math.min(4.5, Math.max(1.6, (alto * 1.08) / (2 * tv * fh), (ancho * 1.08) / (2 * th * fw)));
+  // el centro del área libre en coordenadas normalizadas (−1…1): se gira la cámara para que el tablero quede ahí
+  const cx = ((libre.l + libre.r) / 2 / vista.W) * 2 - 1, cy = 1 - ((libre.t + libre.b) / 2 / vista.H) * 2;
+  const yaw = e.rot + 180 + (Math.atan(cx * th) * 180) / Math.PI;
+  const pitch = (-Math.atan(cy * tv) * 180) / Math.PI;
+  return { x: Fx + nx * D, y: yc, z: -(Fy + ny * D), yaw, pitch, D, near: Math.max(0.1, D - 1.0) };
+}

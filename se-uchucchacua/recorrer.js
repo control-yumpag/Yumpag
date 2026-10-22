@@ -14,7 +14,7 @@ export class Recorrido {
     this._hud = null;
   }
   activar(X, Y, yawDeg = 180, hud = null, yPie = 0) {
-    this.activo = true; this.pies = this.pisoEn(X, Y, yPie); this.pos.set(X, this.pies + this.ojo, -Y);
+    this.activo = true; this.encuadre = false; this.pies = this.pisoEn(X, Y, yPie); this.pos.set(X, this.pies + this.ojo, -Y);
     this.yaw = (yawDeg * Math.PI) / 180; this.pitch = 0; this._hud = hud;
     this.camera.position.copy(this.pos); this._apuntar();
     addEventListener('keydown', this._onKey); addEventListener('keyup', this._onKey); addEventListener('blur', this._onBlur);
@@ -30,7 +30,7 @@ export class Recorrido {
   teletransportar(X, Y) { this.pies = this.pisoEn(X, Y, this.pies); this.pos.set(X, this.pies + this.ojo, -Y); this.camera.position.copy(this.pos); this.onCambio(); }
   // coloca al caminante en un punto (y piso) con una orientación dada; pitch en grados (negativo = mira hacia abajo)
   colocar(X, Y, yawDeg, yPie = this.pies, pitchDeg = 0) {
-    this.pies = this.pisoEn(X, Y, yPie); this.pos.set(X, this.pies + this.ojo, -Y);
+    this.encuadre = false; this.pies = this.pisoEn(X, Y, yPie); this.pos.set(X, this.pies + this.ojo, -Y);
     this.yaw = (yawDeg * Math.PI) / 180; this.pitch = (pitchDeg * Math.PI) / 180;
     this.camera.position.copy(this.pos); this._apuntar(); this.onCambio();
   }
@@ -44,6 +44,12 @@ export class Recorrido {
     return true;
   }
   get yawDeg() { return (this.yaw * 180) / Math.PI; }
+  // encuadre: cámara libre (fuera de la altura de los ojos y sin colisiones) para ver un tablero completo; mientras dure no se camina
+  encuadrar(x, y, z, yawDeg, pitchDeg) {
+    this.encuadre = true; this.pos.set(x, y, z);
+    this.yaw = (yawDeg * Math.PI) / 180; this.pitch = (pitchDeg * Math.PI) / 180;
+    this.camera.position.copy(this.pos); this._apuntar(); this.onCambio();
+  }
   _apuntar() {
     const d = new THREE.Vector3(Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch));
     this.camera.lookAt(this.pos.clone().add(d));
@@ -83,6 +89,7 @@ export class Recorrido {
     return movido;
   }
   _paso(dt) {
+    if (this.encuadre) return false;
     const t = this.teclas; let ax = 0, az = 0;
     if (t.has('w') || t.has('arrowup')) az += 1; if (t.has('s') || t.has('arrowdown')) az -= 1;
     if (t.has('a') || t.has('arrowleft')) ax -= 1; if (t.has('d') || t.has('arrowright')) ax += 1;

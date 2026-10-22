@@ -26,5 +26,9 @@ Lo existente que los planos no detallan (alturas de los pórticos, equipos de la
 de control»: se camina en primera persona por el 1.er y el 2.º piso, con placas grandes de número y código en cada tablero, un
 minimapa clicable por piso, la lista de tableros y el **mapa de obra**: azul = nuevo, naranja = existente con intervención (cables
 nuevos o reconexión), ocre = existente relacionado. La ficha de cada tablero muestra su frente y sus cables del conexionado externo.
+Al elegir un tablero (lista, plano, doble clic o «🎯 Ver completo») la cámara se aleja y lo encuadra entero en la parte libre de
+la pantalla; lo que queda entre la cámara y el pasillo se recorta. ◀ ▶ (o ← →, A D) pasan al tablero vecino de la fila; moverse
+(W, ↑ ↓ o el joystick) vuelve a caminar. «📐 Alzado» abre la vista plana de la fila a escala, con números, códigos y zonas en obra,
+descargable en PNG.
 Fuentes de los códigos: carpeta «PLANOS FUNCIONALES» (ficha de conexionado externo Rev. D, diagrama de bloques del cableado Rev. 0,
 esquemas funcionales =E1.A01.CP01 Rev. D, tablero de regulación EPLI) y el unifilar OE-603.

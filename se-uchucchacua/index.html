@@ -83,6 +83,24 @@ body.sala #hud{bottom:auto;top:70px}
 .ficha table.cab small{display:block;color:var(--ink3);font-size:11px}
 .ficha table.cab small.nota{color:#b5651d}
 .ficha .fuente{font-size:11px;color:var(--ink3);margin-top:6px}
+#barraEnc{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:6;display:flex;gap:6px;align-items:center;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);border-radius:12px;padding:6px 8px;max-width:calc(100vw - 16px)}
+#barraEnc.oculto{display:none}
+#barraEnc button{box-shadow:none;padding:5px 10px;font-size:12.5px;white-space:nowrap}
+#barraEnc .t{font-size:13px;padding:0 6px;text-align:center;line-height:1.25;min-width:0}
+#barraEnc .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#barraEnc .t small{display:block;color:var(--ink3);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+body.encuadre #mira,body.encuadre #mirando,body.encuadre #hud{display:none!important}
+#alzado{position:fixed;inset:0;z-index:25;background:var(--bg);display:none;flex-direction:column}
+#alzado.on{display:flex}
+#alzado .cab{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#alzado .cab h3{margin:0;font-size:15px;font-weight:600;flex:1;min-width:200px}
+#alzado .cab h3 small{display:block;font-weight:400;color:var(--ink2);font-size:12px}
+#alzado .cab button{box-shadow:none;font-size:12.5px}
+#alzado .filas{display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px 0}
+#alzado .filas button{box-shadow:none;font-size:12px;padding:4px 9px}
+#alzado .lienzo{flex:1;overflow:auto;padding:8px 14px 14px}
+#alzado canvas{display:block;margin:0 auto;cursor:pointer}
+@media (max-width: 820px){#barraEnc{top:56px}#barraEnc .solo-pc{display:none}#alzado .cab{padding:8px 10px}#alzado .lienzo{padding:6px}}
 #visor{position:fixed;inset:0;z-index:30;background:rgba(10,14,18,.86);display:none;place-items:center;padding:20px}
 #visor.on{display:grid}
 #visor img{max-width:96vw;max-height:84vh;border-radius:6px;background:#ccc}
@@ -247,6 +265,7 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
  <div id="izqSala" class="oculto">
   <div class="salaCab"><h2>Sala de control</h2><button id="bSalir" title="Volver a la vista general (Esc)">✕ Salir</button></div>
   <div class="seg" id="pisoSel" style="margin-top:8px"><button data-p="1" class="on">1.er piso</button><button data-p="2">2.º piso</button></div>
+  <button id="bAlzados" style="width:100%;margin-top:6px;box-shadow:none">📐 Alzados de los tableros por fila</button>
   <p class="ayuda" id="ayudaSala"></p>
   <label class="capa"><input type="checkbox" id="vZon" checked> Resaltar zonas en obra</label>
   <label class="capa"><input type="checkbox" id="vDes2"> Destapar foso y canaletas</label>
@@ -269,6 +288,8 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
 <div id="mirando" class="oculto"></div>
 <div id="mapa" class="oculto"><div class="cab"><b id="mapaTit">Sala de control · 1.er piso</b><span class="sp"></span><span class="ley"><span><i style="background:#2f6fe4"></i>nuevo</span><span><i style="background:#e07b1f"></i>intervenido</span><span><i style="background:#c9a227"></i>relacionado</span></span><button id="mapaMin" title="Ocultar o mostrar el plano">▾</button></div><canvas id="mapaCv"></canvas></div>
 <div id="visor"><div><img alt=""><p></p></div></div>
+<div id="barraEnc" class="oculto"><button id="encIzq" title="Tablero de la izquierda (← o A)">◀</button><div class="t"><b id="encTit"></b><small id="encSub"></small></div><button id="encDer" title="Tablero de la derecha (→ o D)">▶</button><button id="encAlz" title="Alzado de la fila">📐<span class="solo-pc"> Alzado</span></button><button id="encCam" title="Volver a caminar (W, flechas ↑ ↓ o el joystick)">🚶<span class="solo-pc"> Caminar</span></button></div>
+<div id="alzado"><div class="cab"><h3 id="alzTit"></h3><button id="alzPng">⬇ Descargar PNG</button><button id="alzCerrar">✕ Cerrar</button></div><div class="filas" id="alzFilas"></div><div class="lienzo"><canvas id="alzCv"></canvas></div></div>
 <div id="joy" class="oculto"><i></i></div>
 <div id="mira" class="oculto"></div>
 <div id="pie">
@@ -285,9 +306,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { construir, REG, CAPAS, ESTADOS, ETAPAS, etapaDe, ORIGEN, NORTE, alturaTerreno, NUMS, CTX, pisoEn, OBST_EXTRA, L as LAY } from './se3d.js?v=4';
 import { EQUIPOS } from './interior.js?v=4';
-import { Recorrido, obstaculosDe } from './recorrer.js?v=4';
+import { Recorrido, obstaculosDe } from './recorrer.js?v=5';
 import { Pelicula } from './pelicula.js?v=2';
-import { Minimapa, frenteDe } from './sala.js?v=1';
+import { Minimapa, frenteDe, filasDe, encuadreDe } from './sala.js?v=2';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=1';
 
 const $ = (s) => document.querySelector(s);
@@ -374,22 +395,25 @@ const nums = NUMS.map((n) => {
 let enSala = false;
 const Y2 = CTX.y2;
 const cajaEdif = (p) => p.x > 17.9 && p.x < 46.1 && -p.z > -5.2 && -p.z < 0.8;
-const pisoCam = () => (camera.position.y > Y2 + 0.8 ? 2 : 1);
+const pisoCam = () => (enc ? enc.e.piso : camera.position.y > Y2 + 0.8 ? 2 : 1);
+let enc = null; // encuadre «ver tablero completo» en curso: { e, mapaMin }
 // rótulos menores solo de cerca
 function rotulosVis() {
   const on = $('#vRot').checked;
   rotulos.forEach((r) => { r.visible = on && r.userData.de.visible && (!r.userData.menor || camera.position.distanceTo(r.position) < 40); });
-  const enEdificio = rec && rec.activo && cajaEdif(camera.position);
+  const enEdificio = rec && rec.activo && (enc || cajaEdif(camera.position));
   const pc = pisoCam();
   if (enEdificio) ocultamiento();
-  nums.forEach((n) => (n.visible = capaOn.sala && (enSala ? n.userData.n.piso === 1 : enEdificio && n.userData.n.piso === pc && camera.position.distanceTo(n.position) < 16 && !n.userData.ocl)));
+  if (enc) camera.getWorldDirection(_dirC);
+  const delante = (n) => !enc || _vC.copy(n.position).sub(camera.position).dot(_dirC) > camera.near + 0.15; // en el encuadre, solo lo que queda tras el plano de recorte
+  nums.forEach((n) => (n.visible = capaOn.sala && (enSala ? n.userData.n.piso === 1 : enEdificio && n.userData.n.piso === pc && camera.position.distanceTo(n.position) < 16 && !n.userData.ocl && delante(n))));
   document.body.classList.toggle('dentro', !!enEdificio);
   if (enEdificio) rotulos.forEach((r) => (r.visible = false));
   const cp = renderer.clippingPlanes;
   if (cp.length) rotulos.forEach((r) => { if (r.visible && cp.some((p) => p.distanceToPoint(r.position) < 0)) r.visible = false; });
 }
 // placas tapadas por otros tableros o muros (las placas HTML no se ocultan solas): rayo cámara→placa contra las cajas de colisión
-let obstSala = null, tOcl = 0, oclKey = ''; const _rO = new THREE.Ray(), _pO = new THREE.Vector3();
+let obstSala = null, tOcl = 0, oclKey = ''; const _rO = new THREE.Ray(), _pO = new THREE.Vector3(), _dirC = new THREE.Vector3(), _vC = new THREE.Vector3();
 function ocultamiento() {
   const now = performance.now(); const k = camera.position.toArray().map((v) => v.toFixed(2)).join() + camera.rotation.y.toFixed(2);
   if (k === oclKey || now - tOcl < 120) return; tOcl = now; oclKey = k;
@@ -403,7 +427,7 @@ function ocultamiento() {
     for (const b of obstSala) {
       if (b.containsPoint(cam)) continue;
       if (Math.abs(b.min.x - N.caja.min.x) < 0.02 && Math.abs(b.max.z - N.caja.max.z) < 0.02 && Math.abs(b.max.x - N.caja.max.x) < 0.02) continue; // su propio gabinete
-      const p = _rO.intersectBox(b, _pO); if (p && cam.distanceTo(p) < D - 0.05) { tapada = true; break; }
+      const p = _rO.intersectBox(b, _pO); if (p) { const dp = cam.distanceTo(p); if (dp < D - 0.05 && dp > camera.near + 0.05) { tapada = true; break; } }
     }
     n.userData.ocl = tapada;
   }
@@ -567,7 +591,7 @@ function tablaCables(cods) {
 }
 function seleccionar(info, volarA = false) {
   actual = info;
-  if (!info) { sel.visible = false; $('#ficha').classList.add('oculto'); $('#lista').classList.remove('oculto'); $('#der').classList.remove('conFicha'); if (mapa) { mapa.sel = null; mapa.dibujar(); } pedir(); return; }
+  if (!info) { sel.visible = false; $('#ficha').classList.add('oculto'); $('#lista').classList.remove('oculto'); $('#der').classList.remove('conFicha'); if (mapa) { mapa.sel = null; mapa.dibujar(); } if (enc) requestAnimationFrame(() => enc && verCompleto(enc.e)); pedir(); return; }
   const b = new THREE.Box3().setFromObject(info.obj); sel.box.copy(b); sel.visible = info.id !== 'Terreno';
   const c = b.getCenter(new THREE.Vector3());
   const X = (ORIGEN.X + c.x).toFixed(2), Y = (ORIGEN.Y - c.z).toFixed(2);
@@ -575,7 +599,7 @@ function seleccionar(info, volarA = false) {
   const filas = Object.entries(info.datos || {}).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
   const img = eq ? imagenFrente(eq) : null;
   const obra = info.obra ? `<div class="obra" style="border-color:${OBRA[info.obra].c}"><b style="color:${OBRA[info.obra].c}">${OBRA[info.obra].t}</b>${esc_(info.obraTxt || '')}</div>` : '';
-  const acc = eq ? `<div class="acc"><button data-ir="${eq.key}">🚶 Ir al frente</button>${img ? '<button data-ver="1">🔍 Ver frente</button>' : ''}</div>` : '';
+  const acc = eq ? `<div class="acc"><button data-ir="${eq.key}">🎯 Ver completo</button><button data-alz="1">📐 Alzado de la fila</button></div>` : '';
   $('#ficha').innerHTML = `<button class="cerrar" title="Cerrar">×</button>
     <span class="est" style="background:${COLEST[info.estado]}">${ESTADOS[info.estado]}</span>
     ${img ? `<img class="frente" src="${img}" alt="Frente de ${esc_(info.id)}" title="Ampliar">` : ''}
@@ -585,9 +609,9 @@ function seleccionar(info, volarA = false) {
     ${info.aprox ? '<div class="aprox">Posición en planta tomada del plano OE-604; las alturas y formas son referenciales porque los planos no detallan este elemento existente.</div>' : ''}
     ${info.cod ? tablaCables(info.cod) : ''}`;
   $('#ficha').querySelector('.cerrar').onclick = () => seleccionar(null);
-  const verF = () => { $('#visor img').src = img; $('#visor p').textContent = `${info.id} · ${info.nombre} — frente esquemático (los equipos internos son referenciales)`; $('#visor').classList.add('on'); };
+  const verF = () => abrirAlzado(FILA_DE[eq.key].f, eq);
   $('#ficha').querySelector('img.frente')?.addEventListener('click', verF);
-  $('#ficha').querySelector('[data-ver]')?.addEventListener('click', verF);
+  $('#ficha').querySelector('[data-alz]')?.addEventListener('click', verF);
   $('#ficha').querySelector('[data-ir]')?.addEventListener('click', () => (rec && rec.activo ? irA(eq) : entrarSala(eq)));
   $('#ficha').classList.remove('oculto'); $('#lista').classList.add('oculto'); $('#der').classList.add('conFicha');
   if (mapa) { mapa.sel = eq ? eq.key : null; mapa.dibujar(); }
@@ -599,6 +623,7 @@ function seleccionar(info, volarA = false) {
     volar(c.clone().add(dir.multiplyScalar(dist)), c);
   }
   ajustarMapa(); pedir();
+  if (enc && (!info || info.eqKey)) requestAnimationFrame(() => enc && verCompleto(enc.e)); // el área libre cambió: reencuadrar
 }
 $('#visor').onclick = () => $('#visor').classList.remove('on');
 // lista de equipos
@@ -618,7 +643,7 @@ const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let abajo = 
 function pick(ev, soloTerreno = false) {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
-  ray.setFromCamera(ptr, camera);
+  ray.setFromCamera(ptr, camera); ray.near = enc ? camera.near : 0;
   const objs = soloTerreno ? [terreno] : REG.filter((x) => x.obj.visible).map((x) => x.obj);
   const hits = ray.intersectObjects(objs, true).filter((h) => {
     if (!h.object.visible) return false;
@@ -702,7 +727,7 @@ function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0) {
 }
 function salirRecorrido() {
   if (!rec || !rec.activo) return;
-  const adentro = cajaEdif(camera.position);
+  const adentro = enc || cajaEdif(camera.position); salirEncuadre(false);
   rec.desactivar(); controls.enabled = true; camera.fov = 40; camera.updateProjectionMatrix();
   if (adentro && camAntes) { camera.position.copy(camAntes.p); controls.target.copy(camAntes.t); }
   else { const d = new THREE.Vector3(); camera.getWorldDirection(d); controls.target.copy(camera.position).addScaledVector(d, 6); } // en el patio la órbita sigue desde donde se quedó
@@ -717,10 +742,47 @@ function irPiso(p) { const [X, Y, yaw, yPie, pitch] = LLEGADA[p]; entrarRecorrid
 function irA(e) {
   if (!e) return;
   if (!rec || !rec.activo) { irPiso(e.piso); }
-  const f = frenteDe(e, (X, Y, yPie) => rec.libre(X, Y, yPie));
-  rec.colocar(f.X, f.Y, f.yaw, e.yPiso, f.pitch);
-  seleccionarSuave(e);
+  seleccionarSuave(e); verCompleto(e);
 }
+// ---------- encuadre «ver tablero completo»: la cámara retrocede lo necesario (atraviesa lo que queda detrás con el plano
+// de recorte cercano) y centra el tablero en la parte de la pantalla que no tapan los paneles
+const FOV_ENC = 55;
+function areaLibre() {
+  const W = innerWidth, H = innerHeight; let l = 0, r = W, t = movil ? 104 : 112, b = H;
+  const vis = (el) => el && !el.classList.contains('oculto') && !el.classList.contains('cerrado') && getComputedStyle(el).display !== 'none';
+  if (!movil && vis($('#izq'))) l = $('#izq').getBoundingClientRect().right + 8;
+  if (vis($('#der')) && $('#der').classList.contains('conFicha')) { const rr = $('#der').getBoundingClientRect(); if (movil) b = Math.min(b, rr.top - 6); else r = rr.left - 8; }
+  if (vis($('#izq')) && movil) b = Math.min(b, $('#izq').getBoundingClientRect().top - 6);
+  if (vis($('#mapa'))) b = Math.min(b, $('#mapa').getBoundingClientRect().top - 6);
+  if (movil) b = Math.min(b, H - 54);
+  if (b - t < 160) b = Math.min(H, t + 160);
+  return { l, r, t, b };
+}
+function verCompleto(e) {
+  if (!rec || !rec.activo) return;
+  if (!enc) { enc = { mapaMin: $('#mapa').classList.contains('min') }; if (!enc.mapaMin) { $('#mapa').classList.add('min'); $('#mapaMin').textContent = '▴'; } }
+  enc.e = e; document.body.classList.add('encuadre');
+  const { f, i } = FILA_DE[e.key];
+  $('#encTit').textContent = `${e.info.id}${e.cod ? ' · ' + e.cod : e.sigla ? ' · ' + e.sigla : ''}`;
+  $('#encSub').textContent = `${e.nombre}${e.obra ? ' · ' + OBRA[e.obra].t.toLowerCase() : ''} · ${f.nombre} (${i + 1}/${f.eqs.length})`;
+  $('#encIzq').disabled = i === 0; $('#encDer').disabled = i === f.eqs.length - 1;
+  $('#barraEnc').classList.remove('oculto'); ajustarMapa();
+  const p = encuadreDe(e, areaLibre(), { W: innerWidth, H: innerHeight, fov: FOV_ENC });
+  camera.fov = FOV_ENC; camera.near = p.near; camera.updateProjectionMatrix();
+  rec.encuadrar(p.x, p.y, p.z, p.yaw, p.pitch);
+  oclKey = ''; mapaKey = ''; pedir();
+}
+function salirEncuadre(caminar = true) {
+  if (!enc) return; const e = enc.e;
+  if (!enc.mapaMin) { $('#mapa').classList.remove('min'); $('#mapaMin').textContent = '▾'; }
+  enc = null; document.body.classList.remove('encuadre'); $('#barraEnc').classList.add('oculto');
+  camera.near = 0.1; camera.fov = rec && rec.activo ? 68 : 40; camera.updateProjectionMatrix();
+  if (caminar && rec && rec.activo) { const f = frenteDe(e, (X, Y, yP) => rec.libre(X, Y, yP)); rec.colocar(f.X, f.Y, f.yaw, e.yPiso, f.pitch); }
+  ajustarMapa(); oclKey = ''; mapaKey = ''; pedir();
+}
+function vecino(dir) { if (!enc) return; const { f, i } = FILA_DE[enc.e.key]; const n = f.eqs[i + dir]; if (n) { seleccionarSuave(n); verCompleto(n); } }
+$('#encIzq').onclick = () => vecino(-1); $('#encDer').onclick = () => vecino(1);
+$('#encCam').onclick = () => salirEncuadre(true); $('#encAlz').onclick = () => enc && abrirAlzado(FILA_DE[enc.e.key].f, enc.e);
 // en celular no abre la ficha al llegar (taparía la vista): basta la placa y el rótulo de lo que se mira
 function seleccionarSuave(e) { if (movil) { actual = e.info; if (mapa) { mapa.sel = e.key; mapa.dibujar(); } pedir(); } else seleccionar(e.info); }
 function entrarSala(e = null) { if (e) irA(e); else irPiso(1); }
@@ -735,6 +797,7 @@ function alDoble(ev) {
   const inf = infoDe(h.object); const e = inf && inf.eqKey ? EQ[inf.eqKey] : null;
   if (rec && rec.activo) {
     if (e) { irA(e); return; }
+    if (enc) { salirEncuadre(true); return; }
     // retrocede desde el punto tocado hasta un lugar libre
     const o = ray.ray.origin, d = ray.ray.direction;
     for (let t = h.distance - 0.35; t > 0; t -= 0.2) { const p = o.clone().addScaledVector(d, t); const yP = pisoEn(p.x, -p.z, rec.pies); if (Math.abs(yP - rec.pies) < 0.9 && rec.libre(p.x, -p.z, yP)) { rec.teletransportar(p.x, -p.z); return; } }
@@ -748,6 +811,14 @@ let ultTap = null, ultDoble = 0;
 renderer.domElement.addEventListener('dblclick', (e) => { if (performance.now() - ultDoble < 700) return; alDoble(e); });
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && $('#visor').classList.contains('on')) { $('#visor').classList.remove('on'); return; }
+  if (e.key === 'Escape' && $('#alzado').classList.contains('on')) { cerrarAlzado(); return; }
+  if (enc && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) {
+    const k = e.key.toLowerCase();
+    if (k === 'arrowleft' || k === 'a') { if (!e.repeat) vecino(-1); e.preventDefault(); return; }
+    if (k === 'arrowright' || k === 'd') { if (!e.repeat) vecino(1); e.preventDefault(); return; }
+    if (['arrowup', 'arrowdown', 'w', 's'].includes(k)) { salirEncuadre(true); return; }
+    if (k === 'escape') { salirEncuadre(true); return; }
+  }
   if (e.key === 'Escape' && rec && rec.activo) salirRecorrido();
   if (e.key === 'Enter' && rec && rec.activo && mirandoEq) seleccionar(mirandoEq.info);
 });
@@ -780,10 +851,79 @@ function fijarZonas(on) {
 }
 $('#vZon').onchange = (e) => fijarZonas(e.target.checked); $('#vZon0').onchange = (e) => fijarZonas(e.target.checked);
 $('#vDes2').onchange = (e) => { $('#vDes').checked = e.target.checked; fijarDestapado(e.target.checked); };
+// ---------- alzados por fila (vista plana de los frentes, a escala, con códigos y zonas en obra)
+const FILAS = filasDe(EQUIPOS); const FILA_DE = {}; FILAS.forEach((f) => f.eqs.forEach((e, i) => (FILA_DE[e.key] = { f, i })));
+const OPUESTO = { norte: 'sur', sur: 'norte', este: 'oeste', oeste: 'este' };
+let alzFila = null, alzMarca = null, alzCajas = [];
+function lienzoFrente(e) { let c = null; e.obj.traverse((m) => { const mm = m.userData.mat0 || m.material; if (c || !m.isMesh || !Array.isArray(mm)) return; const t = mm[4]?.map; if (t?.image?.getContext) c = t.image; }); return c; }
+function abrirAlzado(f, marca = null) { alzFila = f || FILAS[0]; alzMarca = marca ? marca.key : null; $('#alzado').classList.add('on'); dibujarAlzado(); }
+function cerrarAlzado() { $('#alzado').classList.remove('on'); }
+function dibujarAlzado() {
+  const f = alzFila; const cv = $('#alzCv'); const g = cv.getContext('2d');
+  $('#alzFilas').innerHTML = FILAS.map((x, i) => `<button data-i="${i}" class="${x === f ? 'on' : ''}">${x.nombre}${x.piso === 2 ? ' · 2.º piso' : ''}</button>`).join('');
+  $('#alzTit').innerHTML = `Alzado · ${f.nombre}<small>Visto desde el frente, mirando al ${OPUESTO[f.rumbo]} · ${f.piso === 1 ? '1.er' : '2.º'} piso · frentes a escala; los equipos dibujados en cada frente son referenciales</small>`;
+  // posiciones a lo largo de la fila (m)
+  const it = f.eqs.map((e) => { const s_ = e.X * f.dx + e.Y * f.dy; return { e, x0: s_ - e.w / 2, x1: s_ + e.w / 2, z0: e.zocalo ?? 0.1 }; });
+  const sMin = Math.min(...it.map((q) => q.x0)), sMax = Math.max(...it.map((q) => q.x1)); const hMax = Math.max(...it.map((q) => q.z0 + q.e.h));
+  const mL = 0.45, arriba = 0.75, abajo = 0.85, pie = 0.55; const anchoM = sMax - sMin + 2 * mL, altoM = arriba + hMax + abajo + pie;
+  const caja = $('#alzado .lienzo'); const aw = caja.clientWidth - 16, ah = caja.clientHeight - 12;
+  let esc = Math.min(aw / anchoM, ah / altoM); esc = Math.max(movil ? 95 : 110, Math.min(300, esc));
+  const W = Math.round(anchoM * esc), H = Math.round(altoM * esc), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // fondo blanco (para imprimir o pegar en un informe)
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+  const yPiso = (arriba + hMax) * esc; const X = (s_) => (s_ - sMin + mL) * esc;
+  g.fillStyle = '#eef0ee'; g.fillRect(0, yPiso, W, 0.18 * esc); g.fillStyle = '#2a3038'; g.fillRect(0, yPiso - 1, W, 3);
+  alzCajas = []; const fsBase = Math.max(10, Math.min(15, esc * 0.075));
+  for (const q of it) {
+    const e = q.e, x0 = X(q.x0), x1 = X(q.x1), w = x1 - x0, yTop = yPiso - (q.z0 + e.h) * esc, yZ = yPiso - q.z0 * esc;
+    const col = e.obra ? OBRA[e.obra].c : null;
+    if (col) { g.save(); g.globalAlpha = 0.35; g.fillStyle = col; for (let k = x0 - 6; k < x1 + 6; k += 9) { g.fillRect(k, yPiso + 3, 4, 0.16 * esc); } g.restore(); }
+    const src = lienzoFrente(e); if (src) g.drawImage(src, x0, yTop, w, yZ - yTop); else { g.fillStyle = '#d6d9d3'; g.fillRect(x0, yTop, w, yZ - yTop); }
+    g.fillStyle = '#1f2328'; g.fillRect(x0, yZ, w, yPiso - yZ);
+    g.strokeStyle = '#4a5058'; g.lineWidth = 1; g.strokeRect(x0 + 0.5, yTop + 0.5, w - 1, yPiso - yTop - 1);
+    if (col) { g.strokeStyle = col; g.lineWidth = 4; g.strokeRect(x0 - 4, yTop - 4, w + 8, yPiso - yTop + 6); }
+    if (alzMarca === e.key) { g.strokeStyle = '#f0a500'; g.lineWidth = 3; g.setLineDash([7, 5]); g.strokeRect(x0 - 10, yTop - 10, w + 20, yPiso - yTop + 18); g.setLineDash([]); }
+    // placa superior: número y código
+    const cod = e.cod || e.sigla || ''; g.font = `700 ${fsBase * 1.35}px IBM Plex Sans, sans-serif`; const tw = Math.max(g.measureText(String(e.n)).width, (g.font = `500 ${fsBase * 0.85}px IBM Plex Mono, monospace`, g.measureText(cod).width)) + 16;
+    const tx = (x0 + x1) / 2, ty = yTop - 0.18 * esc, th = cod ? fsBase * 2.6 : fsBase * 1.8;
+    g.fillStyle = col && e.obra !== 'rel' ? col : e.obra === 'rel' ? '#fff6d6' : '#ffffff'; g.strokeStyle = col || '#9aa4ad'; g.lineWidth = 1.5;
+    g.beginPath(); g.roundRect(tx - tw / 2, ty - th, tw, th, 6); g.fill(); g.stroke();
+    const tc = col && e.obra !== 'rel' ? '#ffffff' : '#18212b'; g.fillStyle = tc; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `700 ${fsBase * 1.35}px IBM Plex Sans, sans-serif`; g.fillText(String(e.n), tx, ty - th + fsBase * 0.95);
+    if (cod) { g.font = `500 ${fsBase * 0.85}px IBM Plex Mono, monospace`; g.fillText(cod, tx, ty - fsBase * 0.65); }
+    // nombre debajo
+    g.fillStyle = '#2a3038'; g.font = `${fsBase * 0.82}px IBM Plex Sans, sans-serif`;
+    const pal = String(e.nombre).split(' '); const lin = []; let l = '';
+    for (const p_ of pal) { const t = l ? l + ' ' + p_ : p_; if (g.measureText(t).width > w - 6 && l) { lin.push(l); l = p_; } else l = t; }
+    if (l) lin.push(l); lin.slice(0, 4).forEach((t, k) => g.fillText(k === 3 && lin.length > 4 ? t + '…' : t, tx, yPiso + 0.3 * esc + k * fsBase * 1.05));
+    alzCajas.push([x0 - 6, ty - th, x1 + 6, yPiso + 0.3 * esc + 4 * fsBase, e]);
+  }
+  // pie: título, leyenda y fuente
+  const yP = H - pie * esc + 8; g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillStyle = '#18212b'; g.font = `600 ${fsBase}px IBM Plex Sans, sans-serif`; g.fillText(`SE Uchucchacua · sala de control · alzado ${f.nombre} (${f.piso === 1 ? '1.er' : '2.º'} piso, visto mirando al ${OPUESTO[f.rumbo]})`, 12, yP);
+  let lx = 12; g.font = `${fsBase * 0.85}px IBM Plex Sans, sans-serif`;
+  for (const [k, o] of Object.entries(OBRA)) { g.fillStyle = o.c; g.fillRect(lx, yP + fsBase * 1.55, 10, 10); g.fillStyle = '#4c5967'; g.fillText(o.t, lx + 15, yP + fsBase * 1.45); lx += g.measureText(o.t).width + 34; }
+  g.fillStyle = '#7b8794'; g.fillText('Fuente: OE-607 (disposición), OE-603, OE-608/609 y planos funcionales Rev. D (códigos e intervención) · modelo 3D en código', 12, yP + fsBase * 2.9);
+}
+$('#alzFilas').onclick = (ev) => { const b = ev.target.closest('button[data-i]'); if (b) { alzFila = FILAS[+b.dataset.i]; alzMarca = null; dibujarAlzado(); } };
+$('#alzCerrar').onclick = cerrarAlzado;
+$('#bAlzados').onclick = () => { const e = enc ? enc.e : actual && actual.eqKey ? EQ[actual.eqKey] : null; abrirAlzado(e ? FILA_DE[e.key].f : FILAS[0], e); };
+$('#alzCv').addEventListener('click', (ev) => {
+  const r = $('#alzCv').getBoundingClientRect(); const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  const c = alzCajas.find(([a, b, c_, d]) => x >= a && x <= c_ && y >= b && y <= d); if (!c) return;
+  cerrarAlzado(); if (rec && rec.activo) irA(c[4]); else entrarSala(c[4]);
+});
+$('#alzCv').addEventListener('mousemove', (ev) => {
+  const r = $('#alzCv').getBoundingClientRect(); const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  const c = alzCajas.find(([a, b, c_, d]) => x >= a && x <= c_ && y >= b && y <= d);
+  $('#alzCv').title = c ? `${c[4].info.id}${c[4].cod ? ' · ' + c[4].cod : ''} — clic para verlo en 3D` : '';
+});
+$('#alzPng').onclick = () => $('#alzCv').toBlob((bl) => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = `Alzado_SE_Uchucchacua_${alzFila.nombre.replace(/[^\wÁÉÍÓÚáéíóúñÑ]+/g, '_')}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
 // ---------- minimapa
 const mapa = new Minimapa($('#mapaCv'), { sala: LAY.sala, equipos: EQUIPOS, norte: NORTE,
   onIr: (e) => irA(e),
-  onPunto: (X, Y, p) => { if (!rec || !rec.activo) return; const yP = p === 2 ? Y2 : 0.12; if (rec.libre(X, Y, yP)) rec.colocar(X, Y, rec.yawDeg, yP, 0); else aviso('Ese punto está ocupado por un tablero o un muro', 2500); },
+  onPunto: (X, Y, p) => { if (!rec || !rec.activo) return; salirEncuadre(false); const yP = p === 2 ? Y2 : 0.12; if (rec.libre(X, Y, yP)) rec.colocar(X, Y, rec.yawDeg, yP, 0); else aviso('Ese punto está ocupado por un tablero o un muro', 2500); },
   onHover: (e) => { $('#mapaCv').title = e ? `${e.info.id}${e.cod ? ' · ' + e.cod : ''} — ${e.nombre}` : ''; } });
 $('#mapaMin').onclick = () => { $('#mapa').classList.toggle('min'); $('#mapaMin').textContent = $('#mapa').classList.contains('min') ? '▴' : '▾'; ajustarMapa(); };
 function ajustarMapa() {
@@ -797,24 +937,27 @@ function ajustarMapa() {
 let mapaKey = '';
 function actualizarMapa() {
   if (!rec || !rec.activo) return;
-  const p = camera.position; const dentro = cajaEdif(p); const piso = dentro ? pisoCam() : mapa.piso;
+  const p = camera.position; const dentro = !!enc || cajaEdif(p); const piso = dentro ? pisoCam() : mapa.piso;
   const k = [p.x.toFixed(2), p.z.toFixed(2), rec.yaw.toFixed(2), piso, dentro].join('|'); if (k === mapaKey) return; mapaKey = k;
   const cambio = piso !== mapa.piso; mapa.fijar({ piso, pos: { X: p.x, Y: -p.z }, yaw: rec.yaw, dentro });
   if (cambio) { mapa.ajustar(mapa.anchoCss); $('#pisoSel').querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.p === piso)); } else mapa.dibujar();
   $('#mapaTit').textContent = dentro ? `Sala de control · ${piso === 1 ? '1.er' : '2.º'} piso` : 'Fuera de la sala · toca un tablero del plano para ir';
 }
 // ---------- qué se está mirando (rayo al centro de la pantalla)
-let mirandoEq = null, tMira = 0; const _c0 = new THREE.Vector2(0, 0);
+let mirandoEq = null, tMira = 0, tSigue = 0; const _c0 = new THREE.Vector2(0, 0);
 function actualizarMirando(now) {
   if (!rec || !rec.activo || now - tMira < 140) return; tMira = now;
   let e = null;
   if (cajaEdif(camera.position)) {
-    ray.setFromCamera(_c0, camera); ray.far = 7;
+    ray.setFromCamera(_c0, camera); ray.far = 7; ray.near = 0;
     const objs = EQUIPOS.filter((q) => q.obj.visible).map((q) => q.obj); const muros = (CAPAS.sala || []).filter((o) => o.visible);
     const h = ray.intersectObjects(muros, true)[0]; ray.far = Infinity;
     if (h) { const inf = infoDe(h.object); if (inf && inf.eqKey && objs.includes(EQ[inf.eqKey].obj)) e = EQ[inf.eqKey]; }
   }
   if (e === mirandoEq) return; mirandoEq = e; const el = $('#mirando');
+  clearTimeout(tSigue);
+  if (e && !enc && actual && actual.eqKey && actual !== e.info && $('#der').classList.contains('conFicha') && !$('#der').classList.contains('cerrado'))
+    tSigue = setTimeout(() => { if (mirandoEq === e && !enc) seleccionar(e.info); }, 700);
   if (!e) { el.classList.add('oculto'); return; }
   const o = e.obra ? OBRA[e.obra] : null;
   el.style.borderLeftColor = o ? o.c : '#9aa4ad';
@@ -854,7 +997,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && pel && pel.activa
 // ---------- bucle (dibuja solo cuando algo cambia)
 let sucio = true; function pedir() { sucio = true; }
 controls.addEventListener('change', pedir);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); css.setSize(innerWidth, innerHeight); ajustarMapa(); pedir(); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); css.setSize(innerWidth, innerHeight); ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); });
 const aguja = $('#aguja'); const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 let tAnt = performance.now();
 function bucle(now) {
@@ -862,7 +1005,7 @@ function bucle(now) {
   const dt = (now - tAnt) / 1000; tAnt = now;
   if (anim) { anim(now); sucio = true; }
   if (rec && rec.activo && rec.update(dt)) sucio = true;
-  if (rec && rec.activo) { actualizarMapa(); actualizarMirando(now); }
+  if (rec && rec.activo) { if (enc && rec.mov.lengthSq() > 0.05) salirEncuadre(true); actualizarMapa(); actualizarMirando(now); }
   if (pel && pel.activa && pel.update(dt)) sucio = true;
   const mov = controls.enabled ? controls.update() : false;
   if (!(sucio || mov)) return;
@@ -878,7 +1021,7 @@ function bucle(now) {
 visibilidad(); aplicarColor();
 requestAnimationFrame(bucle);
 $('#cargando').remove();
-window.__se = { EQ, EQUIPOS, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
+window.__se = { EQ, EQUIPOS, FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
 </script>
 </body>
 </html>

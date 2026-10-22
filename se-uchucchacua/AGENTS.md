@@ -20,7 +20,7 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `interior.js` | Sala de control: tableros y celdas con frente (canvas), relés por tablero, foso y trincheras, bandejas, luces, puertas; ductos y cableado (control, fuerza, comunicaciones, 10 kV, tierra); gabinete del IN-385 |
 | `recorrer.js` | Primera persona: colisiones (cajas), escaleras, teletransporte, joystick táctil |
 | `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
-| `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607) y `frenteDe()` |
+| `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607), `frenteDe()`, `filasDe()` (filas de tableros para alzados y vecinos) y `encuadreDe()` (pose de cámara para ver un tablero completo con el plano de recorte cercano) |
 | `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
 
