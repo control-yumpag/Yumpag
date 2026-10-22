@@ -2,7 +2,7 @@
 // diarios, con la distribución, la paleta y los botones del tablero de la LT 138 kV Yumpag. Todo sale de uchu4d.js (control
 // diario de AXON: hojas AVANCE, PERSONAL Y RESTRICCIONES y REGISTRO FOTOGRÁFICO); nada se escribe a mano aquí. Sin nombres
 // del personal: solo cantidades. Sin rojo de juicio: lo atrasado va en ámbar.
-import { COL4, TXT4, fCorta, fLarga, pct, dias } from './cuatrod.js?v=2';
+import { COL4, TXT4, fCorta, fLarga, pct, dias } from './cuatrod.js?v=3';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

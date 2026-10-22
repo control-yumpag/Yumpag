@@ -61,32 +61,40 @@ const CSS = `
 .t4-bar .f small{display:block;font:500 .6rem "IBM Plex Sans",sans-serif;color:var(--ink-mut)}
 .t4-ley{display:flex;gap:10px;flex-wrap:wrap;font-size:.62rem;color:var(--ink-2)}
 .t4-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-.g4{--nw:270px;position:relative;font-size:.7rem}
-.g4 .r{display:grid;grid-template-columns:var(--nw) 1fr 120px;align-items:center;min-height:21px;cursor:pointer;border-radius:4px}
+.g4{--nw:clamp(300px,27%,430px);position:relative;font-size:.74rem}
+.g4 .r{display:grid;grid-template-columns:var(--nw) minmax(0,1fr) 132px;align-items:center;min-height:26px;cursor:pointer;border-radius:4px;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
 .g4 .r:hover{background:var(--panel-2)}
 .g4 .r.sel{background:var(--sky-soft)}
-.g4 .r.cab{cursor:default;position:sticky;top:0;background:var(--panel);z-index:2;min-height:24px;border-bottom:1px solid var(--line)}
+.g4 .r.cab{cursor:default;position:sticky;top:0;background:var(--panel);z-index:2;min-height:28px;border-bottom:1px solid var(--line)}
 .g4 .r.cab:hover{background:var(--panel)}
-.g4 .r.fase{cursor:default;font-size:.6rem;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-mut);font-weight:700;min-height:22px;margin-top:3px}
+.g4 .r.fase{display:block;cursor:default;min-height:0;margin-top:5px;padding:4px 4px 2px;border-bottom:1px solid var(--line);border-radius:0}
 .g4 .r.fase:hover{background:none}
-.g4 .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px;color:var(--ink-2)}
-.g4 .n b{font:600 .66rem "IBM Plex Mono",monospace;color:var(--ink);margin-right:6px}
-.g4 .r.hoy .n{color:var(--ink);font-weight:600}
-.g4 .r.hoy .n::after{content:'●';color:var(--sky);font-size:9px;margin-left:5px;vertical-align:1px}
-.g4 .z{font-size:.62rem;color:var(--ink-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:8px}
-.g4 .t{position:relative;height:21px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(var(--dw) - 1px),var(--line) calc(var(--dw) - 1px),var(--line) var(--dw))}
-.g4 .t .lb{position:absolute;top:5px;height:11px;border:1px solid var(--line-2);background:var(--panel-3);border-radius:3px}
-.g4 .t .ev{position:absolute;top:5px;height:11px;border-radius:3px}
-.g4 .t .pv{position:absolute;top:5px;height:11px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(45,118,103,.42) 0 3px,transparent 3px 6px)}
-.g4 .t .pm{position:absolute;top:3px;height:15px;width:2px;background:var(--ink);opacity:.55}
-.g4 .t .l{position:absolute;top:-2px;bottom:-2px;width:2px;margin-left:-1px;background:#d9714f;z-index:1}
-.g4 .t .c{position:absolute;top:-2px;bottom:-2px;width:0;border-left:1px dashed var(--ink-mut);z-index:1}
-.g4 .t .tx{position:absolute;left:4px;top:3px;font-size:.6rem;color:var(--ink-mut);white-space:nowrap}
-.g4 .cab .t{background:none;height:24px}
-.g4 .cab .t span{position:absolute;top:5px;font:600 .6rem "IBM Plex Mono",monospace;color:var(--ink-mut);transform:translateX(-50%);cursor:pointer;white-space:nowrap}
+.g4 .r.fase>div:not(.n){display:none}
+.g4 .r.fase .n{display:block;padding:0;font-size:.64rem;letter-spacing:.5px;text-transform:uppercase;font-weight:700;color:var(--ink-mut);line-height:1.3}
+.g4 .n{display:grid;grid-template-columns:2.7em minmax(0,1fr) auto;align-items:center;column-gap:7px;padding:3px 10px 3px 2px;color:var(--ink);line-height:1.28}
+.g4 .n b{font:600 .68rem "IBM Plex Mono",monospace;color:var(--ink-mut);text-align:right;margin:0}
+.g4 .n .nm{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.g4 .n .pc{font:600 .66rem "IBM Plex Mono",monospace;color:var(--ink-2);white-space:nowrap;text-align:right;min-width:4.6em}
+.g4 .n .pc.term{color:#2d7667}
+.g4 .n .pc.atras{color:#b8650a}
+.g4 .n .pc.nd{color:var(--ink-mut);font-weight:400}
+.g4 .r.hoy .n .nm{font-weight:600}
+.g4 .r.hoy .n .nm::after{content:' ●';color:var(--sky);font-size:9px;vertical-align:1px}
+.g4 .z{font-size:.64rem;color:var(--ink-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:10px}
+.g4 .t{position:relative;align-self:stretch;min-height:26px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(var(--dw) - 1px),var(--line) calc(var(--dw) - 1px),var(--line) var(--dw))}
+.g4 .t .lb{position:absolute;top:calc(50% - 7px);height:14px;border:1px solid var(--line-2);background:var(--panel-3);border-radius:3px;box-sizing:border-box}
+.g4 .t .ev{position:absolute;top:calc(50% - 7px);height:14px;border-radius:3px}
+.g4 .t .pv{position:absolute;top:calc(50% - 7px);height:14px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(45,118,103,.42) 0 3px,transparent 3px 6px)}
+.g4 .t .pm{position:absolute;top:calc(50% - 9px);height:18px;width:2px;background:var(--ink);opacity:.55}
+.g4 .t .l{position:absolute;top:-1px;bottom:-1px;width:2px;margin-left:-1px;background:#d9714f;z-index:1}
+.g4 .t .c{position:absolute;top:-1px;bottom:-1px;width:0;border-left:1px dashed var(--ink-mut);z-index:1}
+.g4 .t .tx{position:absolute;left:6px;top:calc(50% - 9px);font-size:.62rem;line-height:16px;color:var(--ink-2);white-space:nowrap;padding:0 9px;border:1px dashed var(--line-2);border-radius:9px;background:var(--panel-2)}
+.g4 .cab .n{display:block;padding-left:2px}
+.g4 .cab .t{background:none;min-height:28px}
+.g4 .cab .t span{position:absolute;top:calc(50% - 8px);font:600 .64rem "IBM Plex Mono",monospace;color:var(--ink-mut);transform:translateX(-50%);cursor:pointer;white-space:nowrap;line-height:16px}
 .g4 .cab .t span.m{font-weight:700;color:var(--ink-2)}
-.g4 .cab .t span.on{color:#fff;background:#d9714f;border-radius:3px;padding:0 3px}
-@media (max-width:900px){.g4{--nw:150px}.g4 .r{grid-template-columns:var(--nw) 1fr}.g4 .z{display:none}}
+.g4 .cab .t span.on{color:#fff;background:#d9714f;border-radius:3px;padding:0 4px}
+@media (max-width:900px){.g4{--nw:172px;font-size:.68rem}.g4 .r{grid-template-columns:var(--nw) minmax(0,1fr)}.g4 .z{display:none}.g4 .n{grid-template-columns:2.2em minmax(0,1fr);padding-right:6px}.g4 .n .pc{grid-column:2;text-align:left;min-width:0;font-size:.6rem}.g4 .n .nm{-webkit-line-clamp:5}}
 `;
 
 export function iniciar4D(ctx) {
@@ -135,8 +143,14 @@ export function iniciar4D(ctx) {
   // ---------------------------------------------------------------- Gantt (pestaña Cronograma)
   const dw = () => `calc(100% / ${N})`;
   const posD = (iso) => Math.max(0, Math.min(N, dias(F[0], iso)));
+  // % ejecutado a la fecha de la barra junto al nombre (sin fechas: el estado va como etiqueta en la barra)
+  function pcAct(a, s) {
+    const e = a.ini ? ejecEn(a, i) : null;
+    if (e == null) return a.ini ? '<span class="pc nd">—</span>' : '<span class="pc nd"></span>';
+    return `<span class="pc ${s === 'atras' ? 'atras' : e >= 0.999 ? 'term' : ''}">${pct(e, 0)}</span>`;
+  }
   function ganttAxon() {
-    const cab = F.map((f, k) => { const d = +f.slice(8); const m = k > 0 && f.slice(5, 7) !== F[k - 1].slice(5, 7); return `<span class="${k === i ? 'on' : ''}${m ? ' m' : ''}" data-k="${k}" style="left:${((k + 0.5) / N) * 100}%" title="${fLarga(f)}">${d}</span>`; }).join('');
+    const cab = F.map((f, k) => { const d = +f.slice(8); const m = k > 0 && f.slice(5, 7) !== F[k - 1].slice(5, 7); return `<span class="${k === i ? 'on' : ''}${m ? ' m' : ''}${Math.abs(k - i) === 1 ? ' cerca' : ''}" data-k="${k}" style="left:${((k + 0.5) / N) * 100}%" title="${fLarga(f)}">${d}</span>`; }).join('');
     const meses = [...new Set(F.map((f) => MES[+f.slice(5, 7) - 1]))].join('–') + ' ' + F[0].slice(0, 4);
     const xL = ((i + 0.5) / N) * 100, xC = ((IC + 1) / N) * 100;
     const hechas = new Set((U4D.dias[F[i]] || {}).hechas || []);
@@ -154,7 +168,7 @@ export function iniciar4D(ctx) {
       } else barra = `<span class="tx">${esc_(a.estado || 'Sin fechas')}</span>`;
       const nf = FOTOS.filter((x) => String(x.act) === String(a.n)).length;
       const tip = `${a.n} · ${a.nombre}\n${a.ini ? `Programado ${fCorta(a.ini)} → ${fCorta(a.fin)}` : 'Sin fechas en el control'} · peso ${pct(a.peso)}\nA la fecha: programado ${pct(a.prog[i])} · ejecutado ${pct(ejecEn(a, i))} · ${TXT4[s]}\nZona: ${zonaTxt(a)}${nf ? `\nFotos: ${nf}` : ''}`;
-      h += `<div class="r${hechas.has(String(a.n)) ? ' hoy' : ''}${actSel === a ? ' sel' : ''}" data-a="${esc_(a.n)}" title="${esc_(tip)}"><div class="n"><b>${esc_(a.n)}</b>${esc_(a.nombre)}</div><div class="t" style="--dw:${dw()}">${barra}<b class="c" style="left:${xC}%"></b><b class="l" style="left:${xL}%"></b></div><div class="z">${esc_(zonaTxt(a))}${nf ? ` · ${nf} 📷` : ''}</div></div>`;
+      h += `<div class="r${hechas.has(String(a.n)) ? ' hoy' : ''}${actSel === a ? ' sel' : ''}" data-a="${esc_(a.n)}" title="${esc_(tip)}"><div class="n"><b>${esc_(a.n)}</b><span class="nm">${esc_(a.nombre)}</span>${pcAct(a, s)}</div><div class="t" style="--dw:${dw()}">${barra}<b class="c" style="left:${xC}%"></b><b class="l" style="left:${xL}%"></b></div><div class="z">${esc_(zonaTxt(a))}${nf ? ` · ${nf} 📷` : ''}</div></div>`;
     }
     mount.gantt.innerHTML = h;
     mount.ganttNota.innerHTML = `Barra gris: ventana programada · relleno: ejecutado a la fecha (lima en curso, verde terminado, ámbar detrás de lo programado) · trazo negro: programado si difiere · rayado: programado después del último reporte · línea roja: fecha elegida · línea punteada: último reporte (${fCorta(U4D.corte)}) · ● trabajada ese día. ${esc_(U4D.linea_base || '')}. Fuente: ${esc_(U4D.fuente)}.`;
@@ -172,7 +186,7 @@ export function iniciar4D(ctx) {
       if (x.fase && x.fase !== fase) { fase = x.fase; h += `<div class="r fase"><div class="n" style="color:var(--ink-mut)">${esc_(fase)}</div><div></div><div></div></div>`; }
       const L = x.ini ? X(x.ini) : 0, W = x.ini ? Math.max(0.6, X(x.fin) + 100 / T - L) : 0;
       const fill = conPct && x.pct_doc != null ? `<i class="ev" style="left:${L}%;width:${(W * Math.min(100, x.pct_doc)) / 100}%;background:${x.pct_doc >= 100 ? COL4.term : COL4.curso};opacity:.8"></i>` : '';
-      h += `<div class="r" style="cursor:default" title="${esc_(`${x.item} · ${x.nombre}\n${fCorta(x.ini)} → ${fCorta(x.fin)}${x.dias ? ` · ${x.dias} d` : ''}${conPct && x.pct_doc != null ? ` · ${x.pct_doc} % según el documento` : ''}`)}"><div class="n"><b>${esc_(x.item)}</b>${esc_(x.nombre)}</div><div class="t" style="--dw:100%">${x.ini ? `<i class="lb" style="left:${L}%;width:${W}%"></i>${fill}` : ''}<b class="l" style="left:${xl}%"></b></div><div class="z">${conPct ? (x.pct_doc != null ? x.pct_doc + ' %' : '—') : x.dias ?? '—'}</div></div>`;
+      h += `<div class="r" style="cursor:default" title="${esc_(`${x.item} · ${x.nombre}\n${fCorta(x.ini)} → ${fCorta(x.fin)}${x.dias ? ` · ${x.dias} d` : ''}${conPct && x.pct_doc != null ? ` · ${x.pct_doc} % según el documento` : ''}`)}"><div class="n"><b>${esc_(x.item)}</b><span class="nm">${esc_(x.nombre)}</span><span class="pc nd"></span></div><div class="t" style="--dw:100%">${x.ini ? `<i class="lb" style="left:${L}%;width:${W}%"></i>${fill}` : ''}<b class="l" style="left:${xl}%"></b></div><div class="z">${conPct ? (x.pct_doc != null ? x.pct_doc + ' %' : '—') : x.dias ?? '—'}</div></div>`;
     }
     mount.gantt.innerHTML = h; mount.ganttNota.textContent = nota;
   }

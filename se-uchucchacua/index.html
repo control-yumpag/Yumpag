@@ -403,7 +403,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
   #v-cro{grid-template-rows:70vh auto;overflow:auto}
   #croDet .cd{grid-template-columns:1fr}
   #v-fot{grid-template-columns:1fr;grid-template-rows:max-content 75vh;overflow:auto}
-  .g4 .cab .t span:nth-child(even):not(.on){display:none}
+  .g4 .cab .t span:nth-child(even):not(.on),.g4 .cab .t span.cerca{display:none}
   #fotDias{flex-direction:row;overflow-x:auto;flex:none}.fd{flex:none;gap:8px}
   .fgrid{grid-template-columns:repeat(2,1fr)}
   #v-rep{grid-template-columns:1fr}#repTira{grid-template-columns:repeat(3,minmax(0,1fr))}#repDet{grid-template-columns:1fr}
@@ -593,8 +593,8 @@ import { Pelicula } from './pelicula.js?v=2';
 import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
 import { U4D } from './uchu4d.js?v=1';
-import { iniciar4D, axonAlCorte } from './cuatrod.js?v=2';
-import { iniciarTablero } from './tablero.js?v=1';
+import { iniciar4D, axonAlCorte } from './cuatrod.js?v=3';
+import { iniciarTablero } from './tablero.js?v=2';
 const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
 
 const $ = (s) => document.querySelector(s);
