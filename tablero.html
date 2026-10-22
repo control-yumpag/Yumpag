@@ -21,6 +21,10 @@
       if (j.completo) { datos = j.completo; modo = 'completo'; } else datos = j.visita; }
     say('colocando los datos del corte ' + (datos.campos.fecha_larga || ''));
     for (const [n, v] of Object.entries(datos.bloques)) t = t.split('⟦bloque:' + n + '⟧').join(v);
+    /* 22-Oct-26 (v72.53): un bloque que la plantilla conoce y el corte publicado todavía no trae (bloque nuevo, como PERSONAL)
+       va vacío (null) y la plantilla usa su respaldo; antes, cualquier bloque nuevo dejaba el portal en «no coinciden» hasta
+       republicar los datos. Los campos sueltos (⟦fecha_larga⟧…) siguen siendo obligatorios. */
+    t = t.replace(/⟦bloque:\w+⟧/g, 'null');
     t = t.replace(/⟦(\w+)⟧/g, (m, k) => (k in datos.campos ? datos.campos[k] : m));
     if (t.includes('⟦')) throw new Error('la plantilla y los datos no coinciden (' + (datos.plantilla || '?') + ')');
     if (modo === 'visita') {
