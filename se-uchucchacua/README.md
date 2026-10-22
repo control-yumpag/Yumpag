@@ -18,6 +18,7 @@ Página: https://control-yumpag.github.io/Yumpag/se-uchucchacua/
 | `uchu4d.js` | Datos del BIM 4D (generado con `gen/uchu_build.py`, no editar a mano): series diarias por actividad, reportes, habilitantes, restricciones, cronogramas e índice de fotos |
 | `fotos4d/` | Fotos del registro de AXON ya publicables (rostros difuminados, sin EXIF, 1280 px y miniaturas en `m/`); `gen/uchu_fotos.py` |
 | `sala.js` | Modo sala: minimapa por piso (tableros, celdas, zonas en obra, posición) y punto para pararse frente a un tablero |
+| `navsala.js` | Navegación: ViewCube (portado de la LT), ventana móvil del plano, curvas de vuelo |
 | `funcional.js` | Datos de los planos funcionales: códigos (=E1.A01.CP01, =A1.C01.REGT…), los 68 cables de la ficha de conexionado externo Rev. D y su clase (nuevo / reconexión / existente) |
 | `pelicula.js` | «Película»: recorrido cinematográfico de 13 paradas (~2 min) con subtítulos y grabación a MP4/WebM desde el navegador |
 | `AGENTS.md` | Reglas y contexto para cualquier agente de código (Antigravity, Claude Code, Gemini CLI) que trabaje en esta carpeta |
@@ -27,14 +28,20 @@ Coordenadas: las del DWG de planta general, en metros, con origen desplazado (X 
 Fuentes: planos CN-EIU-25-04/ID-CNH-SE-OE-601…615 (Rev. 0/1), DWG OE-204 y metrado de obras electromecánicas (CONENHUA / Buenaventura).
 Lo existente que los planos no detallan (alturas de los pórticos, equipos de las bahías existentes, edificaciones vecinas) es referencial y la ficha lo dice.
 
-**Sala de control (modo sala).** Doble clic (doble toque en celular) sobre la sala o sobre un tablero, o el botón «Entrar a la sala
-de control»: se camina en primera persona por el 1.er y el 2.º piso, con placas grandes de número y código en cada tablero, un
-minimapa clicable por piso, la lista de tableros y el **mapa de obra**: azul = nuevo, naranja = existente con intervención (cables
-nuevos o reconexión), ocre = existente relacionado. La ficha de cada tablero muestra su frente y sus cables del conexionado externo.
-Al elegir un tablero (lista, plano, doble clic o «🎯 Ver completo») la cámara se aleja y lo encuadra entero en la parte libre de
-la pantalla; lo que queda entre la cámara y el pasillo se recorta. ◀ ▶ (o ← →, A D) pasan al tablero vecino de la fila; moverse
-(W, ↑ ↓ o el joystick) vuelve a caminar. «📐 Alzado» abre la vista plana de la fila a escala, con números, códigos y zonas en obra,
-descargable en PNG.
+**Sala de control: inspección de tableros.** Navegación pensada para una sala estrecha, con las soluciones de Navisworks
+(«Zoom Selected», órbita restringida, caja de sección), Revit (ViewCube, «Atrás») y los gemelos de subestaciones
+(plano para ubicarse). Clic sobre un tablero (en el 3D, en el plano o en la lista), doble clic sobre la sala o «Entrar a la sala»:
+la cámara vuela en ~0,5–0,9 s (arco por encima de las filas si cambia de fila) y deja el tablero **centrado y completo** en la
+parte libre de la pantalla, con el techo recortado; si otro tablero queda delante (p. ej. la espalda del 9 frente al 8) el plano
+de recorte se corre hasta pasarlo. **◀ ▶, ← →, A D o la rueda del ratón** pasan al tablero vecino (al final de una fila sigue con
+la siguiente); **↑ ↓** cambian de fila; **arrastrar** gira alrededor del tablero (±60°, sin perderlo); «⟲» (o Retroceso) vuelve
+al tablero anterior; «🚶 Caminar» (o W/S, joystick) pasa al recorrido libre y la cámara entra en primera persona sola cuando se
+arrima a un muro; «✕» o Esc sale y regresa a la vista de antes. El **plano de la sala** es una ventana que se arrastra y se
+pliega (recuerda su sitio; en celular arranca plegada). Fuera de la sala, el **ViewCube** (arriba a la derecha, como en la LT)
+lleva a vistas de caras, aristas y esquinas, se arrastra para orbitar, «🏠» vuelve a la vista inicial y «⟲ Atrás» a la anterior.
+Mapa de obra: azul = nuevo, naranja = existente con intervención (cables nuevos o reconexión), ocre = existente relacionado.
+La ficha de cada tablero muestra su frente y sus cables del conexionado externo. «📐 Alzado» abre la vista plana de la fila a
+escala, con números, códigos y zonas en obra, descargable en PNG.
 Fuentes de los códigos: carpeta «PLANOS FUNCIONALES» (ficha de conexionado externo Rev. D, diagrama de bloques del cableado Rev. 0,
 esquemas funcionales =E1.A01.CP01 Rev. D, tablero de regulación EPLI) y el unifilar OE-603.
 

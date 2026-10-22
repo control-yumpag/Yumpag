@@ -196,7 +196,12 @@ table.tb small,.ri small{display:block;color:var(--ink-mut);font-size:.6rem;marg
 .fg img,.fgrid img{width:100%;height:100%;object-fit:cover;display:block;background:var(--panel-3)}
 .fg span{position:absolute;left:0;right:0;bottom:0;font-size:.54rem;line-height:1.2;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72));padding:10px 4px 3px;text-align:left}
 /* visor 3D: superposiciones dentro del visor */
-#brujula{position:absolute;top:10px;right:10px;width:42px;height:42px;border-radius:50%;background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);display:grid;place-items:center;z-index:4}
+.se-viewcube{position:absolute;top:8px;right:8px;z-index:5;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.se-viewcube canvas{width:104px;height:104px;display:block;pointer-events:auto;cursor:grab;touch-action:none;border-radius:12px}
+.se-viewcube canvas:hover{background:rgba(127,138,148,.10)}.se-viewcube canvas.drag{cursor:grabbing}
+.se-viewcube .vc-tools{display:flex;gap:3px;pointer-events:auto}
+.se-viewcube .vc-tools button{border:1px solid var(--line-2);background:var(--panel);color:var(--ink-2);border-radius:6px;font-size:.62rem;line-height:1;padding:4px 7px;box-shadow:var(--shadow)}
+body.sala .se-viewcube{display:none}
 #coord{position:absolute;top:10px;left:10px;z-index:4;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;padding:4px 9px;font:11px "IBM Plex Mono",monospace;color:var(--ink-2);box-shadow:var(--shadow);max-width:calc(100% - 80px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rot{font:500 11px/1.2 "IBM Plex Sans",sans-serif;color:#fff;background:rgba(18,32,28,.8);padding:3px 7px;border-radius:5px;white-space:nowrap;transform:translateY(-6px);border-left:3px solid var(--E)}
 .rot.P{border-left-color:#5b9bff}.rot.C{border-left-color:#3fcf72}
@@ -213,12 +218,14 @@ body.dentro .num b{display:block;font-size:17px;line-height:1.05}
 body.dentro .num span{display:block;font:500 11px/1.2 "IBM Plex Mono",monospace;opacity:.92;margin-top:1px}
 #mirando{position:absolute;left:50%;bottom:calc(var(--mapaH,0px) + 14px);transform:translateX(-50%);z-index:5;pointer-events:none;background:rgba(18,32,28,.86);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 11px;border-radius:9px;max-width:min(440px,90%);text-align:center;border-left:4px solid #9aa4ad}
 #mirando b{font-size:13.5px}#mirando small{display:block;opacity:.8;font-size:11.5px}
-#mapa{position:absolute;z-index:5;bottom:8px;left:8px;background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);border-radius:10px;padding:6px 8px 8px}
-#mapa .cab{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:4px}
+#mapa{position:absolute;z-index:5;bottom:10px;left:10px;background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);border-radius:10px;padding:5px 8px 7px;touch-action:none}
+#mapa.arrastrando{opacity:.9;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#mapa .cab{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-2);margin-bottom:4px;cursor:move;user-select:none}
+#mapa .cab small{color:var(--ink-mut);font-size:10.5px}
 #mapa .cab b{color:var(--ink);font-weight:600}
 #mapa .cab .sp{flex:1}
 #mapa .cab button{padding:1px 8px;font-size:12px}
-#mapa .ley{display:flex;gap:10px;font-size:11px;color:var(--ink-mut);flex-wrap:wrap}
+#mapa .ley{display:flex;gap:10px;font-size:10.5px;color:var(--ink-mut);flex-wrap:wrap;margin-top:4px}
 #mapa .ley i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 #mapa canvas{display:block;touch-action:none;border-radius:6px}
 #mapa.min canvas,#mapa.min .ley{display:none}
@@ -246,7 +253,7 @@ body.sala #coord{display:none}
 #cine .rec.on{display:flex}
 @keyframes par{50%{opacity:.25}}
 body.cine .bim-viewport{position:fixed;inset:0;z-index:40;border-radius:0;border:0}
-body.cine #rotulos,body.cine #hud,body.cine #mira,body.cine #brujula,body.cine #coord,body.cine #mapa{display:none!important}
+body.cine #rotulos,body.cine #hud,body.cine #mira,body.cine .se-viewcube,body.cine #coord,body.cine #mapa{display:none!important}
 .bim-viewport:fullscreen{border-radius:0}
 body.embed .topbar,body.embed .nav{display:none}
 /* panel derecho: ficha, sala y capas (estilos del visor 3D) */
@@ -392,6 +399,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
   .bim-top-bar{padding:6px 8px}.bim-controls{flex-wrap:nowrap;overflow-x:auto;width:100%}
   .zonas-list{grid-template-columns:repeat(4,minmax(0,1fr))}
   #coord{display:none}
+  .se-viewcube canvas{width:80px;height:80px}
   #v-cro{grid-template-rows:70vh auto;overflow:auto}
   #croDet .cd{grid-template-columns:1fr}
   #v-fot{grid-template-columns:1fr;grid-template-rows:max-content 75vh;overflow:auto}
@@ -479,12 +487,12 @@ input[type=range]{width:100%;accent-color:var(--sky)}
     <div class="bim-viewport" id="visorBIM">
       <div id="vista"></div>
       <div id="rotulos"></div>
-      <div id="brujula" title="Norte"><svg width="34" height="34" viewBox="-17 -17 34 34"><g id="aguja"><path d="M0,-13 L5,3 L0,0 L-5,3Z" fill="#d23b2f"/><path d="M0,13 L5,3 L0,0 L-5,3Z" fill="#9aa4ad"/></g></svg></div>
+      <div class="se-viewcube" id="vcBox"><div class="vc-tools"><button id="vcHome" title="Vista inicial">🏠</button><button id="vcAtras" title="Volver a la vista anterior (como «Rewind» del visor de Autodesk)">⟲ Atrás</button></div></div>
       <div id="coord">Pase el puntero sobre el modelo</div>
       <div id="hud" class="oculto"></div>
       <div id="mirando" class="oculto"></div>
-      <div id="mapa" class="oculto"><div class="cab"><b id="mapaTit">Sala de control · 1.er piso</b><span class="sp"></span><span class="ley"><span><i style="background:#2f6fe4"></i>nuevo</span><span><i style="background:#e07b1f"></i>intervenido</span><span><i style="background:#c9a227"></i>relacionado</span></span><button id="mapaMin" title="Ocultar o mostrar el plano">▾</button></div><canvas id="mapaCv"></canvas></div>
-      <div id="barraEnc" class="oculto"><button id="encIzq" title="Tablero de la izquierda (← o A)">◀</button><div class="t"><b id="encTit"></b><small id="encSub"></small></div><button id="encDer" title="Tablero de la derecha (→ o D)">▶</button><button id="encAlz" title="Alzado de la fila">📐<span class="solo-pc"> Alzado</span></button><button id="encCam" title="Volver a caminar (W, flechas ↑ ↓ o el joystick)">🚶<span class="solo-pc"> Caminar</span></button></div>
+      <div id="mapa" class="oculto"><div class="cab" id="mapaCab" title="Arrastra para mover el plano"><b id="mapaTit">Plano · 1.er piso</b><small>toca un tablero para ir</small><span class="sp"></span><button id="mapaMin" title="Plegar o desplegar el plano">–</button></div><canvas id="mapaCv"></canvas><div class="ley"><span><i style="background:#2f6fe4"></i>nuevo</span><span><i style="background:#8e44ad"></i>AXON</span><span><i style="background:#e07b1f"></i>intervenido</span><span><i style="background:#c9a227"></i>relacionado</span></div></div>
+      <div id="barraEnc" class="oculto"><button id="encIzq" title="Tablero anterior (← , A o rueda hacia arriba); al inicio de la fila pasa a la fila anterior">◀</button><div class="t"><b id="encTit"></b><small id="encSub"></small></div><button id="encDer" title="Tablero siguiente (→ , D o rueda hacia abajo); al final de la fila pasa a la siguiente">▶</button><button id="encAlz" title="Alzado de la fila">📐<span class="solo-pc"> Alzado</span></button><button id="encCam" title="Caminar desde aquí (W o el joystick)">🚶<span class="solo-pc"> Caminar</span></button><button id="encAtras" title="Tablero anterior del recorrido">⟲</button><button id="encSalir" title="Volver a la vista anterior (Esc)">✕</button></div>
       <div id="mira" class="oculto"></div>
       <div id="cine"><div class="rec">Grabando</div><button class="salir">✕ Salir (Esc)</button><div class="sub"><b></b><span></span><i>SE Uchucchacua · modelo 3D en código</i></div></div>
     </div>
@@ -511,7 +519,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
           <label class="capa"><input type="checkbox" id="vAx" checked> Mostrar trabajos de AXON</label>
           <div id="axonPanel"></div>
           <div class="ley2"><span><i style="background:#2f6fe4"></i>Nuevo</span><span><i style="background:#8e44ad"></i>Nuevo · AXON (CPM L-1123)</span><span><i style="background:#e07b1f"></i>Existente con intervención (cables nuevos o reconexión)</span><span><i style="background:#c9a227"></i>Existente relacionado (cables existentes)</span></div>
-          <h2>Pasillos</h2>
+          <h2>Filas de tableros</h2>
           <div class="chipsObra" id="pasillos"></div>
           <h2>Zonas en obra</h2>
           <div class="chipsObra" id="obraLista"></div>
@@ -578,7 +586,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { construir, REG, CAPAS, ESTADOS, ETAPAS, etapaDe, ORIGEN, NORTE, alturaTerreno, NUMS, CTX, pisoEn, OBST_EXTRA, L as LAY } from './se3d.js?v=5';
 import { EQUIPOS, zonaObra } from './interior.js?v=5';
-import { Recorrido, obstaculosDe } from './recorrer.js?v=6';
+import { Recorrido, obstaculosDe } from './recorrer.js?v=7';
+import { ViewCube, ventanaMovil, suave, angLerp, bezier } from './navsala.js?v=1';
 import { crearPersona, Rejilla } from './persona.js?v=1';
 import { Pelicula } from './pelicula.js?v=2';
 import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
@@ -821,8 +830,10 @@ function fijarSala(on) {
 // ---------- cámara y vistas
 const P3 = (X, Y, h = 0) => new THREE.Vector3(X, h, -Y);
 let anim = null;
-function volar(pos, tgt, ms = 900) {
+const histVista = []; // «⟲ Atrás» en la vista general (como «Rewind» del visor de Autodesk)
+function volar(pos, tgt, ms = 900, sinHist = false) {
   const p0 = camera.position.clone(), t0_ = controls.target.clone(), ini = performance.now();
+  if (!sinHist && !(rec && rec.activo) && p0.distanceTo(pos) + t0_.distanceTo(tgt) > 0.5) { histVista.push({ p: p0, t: t0_ }); if (histVista.length > 30) histVista.shift(); }
   anim = () => { // reloj propio: la marca de tiempo del cuadro puede ir por detrás de performance.now() (iframe, página cargando) y daba k < 0
     let k = Math.max(0, Math.min(1, (performance.now() - ini) / ms)); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     camera.position.lerpVectors(p0, pos, k); controls.target.lerpVectors(t0_, tgt, k);
@@ -880,7 +891,7 @@ function tablaCables(cods) {
 }
 function seleccionar(info, volarA = false, abrirFicha = true) {
   actual = info;
-  if (!info) { sel.visible = false; $('#ficha').classList.add('oculto'); $('#lista').classList.remove('oculto'); $('#der').classList.remove('conFicha'); if (mapa) { mapa.sel = null; mapa.dibujar(); } if (enc) requestAnimationFrame(() => enc && verCompleto(enc.e)); pedir(); return; }
+  if (!info) { sel.visible = false; $('#ficha').classList.add('oculto'); $('#lista').classList.remove('oculto'); $('#der').classList.remove('conFicha'); if (mapa) { mapa.sel = null; mapa.dibujar(); } pedir(); return; }
   const b = new THREE.Box3().setFromObject(info.obj); sel.box.copy(b); sel.visible = info.id !== 'Terreno';
   const c = b.getCenter(new THREE.Vector3());
   const X = (ORIGEN.X + c.x).toFixed(2), Y = (ORIGEN.Y - c.z).toFixed(2);
@@ -913,7 +924,6 @@ function seleccionar(info, volarA = false, abrirFicha = true) {
     volar(c.clone().add(dir.multiplyScalar(dist)), c);
   }
   ajustarMapa(); pedir();
-  if (enc && (!info || info.eqKey)) requestAnimationFrame(() => enc && verCompleto(enc.e)); // el área libre cambió: reencuadrar
 }
 $('#visor').onclick = () => $('#visor').classList.remove('on');
 // lista de equipos
@@ -952,7 +962,10 @@ function tocar(e) {
     if (!(inf0 && inf0.eqKey) && nrm && nrm.y > 0.7 && Math.abs(h0.point.y - rec.pies) < 0.5) { caminarA(h0.point.x, -h0.point.z, h0.point.y); return; }
   }
   const h = hits.find((x) => infoDe(x.object) && !(subsuelo && x.object === terreno));
-  seleccionar(h ? infoDe(h.object) : null);
+  const inf = h ? infoDe(h.object) : null;
+  // un clic en un tablero o una celda lo centra con un vuelo suave (inspección); el resto, su ficha
+  if (inf && inf.eqKey && EQ[inf.eqKey] && !EQ[inf.eqKey].oculto) { inspeccionar(EQ[inf.eqKey]); return; }
+  seleccionar(inf);
 }
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 5) return;
@@ -1020,7 +1033,7 @@ function fijarVista(tercera) {
   if (!rec) return; rec.fijarTercera(tercera); if (!enc) { camera.fov = fovRec(); camera.updateProjectionMatrix(); }
   mira.classList.toggle('oculto', tercera || !rec.activo); oclKey = ''; mapaKey = ''; pedir();
 }
-function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0) {
+function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0, opt = {}) {
   if (pel && pel.activa) terminarPelicula();
   if (!obst) obst = obstaculosDe(REG).concat(OBST_EXTRA);
   if (!rec) { rec = new Recorrido(camera, renderer.domElement, { pisoEn, obstaculos: obst, onCambio: pedir }); rec.avatar = crearPersona(); rec.avatar.visible = false; scene.add(rec.avatar); rec.tercera = vistaTercera;
@@ -1037,7 +1050,7 @@ function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0) {
   rec.colocar(X, Y, yaw, yPie, pitch);
   $('#bRec').classList.add('on'); mira.classList.toggle('oculto', rec.tercera);
   document.body.classList.add('sala'); tabDer('sala'); $('#mapa').classList.remove('oculto');
-  aviso(AYUDA, 9000); $('#vistas').querySelectorAll('button[data-v]').forEach((x) => x.classList.remove('on'));
+  if (!opt.silencio) aviso(AYUDA, 9000); $('#vistas').querySelectorAll('button[data-v]').forEach((x) => x.classList.remove('on'));
   ajustarMapa(); pedir();
 }
 function salirRecorrido() {
@@ -1054,10 +1067,40 @@ function salirRecorrido() {
 // puntos de llegada de cada piso: 1.er piso por la puerta sur mirando a las celdas K; 2.º piso en el pasadizo frente al tablero 22
 const LLEGADA = { 1: [39.45, -4.35, 155, 0.12, -6], 2: [38.75, -3.05, 0, Y2, -8] };
 function irPiso(p) { const [X, Y, yaw, yPie, pitch] = LLEGADA[p]; entrarRecorrido(X, Y, yaw, yPie, pitch); seleccionar(null); aviso(p === 1 ? 'Primer piso · tableros 1–21, celdas C01–C05 y K01–K05' : 'Segundo piso · tablero 22 de regulación del TP-385 (nuevo), oficina y sala de reuniones', 4000); }
-function irA(e) {
-  if (!e) return;
-  if (!rec || !rec.activo) { irPiso(e.piso); }
-  seleccionarSuave(e); verCompleto(e);
+function irA(e) { inspeccionar(e); }
+// ---------- inspección de tableros (22-Oct-26, con lo que resuelven Navisworks «Zoom Selected» y «Constrained Orbit», la «Selection
+// Box» de Revit, el «Focus» y el «Rewind» del visor de Autodesk y la navegación por plano de Matterport): un clic en un tablero (3D,
+// lista, plano o alzado) lleva la cámara en un vuelo suave a verlo de frente y entero; ◀ ▶, ← →, A D o la rueda pasan al vecino como
+// sobre un riel (al final de la fila sigue la siguiente); ↑ ↓ cambian de fila; arrastrar gira alrededor del tablero (±60°); Esc vuelve.
+let encAnim = null, insp = null; const histInsp = [];
+const TXT_INSP = movil ? 'Inspección · ◀ ▶: tablero vecino · arrastra: girar alrededor · toca otro tablero para ir · ✕: volver'
+  : 'Inspección · ◀ ▶, ← → o la rueda: tablero vecino · ↑ ↓: otra fila · arrastra: girar alrededor · clic en otro tablero: ir · W: caminar · Esc: volver';
+function poseCamara() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return { p: camera.position.clone(), yaw: Math.atan2(d.x, d.z), pitch: Math.asin(Math.max(-1, Math.min(1, d.y))), fov: camera.fov, near: camera.near }; }
+const eqInicial = () => (EQ.CPM && !EQ.CPM.oculto ? EQ.CPM : FILAS[0].eqs[0]);
+function inspeccionar(e, opt = {}) {
+  if (!e || e.oculto || !FILA_DE[e.key]) return;
+  if (pel && pel.activa) terminarPelicula();
+  const desde = poseCamara();
+  if (!rec || !rec.activo) {
+    insp = { enSala, techo };
+    const { nx, ny } = rectDe(e); const yaw0 = e.rot + 180;
+    entrarRecorrido(e.X + nx * (e.d / 2 + 0.8), e.Y + ny * (e.d / 2 + 0.8), yaw0, e.yPiso, 0, { silencio: true });
+    aviso(TXT_INSP, 7000);
+  } else if (!enc) aviso(TXT_INSP, 5000);
+  if (!opt.sinHist && histInsp[histInsp.length - 1] !== e.key) { histInsp.push(e.key); if (histInsp.length > 40) histInsp.shift(); }
+  seleccionarSuave(e); verCompleto(e, { desde });
+}
+function salirInspeccion() {
+  if (!rec || !rec.activo) return;
+  const cur = camera.position.clone(), dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+  const ant = camAntes ? { p: camAntes.p.clone(), t: camAntes.t.clone() } : null; const pr = insp;
+  salirRecorrido(); insp = null; histInsp.length = 0;
+  if (pr) { if (pr.enSala) fijarSala(true); else if (techo !== 'no') cortarTecho('no'); }
+  if (ant) { camera.position.copy(cur); controls.target.copy(cur).addScaledVector(dir, 4); controls.update(); volar(ant.p, ant.t, 850, true); }
+}
+function atrasInsp() {
+  if (histInsp.length > 1) { histInsp.pop(); const k = histInsp[histInsp.length - 1]; if (EQ[k] && !EQ[k].oculto) { inspeccionar(EQ[k], { sinHist: true }); return; } }
+  salirInspeccion();
 }
 // ---------- encuadre «ver tablero completo»: la cámara retrocede lo necesario (atraviesa lo que queda detrás con el plano
 // de recorte cercano) y centra el tablero en la parte de la pantalla que no tapan los paneles
@@ -1066,40 +1109,99 @@ const OBRA_CORTO = { nuevo: 'nuevo', interv: 'existente con intervención', rel:
 function areaLibre() {
   const { W, H } = tamVista(); const vr = cont.getBoundingClientRect();
   const vis = (el) => el && !el.classList.contains('oculto') && getComputedStyle(el).display !== 'none';
-  let l = 0, r = W, t = vis($('#barraEnc')) ? 62 : 10, b = H;
-  if (vis($('#mapa'))) b = Math.min(b, $('#mapa').getBoundingClientRect().top - vr.top - 6);
+  let l = 0, r = W, t = vis($('#barraEnc')) ? 62 : 10, b = H - 8; // el plano es una ventana móvil: no recorta el encuadre
   if (b - t < 160) b = Math.min(H, t + 160);
   return { l, r, t, b };
 }
-function verCompleto(e) {
+function verCompleto(e, opt = {}) {
   if (!rec || !rec.activo) return;
-  if (!enc) { enc = { mapaMin: $('#mapa').classList.contains('min') }; if (!enc.mapaMin) { $('#mapa').classList.add('min'); $('#mapaMin').textContent = '▴'; } }
-  enc.e = e; document.body.classList.add('encuadre');
-  const { f, i } = FILA_DE[e.key];
+  const desde = opt.desde || poseCamara();
+  if (!enc) enc = { mapaMin: true };
+  const ant = enc.e; enc.e = e; document.body.classList.add('encuadre');
+  const { f, i } = FILA_DE[e.key]; const fi = FILAS.indexOf(f);
   $('#encTit').textContent = `${e.info.id}${e.cod ? ' · ' + e.cod : e.sigla ? ' · ' + e.sigla : ''}`;
-  $('#encSub').textContent = `${e.nombre}${e.obra && e.obra !== 'axon' ? ' · ' + OBRA_CORTO[e.obra] : ''} · ${f.nombre} (${i + 1}/${f.eqs.length})`;
-  $('#encIzq').disabled = i === 0; $('#encDer').disabled = i === f.eqs.length - 1;
+  $('#encSub').textContent = `${e.nombre}${e.obra && e.obra !== 'axon' ? ' · ' + OBRA_CORTO[e.obra] : ''} · ${f.nombre} (${i + 1}/${f.eqs.length}) · fila ${fi + 1} de ${FILAS.length}`;
+  $('#encIzq').disabled = false; $('#encDer').disabled = false;
   $('#barraEnc').classList.remove('oculto'); ajustarMapa();
   { const a = areaLibre(); const bE = $('#barraEnc'); bE.style.left = (a.l + a.r) / 2 + 'px'; bE.style.maxWidth = Math.max(260, a.r - a.l - 12) + 'px'; }
   const p = encuadreDe(e, areaLibre(), { ...tamVista(), fov: FOV_ENC });
-  camera.fov = FOV_ENC; camera.near = p.near; camera.updateProjectionMatrix();
-  rec.encuadrar(p.x, p.y, p.z, p.yaw, p.pitch);
+  // techo recortado mientras se inspecciona (más luz y el vuelo entra por arriba, como la caja de sección de Revit)
+  const cTecho = (e.piso === 2 ? Y2 : 0) + TECHO1; if (techo !== 'sala' || planoSala.constant !== cTecho) cortarTecho('sala', e.piso);
+  const P = new THREE.Vector3(p.x, p.y, p.z);
+  const fin = { p: P, yaw: (p.yaw * Math.PI) / 180, pitch: (p.pitch * Math.PI) / 180, fov: FOV_ENC, near: nearLibre(e, P, p.near), near0: p.near, D: p.D };
+  const dist = desde.p.distanceTo(fin.p); const misma = ant && FILA_DE[ant.key] && FILA_DE[ant.key].f === f;
+  const ms = misma ? Math.min(560, 340 + dist * 60) : dist > 6 ? 950 : 680;
+  const pm = !misma && dist > 2.2 ? desde.p.clone().lerp(fin.p, 0.5).setY(Math.max(desde.p.y, fin.p.y) + Math.min(2.4, 0.6 + dist * 0.25)) : null; // arco por encima de las filas
+  encAnim = { t: 0, prev: null, ms, desde, fin, pm }; rec.encuadre = true; rec.orbita = null; rec.ruta = null;
+  if (mapa) { mapa.sel = e.key; mapa.dibujar(); }
+  oclKey = ''; mapaKey = ''; pedir();
+}
+// recorte frontal (como la caja de sección de Navisworks/Revit): si algo queda entre la cámara y el frente del tablero
+// —p. ej. la espalda del tablero 9 frente al 8— el plano cercano se corre hasta pasar ese objeto
+const _rN = new THREE.Raycaster(), _vN = new THREE.Vector3(), _dN = new THREE.Vector3(), _cN = new THREE.Vector3();
+const visibleDe = (o) => { while (o) { if (!o.visible) return false; o = o.parent; } return true; };
+function nearLibre(e, P, near0) {
+  const { nx, ny } = rectDe(e); const z0 = e.zocalo ?? 0.1;
+  const Fx = e.X + nx * (e.d / 2), Fy = e.Y + ny * (e.d / 2), tx = -ny, ty = nx;
+  _cN.set(Fx, e.yPiso + z0 + e.h / 2, -Fy).sub(P).normalize(); // dirección de vista (al centro del frente)
+  const objs = REG.filter((x) => x.obj.visible && x.obj !== e.obj && x.capa !== 'terreno').map((x) => x.obj);
+  let near = near0, tope = Infinity;
+  for (const u of [-0.35, 0, 0.35]) for (const v of [0.3, 0.6, 0.9]) {
+    _vN.set(Fx + tx * u * e.w, e.yPiso + z0 + v * e.h, -(Fy + ty * u * e.w));
+    const prof = _dN.copy(_vN).sub(P).dot(_cN); tope = Math.min(tope, prof - 0.12);
+    const L = _dN.length(); _dN.normalize();
+    _rN.set(P, _dN); _rN.near = 0; _rN.far = L;
+    const h = _rN.intersectObjects(objs, true).find((x) => visibleDe(x.object) && x.point.clone().sub(P).dot(_cN) < prof - 0.2);
+    if (!h) continue; // nada estorba (o solo roza el costado de un vecino)
+    _rN.set(_vN, _dN.clone().negate()); _rN.far = L; // desde el frente hacia la cámara: la cara de salida del estorbo
+    const b = _rN.intersectObjects(objs, true).find((x) => visibleDe(x.object));
+    if (b) near = Math.max(near, b.point.clone().sub(P).dot(_cN) + 0.03);
+  }
+  return Math.max(0.1, Math.min(near, tope));
+}
+function pasoAnim(now) {
+  // el reloj avanza por cuadro con un tope de 100 ms: un cuadro lento (primer ingreso a la sala) no se salta el vuelo
+  const a = encAnim; if (a.prev != null) a.t += Math.min(100, Math.max(0, now - a.prev)); a.prev = now;
+  const t = Math.min(1, a.t / a.ms); const k = suave(t);
+  const pos = a.pm ? bezier(a.desde.p, a.pm, a.fin.p, k) : a.desde.p.clone().lerp(a.fin.p, k);
+  rec.poseLibre(pos.x, pos.y, pos.z, angLerp(a.desde.yaw, a.fin.yaw, k), a.desde.pitch + (a.fin.pitch - a.desde.pitch) * k);
+  camera.fov = a.desde.fov + (a.fin.fov - a.desde.fov) * k; camera.near = Math.max(0.05, a.desde.near + (a.fin.near - a.desde.near) * k); camera.updateProjectionMatrix();
+  if (t >= 1) terminarAnim();
+}
+function terminarAnim() {
+  const f = encAnim.fin; encAnim = null;
+  rec.encuadrar(f.p.x, f.p.y, f.p.z, (f.yaw * 180) / Math.PI, (f.pitch * 180) / Math.PI);
+  camera.fov = f.fov; camera.near = f.near; camera.updateProjectionMatrix(); rec.fijarOrbita(f.D, 1.05);
+  if (enc) { enc.nearIns = f.near; enc.near0 = f.near0; }
   oclKey = ''; mapaKey = ''; pedir();
 }
 function salirEncuadre(caminar = true) {
-  if (!enc) return; const e = enc.e;
-  if (!enc.mapaMin) { $('#mapa').classList.remove('min'); $('#mapaMin').textContent = '▾'; }
+  if (!enc) return; const e = enc.e; encAnim = null; if (rec) rec.orbita = null;
   enc = null; document.body.classList.remove('encuadre'); $('#barraEnc').classList.add('oculto');
   camera.near = 0.1; camera.fov = rec && rec.activo ? fovRec() : 40; camera.updateProjectionMatrix();
-  if (caminar && rec && rec.activo) { const f = frenteDe(e, (X, Y, yP) => rec.libre(X, Y, yP)); rec.colocar(f.X, f.Y, f.yaw, e.yPiso, f.pitch); }
+  if (techo === 'sala' && !enSala) cortarTecho('no'); // al caminar, el techo lo decide el recorrido (tercera persona: recortado adentro)
+  if (caminar && rec && rec.activo) { const f = frenteDe(e, (X, Y, yP) => rec.libre(X, Y, yP)); rec.colocar(f.X, f.Y, f.yaw, e.yPiso, f.pitch); aviso(AYUDA, 6000); }
   ajustarMapa(); oclKey = ''; mapaKey = ''; pedir();
 }
-function vecino(dir) { if (!enc) return; const { f, i } = FILA_DE[enc.e.key]; const n = f.eqs[i + dir]; if (n) { seleccionarSuave(n); verCompleto(n); } }
+// vecino en la fila; al final de la fila pasa a la siguiente (o a la anterior), como un riel continuo
+function vecino(dir) {
+  if (!enc) return; const { f, i } = FILA_DE[enc.e.key]; let n = f.eqs[i + dir];
+  if (!n) { const fi = FILAS.indexOf(f); const g = FILAS[(fi + dir + FILAS.length) % FILAS.length]; n = dir > 0 ? g.eqs[0] : g.eqs[g.eqs.length - 1]; }
+  inspeccionar(n);
+}
+function filaVecina(dir) { if (!enc) return; const { f, i } = FILA_DE[enc.e.key]; const g = FILAS[(FILAS.indexOf(f) + dir + FILAS.length) % FILAS.length]; inspeccionar(g.eqs[Math.min(i, g.eqs.length - 1)]); }
 $('#encIzq').onclick = () => vecino(-1); $('#encDer').onclick = () => vecino(1);
 $('#encCam').onclick = () => salirEncuadre(true); $('#encAlz').onclick = () => enc && abrirAlzado(FILA_DE[enc.e.key].f, enc.e);
+$('#encAtras').onclick = () => atrasInsp(); $('#encSalir').onclick = () => salirInspeccion();
+// rueda del ratón en la inspección: tablero vecino (con una pausa corta para no saltar varios)
+let tRueda = 0;
+renderer.domElement.addEventListener('wheel', (ev) => {
+  if (!enc) return; ev.preventDefault(); const now = performance.now(); if (now - tRueda < 380 || Math.abs(ev.deltaY) < 4) return;
+  tRueda = now; vecino(ev.deltaY > 0 ? 1 : -1);
+}, { passive: false });
 // en celular no abre la ficha al llegar (taparía la vista): basta la placa y el rótulo de lo que se mira
 function seleccionarSuave(e) { if (movil) { actual = e.info; if (mapa) { mapa.sel = e.key; mapa.dibujar(); } pedir(); } else seleccionar(e.info); }
-function entrarSala(e = null) { if (e) irA(e); else irPiso(1); }
+function entrarSala(e = null) { inspeccionar(e || eqInicial()); }
 // ---------- caminar hasta un punto por los pasillos (A* en una rejilla de espacio libre por piso)
 const marcaRuta = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.26, 28), new THREE.MeshBasicMaterial({ color: 0x0b6bcb, transparent: true, opacity: 0.9, depthTest: false }));
 marcaRuta.rotation.x = -Math.PI / 2; marcaRuta.renderOrder = 5; marcaRuta.visible = false; marcaRuta.userData.noObst = true; scene.add(marcaRuta);
@@ -1153,9 +1255,7 @@ function panelPasillos() {
 }
 $('#pasillos').onclick = (ev) => {
   const b = ev.target.closest('button[data-pa]'); if (!b) return; const f = FILAS[+b.dataset.pa];
-  if (!rec || !rec.activo) irPiso(f.piso);
-  const v = vistasPasillo().find((q) => q.f === f); if (!v) return;
-  salirEncuadre(false); seleccionar(null); rec.colocar(v.X, v.Y, v.yaw, v.yP, -8); aviso(`Pasillo · ${f.nombre}`, 2500);
+  inspeccionar(f.eqs[0]); // la fila se recorre tablero a tablero desde el primero
 };
 $('#vistaSel').onclick = (ev) => { const b = ev.target.closest('button[data-t]'); if (b) fijarVista(b.dataset.t === '3'); };
 $('#bRec').onclick = () => (rec && rec.activo ? salirRecorrido() : entrarRecorrido());
@@ -1188,8 +1288,11 @@ addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     if (k === 'arrowleft' || k === 'a') { if (!e.repeat) vecino(-1); e.preventDefault(); return; }
     if (k === 'arrowright' || k === 'd') { if (!e.repeat) vecino(1); e.preventDefault(); return; }
-    if (['arrowup', 'arrowdown', 'w', 's'].includes(k)) { salirEncuadre(true); return; }
-    if (k === 'escape') { salirEncuadre(true); return; }
+    if (k === 'arrowup') { if (!e.repeat) filaVecina(-1); e.preventDefault(); return; }
+    if (k === 'arrowdown') { if (!e.repeat) filaVecina(1); e.preventDefault(); return; }
+    if (k === 'w' || k === 's') { salirEncuadre(true); return; }
+    if (k === 'backspace') { atrasInsp(); e.preventDefault(); return; }
+    if (k === 'escape') { if (!$('#visor').classList.contains('on') && !$('#alzado').classList.contains('on')) salirInspeccion(); return; }
   }
   if (e.key === 'Escape' && rec && rec.activo) salirRecorrido();
   if ((e.key === 'v' || e.key === 'V') && rec && rec.activo && !e.repeat && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) fijarVista(!vistaTercera);
@@ -1215,7 +1318,7 @@ function panelSala() {
   $('#buscar').oninput = lista; lista();
   const ir = (ev) => { const b = ev.target.closest('button[data-k]'); if (b) irA(EQ[b.dataset.k]); };
   $('#obraLista').onclick = ir; $('#eqLista').onclick = ir;
-  $('#ayudaSala').textContent = movil ? 'Toca un tablero en la lista o en el plano para pararte frente a él.' : 'Clic en un tablero de la lista o del plano para pararte frente a él. En el 3D, clic para ver su ficha y sus cables.';
+  $('#ayudaSala').textContent = movil ? 'Toca un tablero en el 3D, en la lista o en el plano y la cámara lo centra; ◀ ▶ pasa al vecino. 🚶 Caminar para moverte libre.' : 'Clic en un tablero (3D, lista o plano) y la cámara lo centra; ◀ ▶, ← → o la rueda pasan al vecino, ↑ ↓ cambian de fila, arrastrar gira alrededor. 🚶 Caminar para moverte libre.';
 }
 // ---------- trabajos de AXON (control diario del nuevo tablero CPM L-1123, Excel de AXON)
 // Cada «TABLERO / UBICACIÓN» del Excel se lleva a un elemento del modelo. Ningún plano disponible ubica el nuevo CPM ni las
@@ -1381,13 +1484,21 @@ const mapa = new Minimapa($('#mapaCv'), { sala: LAY.sala, equipos: EQUIPOS, nort
   onIr: (e) => irA(e),
   onPunto: (X, Y, p) => { if (!rec || !rec.activo) return; salirEncuadre(false); const yP = p === 2 ? Y2 : 0.12; if (rec.libre(X, Y, yP)) caminarA(X, Y, yP); else aviso('Ese punto está ocupado por un tablero o un muro', 2500); },
   onHover: (e) => { $('#mapaCv').title = e ? `${e.info.id}${e.cod ? ' · ' + e.cod : ''} — ${e.nombre}` : ''; } });
-$('#mapaMin').onclick = () => { $('#mapa').classList.toggle('min'); $('#mapaMin').textContent = $('#mapa').classList.contains('min') ? '▴' : '▾'; ajustarMapa(); };
+function plegarMapa(min) { $('#mapa').classList.toggle('min', min); $('#mapaMin').textContent = min ? '+' : '–'; }
+$('#mapaMin').onclick = () => { const min = !$('#mapa').classList.contains('min'); plegarMapa(min); try { localStorage.setItem('se_uchu_plano_min', min ? '1' : '0'); } catch (_) {} ajustarMapa(); };
+// el plano de la sala es una ventana móvil y plegable (como el «Trazo» de la LT): abajo a la izquierda, recuerda dónde la dejaste
+var vMapa = null;
 function ajustarMapa() {
-  if ($('#mapa').classList.contains('oculto')) { document.documentElement.style.setProperty('--mapaH', '0px'); return; }
-  const { W } = tamVista(); const ancho = Math.max(220, Math.min(940, W - 16)) - 16;
-  $('#mapa').style.left = Math.max(8, (W - ancho - 16) / 2) + 'px';
-  mapa.ajustar(ancho);
-  document.documentElement.style.setProperty('--mapaH', ($('#mapa').offsetHeight + 10) + 'px');
+  document.documentElement.style.setProperty('--mapaH', '0px');
+  if (!vMapa) {
+    vMapa = ventanaMovil($('#mapa'), $('#mapaCab'), 'se_uchu_plano');
+    // en celular el plano arranca plegado (deja ver el tablero); luego se recuerda lo que elija el usuario
+    let g = null; try { g = localStorage.getItem('se_uchu_plano_min'); } catch (_) {}
+    plegarMapa(g == null ? movil : g === '1');
+  }
+  if ($('#mapa').classList.contains('oculto')) return;
+  const { W } = tamVista(); const ancho = movil ? Math.max(220, Math.min(W - 36, 320)) : Math.round(Math.max(260, Math.min(360, W * 0.3)));
+  mapa.ajustar(ancho); vMapa.encajar();
 }
 let mapaKey = '';
 function actualizarMapa() {
@@ -1396,7 +1507,7 @@ function actualizarMapa() {
   const k = [p.x.toFixed(2), p.z.toFixed(2), rec.yaw.toFixed(2), piso, dentro].join('|'); if (k === mapaKey) return; mapaKey = k;
   const cambio = piso !== mapa.piso; mapa.fijar({ piso, pos: { X: p.x, Y: -p.z }, yaw: rec.yaw, dentro });
   if (cambio) { mapa.ajustar(mapa.anchoCss); $('#pisoSel').querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.p === piso)); } else mapa.dibujar();
-  $('#mapaTit').textContent = dentro ? `Sala de control · ${piso === 1 ? '1.er' : '2.º'} piso` : 'Fuera de la sala · toca un tablero del plano para ir';
+  $('#mapaTit').textContent = dentro ? `Plano · ${piso === 1 ? '1.er' : '2.º'} piso` : 'Plano · fuera de la sala';
 }
 // ---------- qué se está mirando (rayo al centro de la pantalla)
 let mirandoEq = null, tMira = 0, tSigue = 0; const _c0 = new THREE.Vector2(0, 0);
@@ -1456,12 +1567,29 @@ controls.addEventListener('change', pedir);
 function redimensionar() { const { W, H } = tamVista(); camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); css.setSize(W, H); _vo = ''; ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); }
 addEventListener('resize', redimensionar);
 let _roT = 0; new ResizeObserver(() => { cancelAnimationFrame(_roT); _roT = requestAnimationFrame(() => { if (cont.clientWidth && cont.clientHeight) redimensionar(); }); }).observe(cont);
-const aguja = $('#aguja'); const _a = new THREE.Vector3(), _b = new THREE.Vector3();
+// ViewCube (como el del tablero de la LT, Revit y Navisworks): orienta la vista con un giro suave; arrastrar sobre él orbita
+const vc = new ViewCube($('#vcBox'), { getCam: () => camera, getTarget: () => controls.target, norte: NORTE, size: movil ? 80 : 104,
+  ir: (dir) => {
+    if (rec && rec.activo) return; const tg = controls.target.clone(), d = camera.position.distanceTo(tg), nd = dir.clone();
+    if (nd.y < 0.03) nd.y = 0.03; if (Math.abs(nd.y) > 0.995) nd.z += 0.004; nd.normalize(); volar(tg.clone().add(nd.multiplyScalar(d)), tg, 600);
+  },
+  orbitar: (dx, dy) => {
+    if (rec && rec.activo) return; const off = camera.position.clone().sub(controls.target); const sph = new THREE.Spherical().setFromVector3(off);
+    sph.theta -= dx * 0.012; sph.phi -= dy * 0.012; sph.phi = Math.max(0.02, Math.min(controls.maxPolarAngle - 0.001, sph.phi)); sph.makeSafe();
+    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); anim = null; controls.update(); pedir();
+  } });
+$('#vcHome').onclick = () => vistaInicial();
+$('#vcAtras').onclick = () => { const v = histVista.pop(); if (v) volar(v.p, v.t, 700, true); };
 let tAnt = performance.now();
 function bucle(now) {
   requestAnimationFrame(bucle);
   const dt = Math.max(0, (now - tAnt) / 1000); tAnt = now;
   if (anim) { anim(now); sucio = true; }
+  if (encAnim && rec && rec.activo) { pasoAnim(now); sucio = true; }
+  else if (enc && enc.nearIns > enc.near0 + 0.01 && rec && rec.orbita) {
+    const o = rec.orbita; const g = Math.min(1, (Math.abs(o.az - o.az0) + Math.abs(o.el - o.el0)) / 0.35);
+    const n = enc.nearIns + (enc.near0 - enc.nearIns) * g; if (Math.abs(n - camera.near) > 0.005) { camera.near = n; camera.updateProjectionMatrix(); sucio = true; }
+  }
   if (rec && rec.activo && rec.update(dt)) sucio = true;
   if (rec && rec.activo) {
     if (enc && rec.mov.lengthSq() > 0.05) salirEncuadre(true);
@@ -1480,10 +1608,7 @@ function bucle(now) {
   rotulosVis(); if (pel && pel.activa) rotulos.forEach((r) => (r.visible = false));
   renderer.render(scene, camera); css.render(scene, camera);
   if (pel && pel.grabando) pel.componer(pelTit, pelSub);
-  // brújula: proyecta el norte del plano (bloque NM) a la pantalla
-  _a.copy(controls.target).project(camera); _b.copy(controls.target).addScaledVector(NORTE, 5).project(camera);
-  const ang = Math.atan2(_b.x - _a.x, (_b.y - _a.y) * (renderer.domElement.clientHeight / renderer.domElement.clientWidth));
-  aguja.setAttribute('transform', `rotate(${(ang * 180) / Math.PI})`);
+  if (!(rec && rec.activo)) vc.dibujar(); // ViewCube (solo en la vista general)
 }
 // ---------- BIM 4D del servicio de AXON (cuatrod.js): zonas del modelo por estado a la fecha, panel bajo la vista
 const sup = (eq, reg) => (AX_ZONAS.find((z) => (eq && z.eq === eq) || (reg && z.reg === reg)) || {}).sup;
@@ -1539,7 +1664,7 @@ tablero = iniciarTablero({ U4D, m4d, ZONAS: ZONAS4D, esc_, visor: abrirVisor, ta
   onTab: (v) => { if (v === 'v-bim') requestAnimationFrame(() => { redimensionar(); }); } });
 requestAnimationFrame(bucle);
 $('#cargando').remove();
-window.__se = { vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
+window.__se = { inspeccionar, vecino, filaVecina, salirInspeccion, atrasInsp, encAnimDe: () => encAnim && { ...encAnim, t0: performance.now() - encAnim.t }, vcDe: () => vc, histVista, vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
 </script>
 </body>
 </html>
