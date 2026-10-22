@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag</title>
+<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag y SE Uchucchacua</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -33,6 +33,7 @@ body{font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--tinta);backg
 .directo{display:block;width:100%;text-align:left;border:0;background:var(--pino);color:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;font:inherit;margin-bottom:12px}
 .directo b{display:block;font-weight:600}
 .directo span{font-size:14px;opacity:.85}
+.directo i{display:block;font-style:normal;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lima);margin-bottom:2px}
 .directo:hover{filter:brightness(1.08)}
 .liga{border:0;background:none;color:var(--pino);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:0;margin-right:12px}
 [hidden]{display:none !important}   /* display:block de .directo/.liga gana al hidden del navegador si no se fuerza */
@@ -67,16 +68,22 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
 
 <main class="acceso">
   <div class="panel">
-    <h2>Acceso al tablero</h2>
+    <h2>Acceso a los tableros</h2>
 
+    <!-- 22-Oct-26 (pedido del usuario: «todo lo relacionado a Uchucchacua tiene que estar en otro lado; un botón para ingresar a la LT y otro a la subestación») -->
     <button class="directo" type="button" id="btnEntrar">
-      <b>Entrar al tablero</b>
+      <i>Línea de transmisión</i>
+      <b>LT 138 kV Pomayaros – Yumpag</b>
       <span>BIM 4D, proceso constructivo, curvas S, alertas y plazos.</span>
     </button>
 
-    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    <button class="directo" type="button" id="btnSE">
+      <i>Subestación</i>
+      <b>SE Uchucchacua · TP-385 30/36 MVA</b>
+      <span>BIM 4D del nuevo tablero CPM L-1123 (servicio de AXON): avance diario, cronograma, reporte del día y fotos.</span>
+    </button>
 
-    <p class="nota">Control de construcción de la derivación en doble terna de la LT 138 kV a la SE Yumpag.</p>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
   </div>
 </main>
 
@@ -87,9 +94,12 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
 (() => {
 const $ = id => document.getElementById(id);
 const ir = () => { try{ sessionStorage.removeItem('yumpagDatos'); }catch(e){}   // sin sesiones: el tablero lee datos.json
-  $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el tablero…'; location.href = 'tablero.html'; };
+  $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el tablero de la LT…'; location.href = 'tablero.html'; };
+const irSE = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el tablero de la SE Uchucchacua…';
+  location.href = 'se-uchucchacua/index.html?modo=4d'; };   // página aparte (se-uchucchacua/), abre en su BIM 4D
 $('btnEntrar').onclick = ir;
-addEventListener('keydown', e => { if (e.key === 'Enter') ir(); });
+$('btnSE').onclick = irSE;
+addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
 try{ localStorage.removeItem('yumpagLlave'); }catch(e){}    // limpia el acceso recordado del esquema anterior
 fetch('datos.json',{method:'HEAD'}).catch(()=>{});          // adelanta la descarga
 })();

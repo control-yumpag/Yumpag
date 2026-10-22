@@ -7549,22 +7549,6 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 }
 </style>
 
-<style id="obra-sel-style">
-/* v72.54 · selector de obra en la pestaña BIM 4D: LT 138 kV Yumpag | SE Uchucchacua (BIM 4D del servicio de AXON, en un iframe) */
-.obra-sel{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;flex:none;align-self:center}
-.bim-info .obra-sel{margin-left:auto}
-.obra-sel button{font:inherit;font-size:.7rem;font-weight:700;padding:5px 9px;border:0;background:var(--panel-2);color:var(--ink-2);cursor:pointer;white-space:nowrap}
-.obra-sel button+button{border-left:1px solid var(--line-2)}
-.obra-sel button.on{background:var(--sky);color:#fff}
-#bimSE{display:none}
-#v-bim.obra-se{display:block!important}
-#v-bim.obra-se>*:not(#bimSE){display:none!important}
-#v-bim.obra-se #bimSE{display:flex;flex-direction:column;gap:6px;height:100%;min-height:560px}
-#bimSE .se-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.66rem;color:var(--ink-mut)}
-#bimSE .se-top a{color:var(--ink-2)}
-#bimSE iframe{flex:1;width:100%;min-height:520px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
-@media (max-width:900px){#v-bim.obra-se #bimSE{height:auto}#bimSE iframe{flex:none;height:calc(100svh - 120px);min-height:560px}}
-</style>
 <style id="b4p-style">
 /* v72.53 · panel «Avance a la fecha de la barra» bajo el visor BIM 4D */
 .b4p{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
@@ -8026,7 +8010,6 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
         <div class="bim-badge-chip" id="hudNext" style="display:none"></div>
         <div class="bim-badge-chip" id="mtHud" style="display:none"></div>
       </div>
-      <span class="obra-sel" role="tablist" aria-label="Obra"><button class="on" data-obra="lt" title="LT 138 kV Yumpag (23 torres)">LT Yumpag</button><button data-obra="se" title="SE Uchucchacua: BIM 4D del nuevo tablero CPM L-1123 (servicio de AXON)">SE Uchucchacua</button></span>
       <button class="bim-expand" id="btnFsView" title="Ampliar el modelo 3D a pantalla completa">⛶ Pantalla completa</button>
     </div>
     <!-- Visor WebGL 3D: solo el modelo, el cubo de navegación y la ventana móvil del trazo -->
@@ -8212,13 +8195,6 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
         </div>
       </div>
       <div class="b4p-tip" id="b4Tip" hidden></div>
-    </div>
-    <!-- v72.54 · SE Uchucchacua: BIM 4D del servicio de AXON (se-uchucchacua/, se carga solo al elegirla) -->
-    <div id="bimSE">
-      <div class="se-top"><span class="obra-sel" role="tablist" aria-label="Obra"><button data-obra="lt">LT Yumpag</button><button class="on" data-obra="se">SE Uchucchacua</button></span>
-        <span>Nuevo tablero CPM L-1123 (=E01+WR01) · servicio de AXON · control diario, cronograma, reporte del día y fotos · ubicaciones del CPM y de las rutas supuestas</span>
-        <a href="se-uchucchacua/index.html?modo=4d" target="_blank" rel="noopener">Abrir en otra pestaña ↗</a></div>
-      <iframe id="seFrame" title="SE Uchucchacua · BIM 4D" allow="fullscreen" loading="lazy"></iframe>
     </div>
   </section>
 
@@ -16905,23 +16881,6 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   document.addEventListener('change', e=>{ if(e.target && e.target.id==='hiTorre'){ sel.torre=e.target.value; pintar(); } });
   const nb=document.querySelector('#nav button[data-v="v-hit"]');
   if(nb) nb.addEventListener('click', ()=>setTimeout(window.renderHitosTab, 30));
-})();
-</script>
-<script id="obra-sel-js">
-/* v72.54 · selector de obra en la pestaña BIM 4D. La SE Uchucchacua es otra página (se-uchucchacua/) dentro de un iframe:
-   se carga la primera vez que se elige, con el tema del tablero; los cambios de tema se le avisan por postMessage. */
-(function(){
-  const v = document.getElementById('v-bim'), fr = document.getElementById('seFrame'); if (!v || !fr) return;
-  const tema = () => document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-  function elegir(o) {
-    const se = o === 'se'; v.classList.toggle('obra-se', se);
-    v.querySelectorAll('.obra-sel button').forEach(b => b.classList.toggle('on', b.dataset.obra === o));
-    if (se && !fr.src) fr.src = 'se-uchucchacua/index.html?modo=4d&embed=1&tema=' + tema();
-    if (!se) setTimeout(() => { try { onBIMResize(); bimInvalidate(800); } catch(e){} }, 60);
-  }
-  v.addEventListener('click', ev => { const b = ev.target.closest('.obra-sel button[data-obra]'); if (b) { ev.stopPropagation(); elegir(b.dataset.obra); } }, true);
-  new MutationObserver(() => { try { if (fr.contentWindow && fr.src) fr.contentWindow.postMessage({ tipo: 'tema', tema: tema() }, '*'); } catch(e){} })
-    .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 })();
 </script>
 </body>
