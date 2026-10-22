@@ -320,12 +320,15 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 .ficha table.axt td{font-size:.64rem}.ficha table.axt td:first-child{width:auto;color:var(--ink)}
 
 /* ===== CRONOGRAMA ===== */
-#v-cro{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;overflow:hidden}
+#v-cro{grid-template-columns:minmax(0,1fr) clamp(320px,29%,500px);grid-template-rows:minmax(0,1fr);overflow:hidden} /* vista partida en vertical: Gantt | detalle y fotos */
 .cro-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cro-head h3{flex:1;font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:6px}
 #croGantt{flex:1;min-height:0;overflow:auto;margin-top:6px}
-#croDet .cd{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}
-#croDet .fg{grid-template-columns:repeat(4,1fr)}
+#croDet{overflow:auto}
+#croDet .cd{display:flex;flex-direction:column;gap:12px}
+#croDet .fg{grid-template-columns:repeat(2,1fr);gap:6px}
+#croDet .fg span{font-size:.6rem}
+#croDet .vacio{padding:14px 2px;font-size:.72rem;line-height:1.5}
 #croDet .bim-btn{margin-top:8px}
 
 /* ===== FOTOS DE OBRA ===== */
@@ -400,7 +403,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
   .zonas-list{grid-template-columns:repeat(4,minmax(0,1fr))}
   #coord{display:none}
   .se-viewcube canvas{width:80px;height:80px}
-  #v-cro{grid-template-rows:70vh auto;overflow:auto}
+  #v-cro{grid-template-columns:1fr;grid-template-rows:70vh auto;overflow:auto}
   #croDet .cd{grid-template-columns:1fr}
   #v-fot{grid-template-columns:1fr;grid-template-rows:max-content 75vh;overflow:auto}
   .g4 .cab .t span:nth-child(even):not(.on),.g4 .cab .t span.cerca{display:none}
@@ -594,7 +597,7 @@ import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
 import { U4D } from './uchu4d.js?v=1';
 import { iniciar4D, axonAlCorte } from './cuatrod.js?v=3';
-import { iniciarTablero } from './tablero.js?v=2';
+import { iniciarTablero } from './tablero.js?v=3';
 const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
 
 const $ = (s) => document.querySelector(s);
@@ -628,7 +631,7 @@ scene.background = cielo();
 scene.fog = new THREE.Fog(0xdfe8ee, 140, 330);
 const camera = new THREE.PerspectiveCamera(40, tamVista().W / tamVista().H, 0.1, 800);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.09; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 2; controls.maxDistance = 260;
+controls.enableDamping = true; controls.dampingFactor = 0.09; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 0.3; controls.maxDistance = 260; // la rueda la maneja zoomSuave (abajo); esto queda para el pellizco
 controls.zoomToCursor = true; controls.screenSpacePanning = true;
 
 scene.add(new THREE.HemisphereLight(0xdbe9f7, 0x6f6450, 1.05));
@@ -1199,6 +1202,43 @@ renderer.domElement.addEventListener('wheel', (ev) => {
   if (!enc) return; ev.preventDefault(); const now = performance.now(); if (now - tRueda < 380 || Math.abs(ev.deltaY) < 4) return;
   tRueda = now; vecino(ev.deltaY > 0 ? 1 : -1);
 }, { passive: false });
+// ---------- rueda en la vista general: acercamiento suave al punto bajo el cursor (como Navisworks / Revit / visor de Autodesk)
+// el paso es proporcional a la distancia a ese punto (cerca, fino; lejos, rápido), se reparte en ~0,25 s, no atraviesa lo que se
+// mira, no baja del suelo y no se aleja más allá del entorno del modelo (antes: OrbitControls, saltos de golpe hasta 260 m)
+let zoomP = null, cajaModelo = null, tPick = 0, xyPick = null;
+function cajaDelModelo() {
+  if (cajaModelo) return cajaModelo;
+  const b = new THREE.Box3(); REG.forEach(({ obj, capa }) => { if (capa !== 'terreno') b.expandByObject(obj); });
+  const c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2;
+  return (cajaModelo = { b, c, lejos: Math.max(95, r * 1.5), caja: b.clone().expandByScalar(12) });
+}
+const _vZ = new THREE.Vector3(), _pZ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function puntoZoom(ev) {
+  const hits = pick(ev).filter((h) => !(subsuelo && h.object === terreno)); // con el subsuelo a la vista se puede bajar bajo el terreno
+  if (hits[0]) { const h = hits[0]; const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : null; return { P: h.point.clone(), dMin: h.object === terreno || (n && n.y > 0.8 && h.point.y < 0.6) ? 3 : 1.2 }; }
+  const q = ray.ray.intersectPlane(_pZ, new THREE.Vector3()); if (q && q.distanceTo(camera.position) < 400) return { P: q, dMin: 3 };
+  return { P: camera.position.clone().addScaledVector(ray.ray.direction, Math.max(20, camera.position.distanceTo(controls.target))), dMin: 0 };
+}
+renderer.domElement.parentElement.addEventListener('wheel', (ev) => {
+  if (enc || !controls.enabled || (rec && rec.activo) || ev.target !== renderer.domElement) return; // inspección y recorrido: su propia rueda
+  ev.preventDefault(); ev.stopPropagation(); anim = null;
+  let d = ev.deltaY * (ev.deltaMode === 1 ? 33 : ev.deltaMode === 2 ? 400 : 1); if (!d) return;
+  d = Math.max(-240, Math.min(240, d));
+  const now = performance.now(); const quieto = xyPick && Math.hypot(ev.clientX - xyPick[0], ev.clientY - xyPick[1]) < 6;
+  if (!zoomP || !quieto || now - tPick > 160) { const z = puntoZoom(ev); zoomP = { ...z, f: zoomP && quieto ? zoomP.f : 1 }; tPick = now; xyPick = [ev.clientX, ev.clientY]; }
+  zoomP.f = Math.max(0.3, Math.min(3, zoomP.f * Math.pow(1.0015, d))); // una muesca (100) ≈ 14 % más cerca o 16 % más lejos
+  pedir();
+}, { capture: true, passive: false });
+function pasoZoom(dt) {
+  const z = zoomP; const M = cajaDelModelo();
+  const lf = Math.log(z.f) * (1 - Math.exp(-Math.min(0.1, dt) / 0.085)); const f = Math.exp(lf); z.f = Math.exp(Math.log(z.f) - lf);
+  const np = _vZ.copy(camera.position).sub(z.P).multiplyScalar(f).add(z.P);
+  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || np.y < alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.2))) || (f > 1 && np.distanceTo(M.c) > M.lejos);
+  if (tope) { zoomP = null; return; }
+  camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
+  if (f > 1) M.caja.clampPoint(controls.target, controls.target); // al alejarse, el pivote no sale del entorno del modelo
+  if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
+}
 // en celular no abre la ficha al llegar (taparía la vista): basta la placa y el rótulo de lo que se mira
 function seleccionarSuave(e) { if (movil) { actual = e.info; if (mapa) { mapa.sel = e.key; mapa.dibujar(); } pedir(); } else seleccionar(e.info); }
 function entrarSala(e = null) { inspeccionar(e || eqInicial()); }
@@ -1585,6 +1625,7 @@ function bucle(now) {
   requestAnimationFrame(bucle);
   const dt = Math.max(0, (now - tAnt) / 1000); tAnt = now;
   if (anim) { anim(now); sucio = true; }
+  if (zoomP) { if (controls.enabled && !(rec && rec.activo)) pasoZoom(dt); else zoomP = null; sucio = true; }
   if (encAnim && rec && rec.activo) { pasoAnim(now); sucio = true; }
   else if (enc && enc.nearIns > enc.near0 + 0.01 && rec && rec.orbita) {
     const o = rec.orbita; const g = Math.min(1, (Math.abs(o.az - o.az0) + Math.abs(o.el - o.el0)) / 0.35);
@@ -1664,7 +1705,7 @@ tablero = iniciarTablero({ U4D, m4d, ZONAS: ZONAS4D, esc_, visor: abrirVisor, ta
   onTab: (v) => { if (v === 'v-bim') requestAnimationFrame(() => { redimensionar(); }); } });
 requestAnimationFrame(bucle);
 $('#cargando').remove();
-window.__se = { inspeccionar, vecino, filaVecina, salirInspeccion, atrasInsp, encAnimDe: () => encAnim && { ...encAnim, t0: performance.now() - encAnim.t }, vcDe: () => vc, histVista, vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
+window.__se = { zoomDe: () => zoomP, cajaDelModelo, inspeccionar, vecino, filaVecina, salirInspeccion, atrasInsp, encAnimDe: () => encAnim && { ...encAnim, t0: performance.now() - encAnim.t }, vcDe: () => vc, histVista, vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
 </script>
 </body>
 </html>

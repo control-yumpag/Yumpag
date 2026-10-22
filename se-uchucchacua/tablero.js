@@ -202,12 +202,12 @@ export function iniciarTablero(ctx) {
   // ---------------------------------------------------------------- CRONOGRAMA: detalle de la actividad elegida
   function croDet() {
     const i = m4d.i;
-    if (!act) { $('#croDet').innerHTML = `<div class="vacio">Clic en una actividad del cronograma para ver su detalle y sus fotos. La fecha se elige con los días de la cabecera o con la barra de tiempo del BIM 4D.</div>`; return; }
+    if (!act) { $('#croDet').innerHTML = `<div class="tw-head">Detalle de la actividad</div><div class="vacio">Clic en una actividad del cronograma (a la izquierda) para ver aquí su ventana, su avance a la fecha y sus fotos. La fecha se elige con los días de la cabecera o con la barra de tiempo del BIM 4D.</div>`; return; }
     const fotos = FOTOS.filter((x) => String(x.act) === String(act.n));
     const av = avance([act], i);
     $('#croDet').innerHTML = `<div class="cd"><div><div class="tw-head">${esc_(act.n)} · ${esc_(act.nombre)}<span>${esc_(act.grupo)} · zona ${esc_(zonaTxt(act))} (${esc_(act.ubic)})</span></div>
       <table class="kv"><tr><td>Ventana programada</td><td>${act.ini ? `${fLarga(act.ini)} → ${fLarga(act.fin)} · ${dias(act.ini, act.fin) + 1} días` : 'sin fechas (condicionada)'}</td></tr><tr><td>Peso en el control</td><td>${pct(act.peso)}</td></tr><tr><td>Al ${fCorta(F[i])}</td><td>ejecutado ${pct(av.ejec, 0)} · programado ${pct(av.prog, 0)} · ${TXT4[estadoAct(act, i)]}</td></tr><tr><td>Estado en el control</td><td>${esc_(act.estado || '—')}</td></tr></table>
-      <button class="bim-btn" data-bim="1">🏗️ Ver en el BIM 4D</button></div><div><div class="tw-sec">Fotos · ${fotos.length}</div>${fotosDe(fotos, 8)}</div></div>`;
+      <button class="bim-btn" data-bim="1">🏗️ Ver en el BIM 4D</button></div><div><div class="tw-sec">Fotos · ${fotos.length}</div>${fotosDe(fotos, 12)}</div></div>`;
   }
   $('#croDet').onclick = (e) => {
     if (e.target.closest('[data-bim]')) { verTab('v-bim'); m4d.seleccionarAct(act, true); refrescarBIM(); return; }
