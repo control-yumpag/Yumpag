@@ -12273,7 +12273,7 @@ function drawPataGrid(){
   }
   s += `<div class="tw-kpi-row">${_via}${bigBar('Obra civil', civ, barCol(civ), '', 'Obra civil de la torre: ponderado oficial (hoja Avance del Resumen)')}</div>`;
   const fund = towerFundAt(t, d4i);
-  s += `<div class="tw-sec">Zapatas · ${F(fund)}% (media de 6 actividades) · ${t.patasFuente==='campo' ? '% por pata de los datos de campo' : (t.patasFuente==='registro' ? '% por pata del Registro Fotográfico' : 'reparto uniforme estimado por pata')}</div><div class="tw-patas">`;
+  s += `<div class="tw-sec">Zapatas · ${F(fund)}% (media de 6 actividades) · ${t.patasFuente==='resumen' ? '% por pata del anexo del Resumen' : t.patasFuente==='campo' ? '% por pata de los datos de campo' : (t.patasFuente==='registro' ? '% por pata del Registro Fotográfico' : 'reparto uniforme estimado por pata')}</div><div class="tw-patas">`;
   ['A','B','C','D'].forEach(L=>{
     const p = pataOverall(t, L, d4i);
     const col = barCol(p);
