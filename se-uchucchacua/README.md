@@ -1,4 +1,4 @@
-# SE Uchucchacua · disposición física 3D
+# SE Uchucchacua · tablero BIM 4D (servicio de AXON) y modelo 3D
 
 Modelo 3D de la subestación Uchucchacua (138/33/22,9/10 kV) con la implementación del transformador de potencia
 TP-385 de 30/36 MVA, hecho **todo en código** con Three.js r160 (sin modelos importados).
@@ -7,7 +7,8 @@ Página: https://control-yumpag.github.io/Yumpag/se-uchucchacua/
 
 | Archivo | Qué es |
 |---|---|
-| `index.html` | Visor: vistas, capas, etapas, cortes, fichas y rótulos; doble clic en la sala o en un tablero para entrar en primera persona (1.er y 2.º piso) |
+| `index.html` | Tablero de la SE con el esqueleto del tablero de la LT (franja verde, pestañas Resumen · BIM 4D · Construcción · Cronograma · Fotos de obra · Reportes diarios, misma paleta claro/oscuro y botones) y el visor 3D dentro de la pestaña BIM 4D: vistas, capas, etapas, cortes, fichas, rótulos, sala de control y recorrido |
+| `tablero.js` | Pestañas del tablero (22-Oct-26): Resumen (indicadores, curva S, avance por grupo, personal, plazo, restricciones y habilitantes), fila de zonas de trabajo y panel «Avance» del BIM 4D, detalle del Cronograma, Fotos de obra y Reportes diarios (últimos 7 días); todo desde `uchu4d.js` |
 | `se3d.js` | Disposición de la subestación: coordenadas del plano, equipos, obras civiles, sala de control, red de tierra, fichas técnicas |
 | `lib.js` | Biblioteca de piezas paramétricas: celosías, aisladores, interruptor, seccionador, pararrayos, transformador, canaletas, cerco… |
 | `interior.js` | Interior de la sala de control: tableros y celdas con frente (OE-607/608/609), relés por tablero (OE-603), foso y trincheras, bandejas, luces, puertas; ductos y cableado de control, fuerza, comunicaciones, 10 kV y tierra |
@@ -42,12 +43,16 @@ violeta, la ficha de cada zona con el ejecutado / programado por actividad del c
 **Las ubicaciones son supuestas** (ningún plano disponible las da): el CPM en el lugar del tablero 19 (registrador de fallas, retirado
 al almacén el 17–18-Oct), SS.AA. = tablero 16, SCADA = tablero 2, patio = bahía L-1123, almacén = almacén del OE-604.
 
-**BIM 4D (botón «📅 BIM 4D», o `index.html?modo=4d`; dentro del tablero: `?modo=4d&embed=1`).** Panel bajo la vista con barra de
-tiempo (▶ día por día, 14 → 29-Oct): las zonas del modelo se colorean por el estado de sus actividades a esa fecha (por iniciar ·
-en curso · terminado · detrás de lo programado; después del último reporte, el programado), el registrador de fallas sale y entra el
-nuevo CPM el 18-Oct; medidores (programado, ejecutado, SPI, personal), cronograma (control diario de AXON con avance; V8 de CONENHUA y
-AXON Rev. 1 como referencia; clic en una actividad lleva a su zona y muestra sus fotos), reporte del día (trabajado, restricciones,
-habilitantes vencidos, SSOMA) y fotos del día. Actualizar con un control nuevo:
+**Tablero (desde el 22-Oct-26).** La página abre en **Resumen** (como el tablero de la LT); `#bim`, `#cro`, `#fot`, `#rep` o
+`?modo=4d` abren otra pestaña. **BIM 4D · Construcción**: barra de vistas y botones arriba, fila de las 7 zonas de trabajo con su
+estado y % (como la fila de las 23 torres de la LT; clic = la zona en el 3D y sus actividades), franja de la selección, el visor 3D,
+la barra de tiempo debajo (▶ día por día, 14 → 29-Oct; las zonas se colorean por el estado de sus actividades a esa fecha; el
+registrador de fallas sale y entra el nuevo CPM el 18-Oct) y el panel derecho con pestañas **Avance · Ficha · Sala · Capas**.
+**Cronograma**: Gantt del control diario de AXON (V8 de CONENHUA y AXON Rev. 1 como referencia) con el detalle de la actividad
+elegida y sus fotos. **Fotos de obra**: por día y por actividad. **Reportes diarios**: tira de los últimos 7 días y, del día
+elegido, lo trabajado, el cumplimiento del programa, personal y checklist SSOMA, restricciones y habilitantes, y fotos. Colores de
+estado: por iniciar gris · en curso lima · terminado verde · detrás de lo programado ámbar (sin rojo de juicio).
+Actualizar con un control nuevo:
 
     python3 gen/uchu_fotos.py --excel <axon_ultimo.xlsx> --drive <carpeta de fotos> --drive_json <índice> --yunet <yunet.onnx> \
         --out fotos4d --excluir gen/fotos_excluir.txt --manual gen/fotos_manual.json --acts uchu4d.js --contacto <revisión>

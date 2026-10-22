@@ -14,13 +14,14 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 ## Archivos
 | Archivo | Contenido |
 |---|---|
-| `index.html` | Visor: vistas (isométrica, planta, bahía, TP-385, secciones A-A/B-B, sala, subsuelo), modo Recorrer, Película, capas, etapas, cortes, color realista / por estado, fichas, plano CAD, brújula, tema, celular |
+| `index.html` | Tablero de la SE (franja, pestañas, paleta y botones del tablero de la LT; claro por defecto, `localStorage se_uchu_tema`) y visor 3D en la pestaña BIM 4D: vistas (isométrica, planta, bahía, TP-385, secciones A-A/B-B, sala, subsuelo), modo Recorrer, Película, capas, etapas, cortes, color realista / por estado, fichas, plano CAD, brújula, celular. El visor se dimensiona por su contenedor (`tamVista`, ResizeObserver); el panel derecho tiene pestañas Avance · Ficha · Sala · Capas (`tabDer`) |
+| `tablero.js` | Pestañas Resumen, Cronograma (detalle), Fotos de obra y Reportes diarios, fila de zonas y panel «Avance» del BIM 4D (`iniciarTablero`); solo lee `uchu4d.js` |
 | `se3d.js` | Disposición: `L` (coordenadas de todo), fichas `F`, terreno, patio 138 kV, bahía TP-385, patio 33 kV, transformadores, obras civiles, edificaciones, sala, red de tierra, cerco; `pisoEn()`, `HUECOS`, `OBST_EXTRA`, `ETAPAS` |
 | `lib.js` | Piezas paramétricas: materiales `M`, celosías (angulares L), aisladores, interruptor, seccionador, pararrayos, TC/TT, trampa de onda, transformador, catenarias, cadenas, canaletas, losas, muros, cerco |
 | `interior.js` | Sala de control: tableros y celdas con frente (canvas), relés por tablero, foso y trincheras, bandejas, luces, puertas; ductos y cableado (control, fuerza, comunicaciones, 10 kV, tierra); gabinete del IN-385 |
 | `recorrer.js` | Recorrido en tercera persona (por defecto) o primera: colisiones (cajas), escaleras, rutas (`irPor`), teletransporte, joystick táctil; la cámara de tercera persona se acorta contra obstáculos afuera y, adentro, el techo se recorta (`cortarTecho` en `index.html`) |
 | `persona.js` | Persona de la tercera persona (sin rasgos) y `Rejilla` A* para caminar por los pasillos |
-| `cuatrod.js` | BIM 4D del servicio de AXON (`iniciar4D`): panel, barra de tiempo, zonas por estado, Gantt, reporte y fotos del día; `axonAlCorte()` da el AXON al corte para el panel y las fichas |
+| `cuatrod.js` | BIM 4D del servicio de AXON: `modelo4D()` (estados, avance por zona o grupo), `iniciar4D()` monta la barra de tiempo (bajo el visor) y el Gantt (pestaña Cronograma) en `ctx.mount`, colorea las zonas del 3D y avisa con `onFecha`/`onAct`; `axonAlCorte()` da el AXON al corte para el panel de la sala y las fichas |
 | `uchu4d.js` | Datos del BIM 4D, generado con `gen/uchu_build.py` (no editar a mano); fotos en `fotos4d/` con `gen/uchu_fotos.py` (rostros difuminados con YuNet, sin EXIF) |
 | `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
 | `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607), `frenteDe()`, `filasDe()` (filas de tableros para alzados y vecinos) y `encuadreDe()` (pose de cámara para ver un tablero completo con el plano de recorte cercano) |
@@ -28,8 +29,16 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
 
-## Acceso
-Desde el 22-Oct-26 (pedido del usuario: «todo lo relacionado a Uchucchacua tiene que estar en otro lado; un botón para ingresar a la LT y otro a la subestación») la SE **ya no va dentro del tablero de la LT**: la portada del portal (`index.html` de la raíz) tiene dos botones, «LT 138 kV Pomayaros – Yumpag» → `tablero.html` y «SE Uchucchacua · TP-385» → `se-uchucchacua/index.html?modo=4d` (abre en su BIM 4D). Esta página lleva «← Portada» (`../`) en la cabecera. Los parámetros `embed=1`, `tema` y el `postMessage({tipo:'tema'})` siguen funcionando pero hoy nadie los usa (el selector v72.54 de la plantilla se retiró en la v72.56). Fotos: nada se publica sin revisar la hoja de contacto (documentos, firmas, baños, rostros sin difuminar).
+## Acceso y estructura del tablero
+Desde el 22-Oct-26 la SE **no va dentro del tablero de la LT**: la portada del portal (`index.html` de la raíz) tiene dos botones,
+«LT 138 kV Pomayaros – Yumpag» → `tablero.html` y «SE Uchucchacua» → `se-uchucchacua/`. Esta página es el **tablero de la SE** con
+la misma distribución, paleta y botones que el de la LT (pedido del usuario: «el tablero de subestación con una distribución, paleta
+de colores y botones de manera similar… no mezclar, el apartado de LLTT está bien y no tocar»): franja verde, pestañas Resumen ·
+BIM 4D · Construcción · Cronograma · Fotos de obra · Reportes diarios. **No se toca nada de la raíz** para cambiar la SE.
+Abre en Resumen; `#bim`, `#cro`, `#fot`, `#rep` o `?modo=4d` abren otra pestaña; `embed=1` oculta franja y pestañas; `tema` y
+`postMessage({tipo:'tema'})` siguen funcionando. Colores de estado del 4D: gris por iniciar · lima en curso · verde terminado · ámbar
+detrás de lo programado (sin rojo de juicio). Fotos: nada se publica sin revisar la hoja de contacto (documentos, firmas, baños,
+rostros sin difuminar).
 
 ## Convenciones que no se cambian
 - **Coordenadas**: las del DWG de planta general (CN-EIU-25-03ED-CNH-SE-OE-204), en metros, con origen desplazado:
