@@ -4,7 +4,7 @@ import * as THREE from 'three';
 export class Recorrido {
   constructor(camera, dom, { pisoEn, obstaculos = [], onCambio = () => {} }) {
     this.camera = camera; this.dom = dom; this.pisoEn = pisoEn; this.obst = obstaculos; this.onCambio = onCambio;
-    this.activo = false; this.yaw = 0; this.pitch = 0; this.pies = 0; this.ojo = 1.65; this.radio = 0.32;
+    this.activo = false; this.yaw = 0; this.pitch = 0; this.pies = 0; this.ojo = 1.65; this.radio = 0.26;
     this.teclas = new Set(); this.pos = new THREE.Vector3();
     this.mov = new THREE.Vector2(); // joystick (−1…1)
     this._punteros = new Map(); this._joy = null;
@@ -28,6 +28,22 @@ export class Recorrido {
     this.dom.style.cursor = ''; if (this._hud) this._hud.joy(null);
   }
   teletransportar(X, Y) { this.pies = this.pisoEn(X, Y, this.pies); this.pos.set(X, this.pies + this.ojo, -Y); this.camera.position.copy(this.pos); this.onCambio(); }
+  // coloca al caminante en un punto (y piso) con una orientación dada; pitch en grados (negativo = mira hacia abajo)
+  colocar(X, Y, yawDeg, yPie = this.pies, pitchDeg = 0) {
+    this.pies = this.pisoEn(X, Y, yPie); this.pos.set(X, this.pies + this.ojo, -Y);
+    this.yaw = (yawDeg * Math.PI) / 180; this.pitch = (pitchDeg * Math.PI) / 180;
+    this.camera.position.copy(this.pos); this._apuntar(); this.onCambio();
+  }
+  // ¿cabe una persona (radio r) parada en X, Y a la altura de pies yPie?
+  libre(X, Y, yPie, r = this.radio) {
+    const x = X, z = -Y, yb = yPie + 0.25, yt = yPie + 1.75;
+    for (const b of this.obst) {
+      if (b.max.y < yb || b.min.y > yt) continue;
+      if (x + r > b.min.x && x - r < b.max.x && z + r > b.min.z && z - r < b.max.z) return false;
+    }
+    return true;
+  }
+  get yawDeg() { return (this.yaw * 180) / Math.PI; }
   _apuntar() {
     const d = new THREE.Vector3(Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch));
     this.camera.lookAt(this.pos.clone().add(d));
@@ -102,7 +118,7 @@ export class Recorrido {
 export function obstaculosDe(REG, capasOmitidas = new Set(['cables', 'tierra', 'terreno'])) {
   const out = []; const tmp = new THREE.Box3();
   const toma = (o) => {
-    if (!o.visible) return;
+    if (!o.visible || o.userData.noObst) return;
     o.updateWorldMatrix(true, false);
     tmp.setFromObject(o);
     if (tmp.isEmpty()) return;
@@ -120,6 +136,7 @@ export function obstaculosDe(REG, capasOmitidas = new Set(['cables', 'tierra', '
     if (capa === 'sala' || capa === 'obraCivil' || capa === 'patio138' || capa === 'patio33' || capa === 'edificaciones' || capa === 'cerco' || capa === 'transformadores') {
       // bajar hasta los nodos con geometría propia o grupos pequeños
       const baja = (n, prof) => {
+        if (n.userData.noObst) return;
         if (n.userData.obstaculo || n.isMesh || prof >= 3 || !n.children.length) { toma(n); return; }
         tmp.setFromObject(n); const sx = tmp.max.x - tmp.min.x, sz = tmp.max.z - tmp.min.z;
         if (sx < 3 && sz < 3) { toma(n); return; }

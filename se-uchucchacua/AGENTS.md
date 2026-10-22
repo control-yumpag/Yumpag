@@ -20,6 +20,8 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `interior.js` | Sala de control: tableros y celdas con frente (canvas), relés por tablero, foso y trincheras, bandejas, luces, puertas; ductos y cableado (control, fuerza, comunicaciones, 10 kV, tierra); gabinete del IN-385 |
 | `recorrer.js` | Primera persona: colisiones (cajas), escaleras, teletransporte, joystick táctil |
 | `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
+| `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607) y `frenteDe()` |
+| `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
 
 ## Convenciones que no se cambian
@@ -34,6 +36,10 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 - Capas: `patio138 · transformadores · patio33 · cables · obraCivil · sala · edificaciones · tierra · cerco · terreno`.
 - Tapas, rejillas y grava llevan `userData.tapa / rejilla / gravaBase` (las oculta «Destapar»); puertas de gabinetes
   en `CTX.puertas` con `userData.puerta = {cerrada, abierta}`; obstáculos del recorrido con `userData.obstaculo`.
+- Tableros y celdas: `TABLEROS` / `CELDAS_K` en `interior.js` con `cod` (designación funcional, p. ej. `=E1.A01.CP01`), `sigla`
+  (abreviatura del OE-607), `obra` (`nuevo` | `interv` | `rel`) y `obraTxt`. Se registran en `EQUIPOS` (navegación, minimapa,
+  placas y zonas en obra). La bahía del TP-385 usa los equipos **existentes SB-383 e IN-383** (OE-603, OE-605 y esquemas funcionales);
+  no renombrarlos a «385». El tablero 18 (=E1.A01.CP01) es existente con intervención; el único tablero nuevo es el 22 (=A1.C01.REGT).
 - El terreno se recorta (`discard` en el shader) dentro de los rectángulos de `HUECOS` (canaletas, base, pozos,
   trincheras): si añades una canaleta nueva, llama `huecoSeg(pts, semiAncho)`.
 - Realismo con geometría, no con texturas de IA. Texturas solo procedurales (canvas) o de fotos de campo propias.
@@ -45,8 +51,9 @@ Carpeta de Drive «Proyecto TP 36 MVA» (Archivos CAD · Archivos PDF · `Proy T
 planos CN-EIU-25-04/ID-CNH-SE-OE-601…615 (unifilares 601–603, planta general 604, disposición de equipos 605 planta y
 606 secciones, sala de control 607 1/2 y 2/2, frente de tablero 608, frente de celdas 609, tierra profunda 610 Rev.1,
 tierra superficial 611, montaje del transformador 612 1/2 y 2/2, SS.AA. 613, ductos 614, conectores 615). Los DWG
-se convierten con `dwg2dxf` (LibreDWG) y se leen con `ezdxf`. Pendiente: planos funcionales por tablero (nota 2 del
-OE-608) y planos de estructuras / cimentaciones de pórticos.
+se convierten con `dwg2dxf` (LibreDWG) y se leen con `ezdxf`. Subcarpeta «PLANOS FUNCIONALES»: ficha de conexionado
+externo Rev. D (Excel y PDF), diagrama de bloques del cableado Rev. 0, esquemas funcionales =E1.A01.CP01 Rev. D (PDF de 13 MB) y
+tablero de regulación automática del TP-385 (EPLI). Pendiente: planos de estructuras / cimentaciones de pórticos.
 
 ## Cómo probar
 ```bash

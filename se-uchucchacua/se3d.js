@@ -4,7 +4,7 @@
 // Cota del patio (y = 0) = 4 447,00 m s.n.m. (NPT sala de control 4 447,03; base TP-385 4 447,248).
 import * as THREE from 'three';
 import * as P from './lib.js';
-import { construirInterior, construirCables } from './interior.js';
+import { construirInterior, construirCables } from './interior.js?v=4';
 const { V, M } = P;
 
 export const ORIGEN = { X: 73400, Y: 24900, cota: 4447.0 };
@@ -54,7 +54,7 @@ export const L = {
   // patio 33 kV
   g33: { xs: [1.5, 16.3], ys: [38.2, 32.1], barras: [36.6, 35.0, 33.4], hBarra: 6.0, hCol: 7.2 },
   salidas33: [{ id: 'Iscaycruz', xs: [5.6, 6.7, 7.7] }, { id: 'Raura', xs: [10.6, 11.7, 12.7] }],
-  // bahía TP-385 (proyectada)
+  // bahía del TP-385 (equipos existentes SB-383 / IN-383; transformador proyectado)
   b385: { xSec: [37.9, 40.65, 43.15], xIn: [38.2, 40.7, 43.2], ySec: 21.2, yIn: 17.0, yPR: 13.8, yBushAT: 11.45 + 0.0,
           aisladorSop: [37.9, 26.25], porticoX: 46.6, porticoYs: [30.2, 22.2],
           base: { x0: 36.4, x1: 46.6, y0: 8.4, y1: 14.7 }, ejeRuedas: 11.45, ejeAT: 40.64 },
@@ -68,30 +68,34 @@ const F = {
     datos: { Marca: 'EPLI', Modelo: 'TP30', Relación: '138 ± 2×1,25 % − 18×1,25 % / 22,9 / 10 kV', Potencia: '30/30/30 MVA ONAN · 36/36/36 MVA ONAF',
       Grupo: 'YNyn0d5 · 60 Hz', Regulación: 'Bajo carga (OLTC) con tablero de regulación automática (T1)', Altura: '7,203 m del nivel de base al borne AT',
       Nota: 'Equipo existente suministrado por Buenaventura; se traslada, monta y prueba en la SE Uchucchacua (actividad del fabricante).' },
-    planos: ['CN-EIU-25-04/ID-CNH-SE-OE-605', 'OE-606', 'OE-612 (1/2 y 2/2)'] },
-  IN385: { id: 'IN-385', nombre: 'Interruptor de potencia 145/170 kV', estado: 'P',
-    datos: { Marca: 'ABB', Tipo: 'LTB 170D1/B', 'Corriente nominal': '2 000 A', 'Tensión': '170 kV', 'Corriente de corte': '40 kA', BIL: '750 kVp',
+    planos: ['CN-EIU-25-04/ID-CNH-SE-OE-605', 'OE-606', 'OE-612 (1/2 y 2/2)'], cod: ['=TP-385', '=TP-385 (CBC)'] },
+  IN385: { id: 'IN-383', nombre: 'Interruptor de potencia 145/170 kV de la bahía del TP-385', estado: 'E', cod: '=IN-383', obra: 'interv',
+    obraTxt: 'Equipo existente. Se reconectan sus cables de control, disparo y fuerza, reubicados durante las obras civiles (ficha de conexionado Rev. D).',
+    datos: { Código: 'IN-383 (OE-603 y esquemas funcionales =E1.A01.CP01)', Marca: 'ABB', Tipo: 'LTB 170D1/B (leyenda OE-605, ítem 3)', 'Corriente nominal': '2 000 A (OE-605) · el OE-603 indica 3 150 A: verificar en placa', 'Tensión': '170 kV', 'Corriente de corte': '40 kA', BIL: '750 kVp',
       'Mando': 'Gabinete central de interruptor (cables de control por PVC SAP 4×Ø2" a la canaleta C1)' },
-    planos: ['OE-605', 'OE-606', 'OE-614'] },
-  SB385: { id: 'SB-385', nombre: 'Seccionador de barra tripolar de mando motorizado', estado: 'P',
-    datos: { Marca: 'ABB', Tipo: 'SDF170', 'Corriente nominal': '1 600 A', 'Tensión': '170 kV', 'Corto circuito': '31,5 kA / 1 s', BIL: '750 kVp' }, planos: ['OE-605', 'OE-606'] },
-  AS385: { id: 'AS-385', nombre: 'Aislador soporte 138 kV (fase T)', estado: 'P',
+    planos: ['OE-603', 'OE-605', 'OE-606', 'OE-614'] },
+  SB385: { id: 'SB-383', nombre: 'Seccionador de barra tripolar de mando motorizado', estado: 'E', cod: '=SB-383', obra: 'rel',
+    obraTxt: 'Equipo existente; sus cables al tablero 18 (CP01), al 17 (CP02) y a SS.AA. figuran como existentes en la ficha Rev. D.',
+    datos: { Código: 'SB-383 (OE-603 y esquemas funcionales)', Marca: 'ABB', Tipo: 'SDF170 (leyenda OE-605, ítem 4)', 'Corriente nominal': '1 600 A (OE-605) · el OE-603 indica 1 250 A: verificar en placa', 'Tensión': '170 kV', 'Corto circuito': '31,5 kA / 1 s', BIL: '750 kVp' }, planos: ['OE-603', 'OE-605', 'OE-606'] },
+  AS385: { id: 'Aislador soporte', nombre: 'Aislador soporte 138 kV (fase T) · ítem 5 del OE-605', estado: 'E',
     datos: { Marca: 'EMEK', Modelo: 'C4-750', 'Corto circuito': '31,5 kA / 1 s', BIL: '750 kVp', Montaje: 'Pedestal de 2,50 m; aislador de 1,786 m' }, planos: ['OE-605', 'OE-606'] },
-  PR385: { id: 'PR-385', nombre: 'Pararrayos de óxido metálico 120 kV (3)', estado: 'P',
+  PR385: { id: 'PR-383', nombre: 'Pararrayos de óxido metálico 120 kV (3)', estado: 'P',
     datos: { Marca: 'Cooper Power', Tipo: 'VariSTAR U3', Ur: '120 kV', Uc: '98 kV', Clase: '3 · 10 kA', Montaje: 'Ménsula del transformador (lo suministra el fabricante del transformador)' }, planos: ['OE-605', 'OE-606', 'OE-612'] },
-  K03: { id: 'K03', nombre: 'Celda de media tensión — llegada del transformador TP-385', estado: 'P',
-    datos: { Marca: 'Siemens', Modelo: 'NXPLUS C', Tensión: '24 kV', Corriente: '1 250 A', 'Corto circuito': '25 kA', Conexión: 'Cable 1×500 mm² 12/20 kV N2XSOH desde la cajuela 10 kV' }, planos: ['OE-605', 'OE-607', 'OE-609'] },
-  T1: { id: 'Tablero 22 (T1)', nombre: 'Tablero de regulación automática del TP-385 (nuevo)', estado: 'P',
-    datos: { Marca: 'EPLI', Dimensiones: '800 × 600 × 2 000 mm', Ubicación: 'Sala de control, segundo piso' }, planos: ['OE-606', 'OE-607 (2/2)'] },
+  K03: { id: 'K03', nombre: 'Celda de media tensión — llegada del transformador TP-385', estado: 'E', cod: '=K03+K03', obra: 'interv',
+    obraTxt: 'Celda existente «a ser conectada con el nuevo transformador» (nota del OE-607): llega el cable 10 kV del TP-385 y sale el cable nuevo de señal de tensión al tablero 22 (WGK034001).',
+    datos: { Marca: 'Siemens', Modelo: 'NXPLUS C', Tensión: '24 kV', Corriente: '1 250 A', 'Corto circuito': '25 kA', 'Interruptor (OE-603)': 'IN-116 · 1 250 A · 17,5 kV · 25 kA', 'Relé (OE-603)': 'Siemens 7SJ82 (27/59 · 59N · 50/51 · 25)', 'Medida (OE-603)': 'TC-105 1 000/1/1 A · TT-103 10/√3 / 0,1/√3 kV · medidor PM9510DC · pararrayos PR-105', Conexión: 'Cable N2XSOH 12/20 kV 500 mm² desde la cajuela 10 kV (OE-603: 3F × 2 × 1×500 mm², 35 m)' }, planos: ['OE-603', 'OE-605', 'OE-607', 'OE-609'] },
+  T1: { id: 'Tablero 22 (T1)', nombre: 'Tablero de regulación automática del TP-385 (nuevo)', estado: 'P', cod: '=A1.C01.REGT', obra: 'nuevo',
+    obraTxt: 'Tablero nuevo. Cables nuevos al cambiador bajo carga (CBC) y al gabinete del TP-385, a la celda K03 (señal de tensión) y a SS.AA. (110 Vcc y 220 Vca).',
+    datos: { Código: '=A1.C01.REGT (diagrama de bloques del cableado)', Marca: 'EPLI', Dimensiones: 'OE-608: 800 × 600 × 1 900 mm sobre zócalo · fabricante: 800 × 1 800 × 600 mm (an × al × pf) con zócalo desmontable de 100 mm', Acabado: 'RAL 7035, electrostático, IP 54 (plano del fabricante)', Ubicación: 'Sala de control, segundo piso' }, planos: ['OE-606', 'OE-607 (2/2)', 'OE-608', 'Funcional 01 (EPLI)'] },
   BASE385: { id: 'Base TP-385', nombre: 'Base del transformador con poza de aceite', estado: 'C',
     datos: { Dimensiones: '10,20 × 6,30 m', 'Nivel superior': 'N.S.C. 4 447,248', 'Fondo de poza': '4 445,548', Acabado: 'Grava piedra rodada sobre rejilla metálica; rieles con eje de ruedas a 3,05 m del borde sur',
       Nota: 'La base reemplaza la del transformador retirado (bloque «Base trafo», capa A RETIRAR).' }, planos: ['OE-605', 'OE-612', 'OE-610'] },
   C1: { id: 'C1', nombre: 'Canaleta de cables de control 0,70 × 0,70 m', estado: 'C',
-    datos: { Sección: '0,70 × 0,70 m interior', Recorrido: 'Del gabinete del interruptor IN-385 a la canaleta existente, con curva de bandeja', Ductos: 'PVC SAP 4×Ø2" desde el gabinete central' }, planos: ['OE-614'] },
+    datos: { Sección: '0,70 × 0,70 m interior', Recorrido: 'Del gabinete del interruptor IN-383 a la canaleta existente, con curva de bandeja', Ductos: 'PVC SAP 4×Ø2" desde el gabinete central' }, planos: ['OE-614'] },
   CT10: { id: 'Canal 10 kV', nombre: 'Canal de cable 10 kV (nuevo)', estado: 'C',
     datos: { Cable: '1×500 mm² 12/20 kV N2XSOH (650 m en metrado)', Soportes: 'Rieles Unistrut con abrazaderas tipo trébol (Detalles D3–D5)' }, planos: ['OE-612 (2/2)'] },
   CAB10: { id: 'Cable 10 kV', nombre: 'Cable de potencia MT TP-385 → celda K03', estado: 'P',
-    datos: { Tipo: 'N2XSOH 1×500 mm² 12/20 kV, pantalla 25 mm²', Recorrido: 'Cajuela 10 kV → canal nuevo → canaleta existente → sala de control (cruce con cables existentes)', Terminaciones: '8 exteriores termocontraíbles + 5 enchufables tipo T' }, planos: ['OE-605', 'OE-606', 'OE-612'] },
+    datos: { Tipo: 'N2XSOH 1×500 mm² 12/20 kV, pantalla 25 mm²', 'Según OE-603': '3F × 2 × 1×500 mm² (dos cables por fase), 35 m', Recorrido: 'Cajuela 10 kV → canal nuevo → canaleta existente → sala de control (cruce con cables existentes)', Terminaciones: '8 exteriores termocontraíbles + 5 enchufables tipo T' }, planos: ['OE-605', 'OE-606', 'OE-612'] },
   ACAR: { id: 'ACAR 557', nombre: 'Conexión AT interruptor → bornes del transformador', estado: 'P',
     datos: { Conductor: 'Aluminio ACAR 557 mm² (30 m)', Conectores: 'Acodado 90° cable–borne Ø30 (3) · derivación en T cable–platina (3) · acodado 45° cable–platina (3)' }, planos: ['OE-615'] },
   MALLA: { id: 'Malla de tierra profunda', nombre: 'Malla de tierra profunda — modificación', estado: 'C',
@@ -363,7 +367,7 @@ function patio138() {
     datos: { Equipos: 'SB-381 MESA 1 250 A · IN-381 Magrini Galileo 2 000 A, 31,5 kA · PR-381 120 kV · TC 100–200/1/1/1 A', Transformador: 'TP-383 WEG 127,65 ± 10×1 % / 34,5 / 4,16 kV · 20/18/20 MVA ONAN · 25/22/25 MVA ONAF · YNyn0d5', Protección: 'Tablero 9: R22 KCGG 140 (50/51, 50N/51N) · R21 SEL 387E (87T) · R23 86 · R41 KCGG 140 lado 33 kV', Fases: 'Horizontales a 3,00 m (Y 29,2 · 26,2 · 23,2)' }, planos: ['OE-602', 'OE-603', 'OE-604'], aprox: true });
 }
 
-// ---------- bahía TP-385 (proyectada)
+// ---------- bahía del TP-385 (SB-383 e IN-383 existentes, OE-603/605; pórtico y transformador)
 function bahia385() {
   const b = L.b385, hb = L.g138.hBarra;
   // pórtico de barra de la ampliación sobre la terraza (+1,09)
@@ -375,18 +379,18 @@ function bahia385() {
 
   // aislador soporte (5) — fase T
   const as = P.aisladorSoporte({ hPed: 2.5, hAisl: 1.786 }); en(as, ...b.aisladorSop);
-  reg(as, 'patio138', F.AS385); etiqueta(as, 'AS (5)', 5.0, undefined, undefined, true);
+  reg(as, 'patio138', F.AS385); etiqueta(as, 'Aislador soporte (5)', 5.0, undefined, undefined, true);
   // seccionador SDF170 (4) — polos N–S de 2,0 m
   const sb = P.seccionador({ sep: 2.62, h: 2.9, largo: 2.0, mat: M.aisladorGris }); en(sb, b.xSec[1], b.ySec);
   // ajuste fino de fases (37,9 / 40,65 / 43,15)
   sb.children.slice(0, 3).forEach((f, i) => (f.position.x = b.xSec[i] - b.xSec[1]));
-  reg(sb, 'patio138', F.SB385); etiqueta(sb, 'SB-385 · seccionador (4)', 6.2, undefined, undefined, true);
+  reg(sb, 'patio138', F.SB385); etiqueta(sb, 'SB-383 · seccionador (4)', 6.2, undefined, undefined, true);
   // estructura de soporte del seccionador (celosía baja, E–O)
   const sop = P.soporteCelosia(6.4, 2.9, 0.5); en(sop, b.xSec[1], b.ySec);
-  reg(sop, 'patio138', { ...F.SB385, id: 'Soporte SB-385', nombre: 'Estructura soporte del seccionador SB-385' });
+  reg(sop, 'patio138', { ...F.SB385, id: 'Soporte SB-383', nombre: 'Estructura soporte del seccionador SB-383', lista: false });
   // interruptor LTB 170D1/B (3)
   const it = P.interruptor({ sep: 2.5, hEstruct: 2.45, mat: M.aisladorGris }); en(it, b.xIn[1], b.yIn);
-  reg(it, 'patio138', F.IN385); etiqueta(it, 'IN-385 · interruptor (3)', 7.0, undefined, undefined, true);
+  reg(it, 'patio138', F.IN385); etiqueta(it, 'IN-383 · interruptor (3)', 7.0, undefined, undefined, true);
   // conexiones AT: barra → AS → seccionador → interruptor (AAAC 240 mm² en el plano de conectores)
   const C = new THREE.Group(); const yAS = 4.3, ySec = 4.85, yIn = it.userData.term.sup;
   const xS = b.xSec, xI = b.xIn;
@@ -769,13 +773,13 @@ function cerco() {
 export const ETAPAS = [
   { n: 'Situación actual', d: 'Subestación existente, sin la bahía del TP-385.' },
   { n: '1 · Obras civiles', d: 'Base del transformador con poza, canaleta de control C1, canal de cable 10 kV, ductos y modificación de la malla de tierra profunda.' },
-  { n: '2 · Montaje de equipos', d: 'Aislador soporte, seccionador SDF170, interruptor LTB 170D1/B y traslado del transformador TP-385 a su base.' },
-  { n: '3 · Conexionado', d: 'Conexiones AT (AAAC y ACAR 557 mm²), cable 10 kV 500 mm² a la celda K03, red de tierra superficial, bandejas y tablero de regulación.' },
+  { n: '2 · Montaje del transformador', d: 'Traslado y montaje del TP-385 en su base, con los pararrayos PR-383. La bahía (aislador soporte, seccionador SB-383 e interruptor IN-383) es existente.' },
+  { n: '3 · Conexionado', d: 'Conexiones AT (AAAC y ACAR 557 mm²), cable 10 kV 500 mm² a la celda K03, red de tierra superficial, bandejas, tablero de regulación 22 y reconexión de cables de control (tableros 16, 17, 18 e IN-383).' },
 ];
 export function etapaDe(info) {
   if (!info || info.estado === 'E') return 0;
   const id = info.id || '';
   if (/Base TP-385|C1|Canal 10 kV|Buzón|Malla de tierra profunda/.test(id)) return 1;
-  if (/TP-385|IN-385|SB-385|AS-385|Soporte SB-385|K03/.test(id)) return 2;
+  if (/TP-385|PR-383/.test(id)) return 2;
   return 3;
 }
