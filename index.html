@@ -96,7 +96,7 @@ const $ = id => document.getElementById(id);
 const ir = () => { try{ sessionStorage.removeItem('yumpagDatos'); }catch(e){}   // sin sesiones: el tablero lee datos.json
   $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el tablero de la LT…'; location.href = 'tablero.html'; };
 const irSE = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el tablero de la SE Uchucchacua…';
-  location.href = 'se-uchucchacua/index.html?modo=4d'; };   // página aparte (se-uchucchacua/), abre en su BIM 4D
+  location.href = 'se-uchucchacua/'; };   // tablero aparte de la SE (se-uchucchacua/), abre en su Resumen como el de la LT
 $('btnEntrar').onclick = ir;
 $('btnSE').onclick = irSE;
 addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
