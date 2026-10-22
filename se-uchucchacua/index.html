@@ -128,6 +128,7 @@ body.encuadre #mira,body.encuadre #mirando,body.encuadre #hud{display:none!impor
 header{position:fixed;left:12px;top:12px;right:12px;display:flex;gap:10px;align-items:flex-start;pointer-events:none;z-index:5}
 .tit{pointer-events:auto;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);border-radius:var(--r);padding:10px 14px;max-width:560px}
 .tit h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.1px}
+.tit .volver{display:inline-block;font-size:11.5px;color:var(--ink2);text-decoration:none;margin-bottom:2px}.tit .volver:hover{text-decoration:underline}body.embed .tit .volver{display:none}
 .tit p{margin:2px 0 0;color:var(--ink2);font-size:12.5px}
 .tit .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
@@ -228,6 +229,7 @@ body.cine header,body.cine aside,body.cine #pie,body.cine #rotulos,body.cine #hu
 
 <header>
   <div class="tit">
+    <a class="volver" href="../" title="Volver a la portada (LT 138 kV Yumpag y SE Uchucchacua)">← Portada</a>
     <h1>SE Uchucchacua · disposición física 3D</h1>
     <p>Implementación del transformador de potencia TP-385 30/36 MVA, 138/22,9/10 kV · patio de llaves, equipos, obras civiles, sala de control y puesta a tierra</p>
     <div class="chips">

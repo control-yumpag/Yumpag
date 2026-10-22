@@ -28,10 +28,8 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
 
-## Dentro del tablero
-La pestaña «BIM 4D · Construcción» del tablero tiene un selector «LT Yumpag | SE Uchucchacua» (plantilla v72.54): la SE se carga en un
-iframe con `index.html?modo=4d&embed=1&tema=<claro|oscuro>` y el tema cambia por `postMessage({tipo:'tema', tema})`. No romper esos
-parámetros. Fotos: nada se publica sin revisar la hoja de contacto (documentos, firmas, baños, rostros sin difuminar).
+## Acceso
+Desde el 22-Oct-26 (pedido del usuario: «todo lo relacionado a Uchucchacua tiene que estar en otro lado; un botón para ingresar a la LT y otro a la subestación») la SE **ya no va dentro del tablero de la LT**: la portada del portal (`index.html` de la raíz) tiene dos botones, «LT 138 kV Pomayaros – Yumpag» → `tablero.html` y «SE Uchucchacua · TP-385» → `se-uchucchacua/index.html?modo=4d` (abre en su BIM 4D). Esta página lleva «← Portada» (`../`) en la cabecera. Los parámetros `embed=1`, `tema` y el `postMessage({tipo:'tema'})` siguen funcionando pero hoy nadie los usa (el selector v72.54 de la plantilla se retiró en la v72.56). Fotos: nada se publica sin revisar la hoja de contacto (documentos, firmas, baños, rostros sin difuminar).
 
 ## Convenciones que no se cambian
 - **Coordenadas**: las del DWG de planta general (CN-EIU-25-03ED-CNH-SE-OE-204), en metros, con origen desplazado:
