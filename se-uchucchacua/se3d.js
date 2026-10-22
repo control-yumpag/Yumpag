@@ -4,7 +4,7 @@
 // Cota del patio (y = 0) = 4 447,00 m s.n.m. (NPT sala de control 4 447,03; base TP-385 4 447,248).
 import * as THREE from 'three';
 import * as P from './lib.js';
-import { construirInterior, construirCables } from './interior.js?v=4';
+import { construirInterior, construirCables } from './interior.js?v=5';
 const { V, M } = P;
 
 export const ORIGEN = { X: 73400, Y: 24900, cota: 4447.0 };

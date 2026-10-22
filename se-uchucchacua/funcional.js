@@ -23,6 +23,7 @@ export const OBRA = {
   nuevo: { t: 'Nuevo', c: '#2f6fe4' },
   interv: { t: 'Existente con intervención', c: '#e07b1f' },
   rel: { t: 'Existente relacionado (solo cables existentes)', c: '#c9a227' },
+  axon: { t: 'Nuevo · trabajos de AXON (CPM L-1123)', c: '#8e44ad' },
 };
 
 // designación funcional → nombre legible y elemento del modelo (eq = clave en EQUIPOS de interior.js)

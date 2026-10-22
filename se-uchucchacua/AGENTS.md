@@ -21,6 +21,7 @@ Es independiente del portal del tablero BIM 4D que vive en la raíz de este repo
 | `recorrer.js` | Primera persona: colisiones (cajas), escaleras, teletransporte, joystick táctil |
 | `pelicula.js` | Recorrido cinematográfico (`GUION`) y grabación a video con MediaRecorder |
 | `sala.js` | Modo sala: `Minimapa` (plantas de 1.er y 2.º piso desde `L.sala` y los tabiques del OE-607), `frenteDe()`, `filasDe()` (filas de tableros para alzados y vecinos) y `encuadreDe()` (pose de cámara para ver un tablero completo con el plano de recorte cercano) |
+| `axon.js` | Control diario de AXON (CPM L-1123), generado con `gen/axon_gen.py`; sin nombres ni DNI del personal. Las zonas de AXON (`AX_ZONAS` en `index.html`) son ubicaciones **supuestas** y la ficha lo dice; corregirlas cuando se confirme en campo |
 | `funcional.js` | Planos funcionales: `CABLES` (ficha de conexionado externo Rev. D, generado con `gen/funcional_gen.py` desde el Excel; no editar a mano), `CLASE`, `OBRA`, `DISP`, `cablesDe()` |
 | `cad.json` | Líneas del DWG de planta general para superponer sobre el terreno (1,1 MB) |
 

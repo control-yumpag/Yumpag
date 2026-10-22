@@ -13,6 +13,7 @@ Página: https://control-yumpag.github.io/Yumpag/se-uchucchacua/
 | `interior.js` | Interior de la sala de control: tableros y celdas con frente (OE-607/608/609), relés por tablero (OE-603), foso y trincheras, bandejas, luces, puertas; ductos y cableado de control, fuerza, comunicaciones, 10 kV y tierra |
 | `recorrer.js` | Modo «Recorrer»: primera persona con colisiones, escaleras, teletransporte por doble clic y joystick táctil |
 | `sala.js` | Modo sala: minimapa por piso (tableros, celdas, zonas en obra, posición) y punto para pararse frente a un tablero |
+| `axon.js` | Control diario de AXON del nuevo tablero CPM L-1123 (=E01+WR01): avance por actividad, habilitantes y restricciones (solo cifras; sin nombres ni DNI). Se genera con `gen/axon_gen.py` desde el Excel de AXON |
 | `funcional.js` | Datos de los planos funcionales: códigos (=E1.A01.CP01, =A1.C01.REGT…), los 68 cables de la ficha de conexionado externo Rev. D y su clase (nuevo / reconexión / existente) |
 | `pelicula.js` | «Película»: recorrido cinematográfico de 13 paradas (~2 min) con subtítulos y grabación a MP4/WebM desde el navegador |
 | `AGENTS.md` | Reglas y contexto para cualquier agente de código (Antigravity, Claude Code, Gemini CLI) que trabaje en esta carpeta |
@@ -32,3 +33,9 @@ la pantalla; lo que queda entre la cámara y el pasillo se recorta. ◀ ▶ (o �
 descargable en PNG.
 Fuentes de los códigos: carpeta «PLANOS FUNCIONALES» (ficha de conexionado externo Rev. D, diagrama de bloques del cableado Rev. 0,
 esquemas funcionales =E1.A01.CP01 Rev. D, tablero de regulación EPLI) y el unifilar OE-603.
+
+**Trabajos de AXON (CPM L-1123).** Capa «Trabajos de AXON» (encendida por defecto): el nuevo tablero CPM L-1123 (=E01+WR01) en
+violeta, la ficha de cada zona con el ejecutado / programado por actividad del control diario de AXON, y los habilitantes pendientes.
+**Las ubicaciones son supuestas** (ningún plano disponible las da): el CPM en el lugar del tablero 19 (registrador de fallas, retirado
+al almacén el 17–18-Oct), SS.AA. = tablero 16, SCADA = tablero 2, patio = bahía L-1123, almacén = almacén del OE-604. Para actualizar
+con otro día: `python3 gen/axon_gen.py <Excel de AXON> axon.js "<nombre del archivo>"`.

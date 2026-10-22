@@ -127,7 +127,7 @@ export function gabinete({ w, h, d, tex, mat = M.tablero, zocalo = 0.1, X, Y, ro
 }
 
 // ------------------------------------------------------------------ zona de obra: marco de color en el frente y franja rayada en el piso
-const COL_OBRA = { nuevo: 0x2f6fe4, interv: 0xe07b1f, rel: 0xc9a227 };
+const COL_OBRA = { nuevo: 0x2f6fe4, interv: 0xe07b1f, rel: 0xc9a227, axon: 0x8e44ad };
 const _rayas = new Map();
 function texRayas(col) {
   if (_rayas.has(col)) return _rayas.get(col);
@@ -241,6 +241,18 @@ export function construirInterior(ctx) {
   reg(t22, 'sala', info22);
   equipo({ key: 'T22', n: 22, tipo: 'tablero', cod: '=A1.C01.REGT', nombre: 'Regulación del transformador TP-385', X: 38.6, Y: -4.55, rot: 180, w: 0.8, d: 0.6, h: 1.9, zocalo: 0.2, yPiso: y2, piso: 2, obj: t22, info: info22, obra: 'nuevo' });
   ctx.t22 = t22;
+  // nuevo tablero CPM de la L-1123 (=E01+WR01) que instala AXON — proyecto de la derivación de la L-1123 a la SE Yumpag.
+  // Ubicación SUPUESTA: en el lugar del tablero 19 (registrador de fallas), que AXON retiró al almacén el 17–18-Oct (R-05 de su
+  // control diario) y montó el nuevo tablero el 18-Oct. Ningún plano lo ubica: se confirma en campo y se corrige aquí.
+  const t19 = TABLEROS.find((t) => t.n === 19);
+  const cpm = gabinete({ w: t19.w, h: 2.2, d: t19.d, tex: frenteTablero({ num: 'CPM', nombre: 'Protección y control de la L-1123 (nuevo · AXON)', cod: '=E01+WR01', tipo: 'prot', w: t19.w, h: 2.2, nuevo: true, visor: ['L-1123', ''] }), X: t19.X, Y: t19.Y, rot: t19.rot, mat: M.tableroNuevo, piso });
+  const infoCPM = { id: 'CPM L-1123', nombre: 'Tablero de protección y control de la L-1123 (=E01+WR01) · nuevo, lo instala AXON', estado: 'P', obra: 'axon', axon: 'CPM L-1123',
+    obraTxt: 'Ubicación supuesta: en el lugar del tablero 19 (registrador de fallas), que AXON retiró al almacén el 17–18-Oct; el nuevo tablero se montó el 18-Oct. Ningún plano disponible lo ubica: confirmar en campo.',
+    datos: { Código: '=E01+WR01 (control diario de AXON)', Contratista: 'AXON Group · AX-26138 · OS BVN 5800003219', Proyecto: 'Derivación LT 138 kV Paragsha II – Uchucchacua (L-1123) a SE Yumpag', Ubicación: 'Sala de control, primer piso · supuesta (ver nota)' },
+    planos: ['Control diario de AXON (Excel)'], lista: true };
+  reg(cpm, 'sala', infoCPM);
+  equipo({ key: 'CPM', n: 'CPM', tipo: 'tablero', cod: '=E01+WR01', nombre: 'Protección y control de la L-1123 (nuevo · AXON)', X: t19.X, Y: t19.Y, rot: t19.rot, w: t19.w, d: t19.d, h: 2.2, yPiso: piso, piso: 1, obj: cpm, info: infoCPM, obra: 'axon', reemplaza: 'T19' });
+  ctx.cpm = cpm;
   ctx.sala.add(zonas);
 
   // ---- piso de la sala con huecos (foso de cables y canaletas interiores), trincheras y rejillas

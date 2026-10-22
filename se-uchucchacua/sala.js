@@ -1,6 +1,6 @@
 // Modo sala: minimapa por piso de la sala de control (tableros, celdas, zonas en obra, posición) y utilidades para
 // pararse frente a un tablero. Las paredes salen de L.sala (se3d.js) y los tabiques del OE-607; los equipos, de EQUIPOS (interior.js).
-const COL_OBRA = { nuevo: '#2f6fe4', interv: '#e07b1f', rel: '#c9a227' };
+const COL_OBRA = { nuevo: '#2f6fe4', interv: '#e07b1f', rel: '#c9a227', axon: '#8e44ad' };
 
 // planta de cada piso (coordenadas del plano, m)
 export function plantas(s) {
@@ -56,7 +56,7 @@ export class Minimapa {
   constructor(cv, { sala, equipos, norte, onIr, onPunto, onHover }) {
     this.cv = cv; this.g = cv.getContext('2d'); this.P = plantas(sala); this.sala = sala; this.eqs = equipos;
     this.norte = norte; this.onIr = onIr; this.onPunto = onPunto; this.onHover = onHover;
-    this.piso = 1; this.pos = null; this.yaw = 0; this.zonas = true; this.sobre = null; this.dentro = false;
+    this.piso = 1; this.pos = null; this.yaw = 0; this.zonas = true; this.axon = true; this.sobre = null; this.dentro = false;
     cv.addEventListener('pointerdown', (e) => this._clic(e));
     cv.addEventListener('pointermove', (e) => this._hover(e));
     cv.addEventListener('pointerleave', () => { this.sobre = null; this.dibujar(); this.onHover?.(null); });
@@ -81,7 +81,7 @@ export class Minimapa {
   }
   aPx(X, Y) { return [(X - this.vx0) * this.esc, (this.sala.y1 + 0.85 - Y) * this.esc]; }
   aPlano(u, v) { return [u / this.esc + this.vx0, this.sala.y1 + 0.85 - v / this.esc]; }
-  equiposPiso() { return this.eqs.filter((e) => e.piso === this.piso); }
+  equiposPiso() { return this.eqs.filter((e) => e.piso === this.piso && !e.oculto); }
   dibujar() {
     const g = this.g, cv = this.cv; if (!this.esc) return;
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); this.vx0 = this._vx0();
@@ -130,6 +130,8 @@ export class Minimapa {
       if (r.ny > 0.5) { g.moveTo(a, b); g.lineTo(c, b); } else if (r.ny < -0.5) { g.moveTo(a, d); g.lineTo(c, d); }
       else if (r.nx > 0.5) { g.moveTo(c, b); g.lineTo(c, d); } else { g.moveTo(a, b); g.lineTo(a, d); }
       g.stroke();
+      // trabajos de AXON: contorno violeta punteado
+      if (this.axon && e.axonZ && e.key !== 'CPM') { g.strokeStyle = '#8e44ad'; g.lineWidth = 2; g.setLineDash([4, 3]); g.strokeRect(a - 3, b - 3, c - a + 6, d - b + 6); g.setLineDash([]); }
       // número
       const fs = Math.max(9, Math.min(13, Math.min(c - a, d - b) * 0.55)); g.font = `700 ${fs}px IBM Plex Sans, sans-serif`;
       g.fillStyle = col && e.obra !== 'rel' ? '#fff' : '#18212b'; g.fillText(String(e.n), (a + c) / 2, (b + d) / 2 + 0.5);
@@ -177,13 +179,15 @@ export function filasDe(equipos) {
   for (const [k, es] of grupos) {
     const { nx, ny } = rectDe(es[0]); const dx = -ny, dy = nx; // derecha del observador que mira el frente
     es.sort((a, b) => a.X * dx + a.Y * dy - (b.X * dx + b.Y * dy));
-    const nums = es.map((e) => e.n); const celdas = es[0].tipo === 'celda';
-    const ord = [...nums].sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true }));
-    const nombre = es.length === 1 ? `Tablero ${nums[0]}` : celdas ? `Celdas ${ord[0]}–${ord[ord.length - 1]}` : `Tableros ${ord[0]}–${ord[ord.length - 1]}`;
+    const celdas = es[0].tipo === 'celda';
+    const ord = es.map((e) => e.n).filter((n) => celdas || typeof n === 'number').sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true }));
+    const extra = celdas ? [] : es.filter((e) => typeof e.n !== 'number').map((e) => e.n === 'CPM' ? 'CPM L-1123' : String(e.n));
+    const rango = ord.length === 1 ? `${ord[0]}` : `${ord[0]}–${ord[ord.length - 1]}`;
+    const nombre = es.length === 1 ? (extra.length ? extra[0] : `Tablero ${ord[0]}`) : celdas ? `Celdas ${rango}` : `Tableros ${rango}${extra.length ? ' y ' + extra.join(', ') : ''}`;
     const rumbo = ny > 0.5 ? 'norte' : ny < -0.5 ? 'sur' : nx > 0.5 ? 'este' : 'oeste';
     filas.push({ k, nombre, rumbo, piso: es[0].piso, eqs: es, dx, dy });
   }
-  const orden = (f) => (f.piso - 1) * 1000 + (typeof f.eqs[0].n === 'number' ? Math.min(...f.eqs.map((e) => (typeof e.n === 'number' ? e.n : 99))) : f.eqs[0].n.startsWith('C') ? 100 : 200);
+  const orden = (f) => { const ns = f.eqs.map((e) => e.n).filter((n) => typeof n === 'number'); return (f.piso - 1) * 1000 + (ns.length ? Math.min(...ns) : String(f.eqs[0].n).startsWith('C0') ? 100 : 200); };
   return filas.sort((a, b) => orden(a) - orden(b));
 }
 
