@@ -1,0 +1,45 @@
+--- a/src/decode.c	2026-10-22 00:15:17.534938834 -0500
++++ b/src/decode.c	2026-10-22 00:15:17.537066534 -0500
+@@ -2014,6 +2014,10 @@
+                  info->name, info->num_sections, info->max_decomp_size);
+       return DWG_ERR_VALUEOUTOFBOUNDS;
+     }
++  if (type == SECTION_ACDS && getenv ("ACDS_DUMP") && info->size > 0
++      && info->size < 0x2f000000)
++    max_decomp_size = (BITCODE_RL)info->size + info->max_decomp_size + 64;
++  else
+   if (info->size > (int64_t)info->num_sections * (int64_t)info->max_decomp_size
+       || info->size < 0)
+     {
+@@ -2100,6 +2104,16 @@
+       if (info->compressed == 2 && bytes_left > 0
+           && (j * info->max_decomp_size) <= max_decomp_size)
+         {
++          if (type == SECTION_ACDS && getenv ("ACDS_DUMP"))
++            {
++              if ((size_t)es.fields.address + info->max_decomp_size <= max_decomp_size)
++                error = decompress_R2004_section (
++                    dat, &decomp[es.fields.address],
++                    info->max_decomp_size, es.fields.data_size);
++              else error = 0;
++              if (error > DWG_ERR_CRITICAL) error = 0;
++              continue;
++            }
+           error = decompress_R2004_section (
+               dat, &decomp[j * info->max_decomp_size], // offset
+               info->max_decomp_size, es.fields.data_size);
+@@ -3111,6 +3125,14 @@
+ 
+   LOG_TRACE ("AcDs datastorage (%" PRIuSIZE ")\n-------------------\n",
+              sec_dat.size)
++  {
++    const char *dump = getenv ("ACDS_DUMP");
++    if (dump)
++      {
++        FILE *fp = fopen (dump, "wb");
++        if (fp) { fwrite (sec_dat.chain, 1, sec_dat.size, fp); fclose (fp); }
++      }
++  }
+   old_dat = *dat;
+   dat = &sec_dat; // restrict in size
+   bit_chain_set_version (&old_dat, dat);
