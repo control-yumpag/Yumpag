@@ -131,9 +131,10 @@ md = placemarks(kml_de(A.mdia))
 QUE = {'DMO': 'Depósito de material orgánico', 'DMC': 'Depósito de material de corte', 'DME': 'Depósito de material excedente'}
 mdia = []
 for n, c, g, pts in md:
-    if not n or re.fullmatch(r'\d+|T\d+|EJE|C\d+|CP\d+', n) or n.startswith('Pórtico'): continue
+    if not n or re.fullmatch(r'\d+|T\d+|EJE|C\d+A?|CP\d+A?', n) or n.startswith('Pórtico'): continue   # C1A y CP3A ya están en los caminos
     u = [utm(p[0], p[1]) for p in pts]
-    mdia.append({'nombre': n, 'que': QUE.get(n, ''), 'tipo': 'punto' if g == 'Point' else 'poligono', 'pts': u})
+    tipo = 'punto' if g == 'Point' else 'camino' if re.fullmatch(r'CPT\d+', n) else 'poligono'   # CPT: tramos de camino (abiertos)
+    mdia.append({'nombre': n, 'que': QUE.get(n, 'camino de acceso (MDIA)' if tipo == 'camino' else ''), 'tipo': tipo, 'pts': u})
 
 # ------------------------------------------------------------ L-1123 existente (OpenStreetMap, way 639201004, de oeste a este)
 osm = json.load(open(A.osm))

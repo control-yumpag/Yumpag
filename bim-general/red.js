@@ -401,13 +401,14 @@ export function construirRed(escena, D, cota) {
   }
   // ----- componentes auxiliares (MDIA)
   for (const [i, m] of D.mdia.entries()) {
-    const tipo = /tendido/i.test(m.nombre) ? 'tendido' : /^(DM|Punto)/.test(m.nombre) ? 'mdia' : 'aux';
-    const pts = m.tipo === 'punto' ? null : densificar([...m.pts, m.pts[0]], 6).map(([E, N]) => aEsc(E, N, cota(E, N) + 0.9));
+    const tipo = m.tipo === 'camino' ? 'camino' : /tendido/i.test(m.nombre) ? 'tendido' : /^(DM|Punto)/.test(m.nombre) ? 'mdia' : 'aux';
+    const pts = m.tipo === 'punto' ? null : densificar(m.tipo === 'camino' ? m.pts : [...m.pts, m.pts[0]], 6).map(([E, N]) => aEsc(E, N, cota(E, N) + (m.tipo === 'camino' ? 1.4 : 0.9)));
     const [E0, N0] = m.tipo === 'punto' ? m.pts[0] : [m.pts.reduce((s, p) => s + p[0], 0) / m.pts.length, m.pts.reduce((s, p) => s + p[1], 0) / m.pts.length];
     const c = aEsc(E0, N0, cota(E0, N0));
     const f = ficha('mdia_' + i, { tipo: 'mdia', grupo: 'Componentes auxiliares (MDIA)', nombre: m.nombre, origen: 'D', sub: m.que || (tipo === 'tendido' ? 'playa de tendido' : 'componente auxiliar'),
-      datos: [[m.tipo === 'punto' ? 'Ubicación' : 'Centro', fUTM([E0, N0]), 'KMZ Mapa de Componentes Integrado 1.ª y 2.ª MDIA'], ...(m.tipo === 'punto' ? [] : [['Área', `${fmt(area(m.pts), 0)} m²`, 'calculada del polígono']])],
-      foco: c, radio: m.tipo === 'punto' ? 60 : Math.max(50, Math.sqrt(area(m.pts)) * 1.2) });
+      datos: [[m.tipo === 'punto' ? 'Ubicación' : 'Centro', fUTM([E0, N0]), 'KMZ Mapa de Componentes Integrado 1.ª y 2.ª MDIA'],
+        ...(m.tipo === 'poligono' ? [['Área', `${fmt(area(m.pts), 0)} m²`, 'calculada del polígono']] : m.tipo === 'camino' ? [['Longitud', `${fmt(largo(m.pts), 1)} m`, 'medida en planta']] : [])],
+      foco: c, radio: m.tipo === 'punto' ? 60 : m.tipo === 'camino' ? Math.max(50, largo(m.pts) * 0.45) : Math.max(50, Math.sqrt(area(m.pts)) * 1.2) });
     if (pts) { const l = linea2(pts, COL[tipo], 2.2); l.userData.ficha = f; G.mdia.add(l); }
     else { const p = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 14, 10).translate(0, 7, 0), new THREE.MeshLambertMaterial({ color: COL.aux })); p.position.copy(c); reg(p, f); G.mdia.add(p); }
     ROT.push({ texto: m.nombre.replace(/\s*\(.*$/, ''), pos: c.clone().setY(c.y + 10), clase: 'rmd', lejos: [0, 1100], ficha: f });

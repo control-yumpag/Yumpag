@@ -216,7 +216,7 @@ export function cargarOrto(P, renderer, alListo) {
   return P.orto;
 }
 
-// ---------- foco: ortofoto de alta resolución (z17–z18) alrededor del punto que se mira
+// ---------- foco: ortofoto de alta resolución (z17, ≈ 1,2 m/px) alrededor del punto que se mira
 export class Foco {
   constructor(escena, renderer, parches, pedir) { Object.assign(this, { escena, renderer, parches, pedir, malla: null, clave: '', tm: 0 }); }
   actualizar(objetivo, dist, activo) {
@@ -224,7 +224,8 @@ export class Foco {
     const [E, N] = deEsc(objetivo);
     const P = this.parches.find((Q) => Q.detalle && Q.geo && E > Q.e0 + 100 && E < Q.e1 - 100 && N > Q.n0 + 100 && N < Q.n1 - 100);
     if (!P) { this.quitar(); return; }
-    const z = dist < 800 ? 18 : 17; const [mx, my] = merc01(...aGeo(E, N)); const cx = Math.floor(mx * 2 ** z), cy = Math.floor(my * 2 ** z);
+    const z = 17; // Esri World Imagery no tiene z18 en la zona (devuelve «Map data not yet available»)
+    const [mx, my] = merc01(...aGeo(E, N)); const cx = Math.floor(mx * 2 ** z), cy = Math.floor(my * 2 ** z);
     const clave = `${P.id}/${z}/${cx}/${cy}`;
     if (clave === this.clave || clave === this.pendiente) return;
     clearTimeout(this.tm); this.pendiente = clave;
