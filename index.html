@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag y SE Uchucchacua</title>
+<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag, SE Uchucchacua y SE Yumpag</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -83,6 +83,13 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
       <span>BIM 4D del nuevo tablero CPM L-1123 (servicio de AXON): avance diario, cronograma, reporte del día y fotos.</span>
     </button>
 
+    <!-- 23-Oct-26 (pedido del usuario: «crea un espacio para SE Yumpag, levantar todo el 3D como lo hicimos para la LT y la SE Uchucchacua») -->
+    <button class="directo" type="button" id="btnYPG">
+      <i>Subestación</i>
+      <b>SE Yumpag · 138/10 kV · 10/12,5 MVA</b>
+      <span>Modelo 3D desde la ingeniería de detalle: patio 138 kV, pórtico P-19 m, transformador, salas 10 kV y obras civiles.</span>
+    </button>
+
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
   </div>
 </main>
@@ -99,6 +106,8 @@ const irSE = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abri
   location.href = 'se-uchucchacua/'; };   // tablero aparte de la SE (se-uchucchacua/), abre en su Resumen como el de la LT
 $('btnEntrar').onclick = ir;
 $('btnSE').onclick = irSE;
+$('btnYPG').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el modelo 3D de la SE Yumpag…';
+  location.href = 'se-yumpag/'; };   // modelo aparte de la SE Yumpag (se-yumpag/), sin avance de obra aún
 addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
 try{ localStorage.removeItem('yumpagLlave'); }catch(e){}    // limpia el acceso recordado del esquema anterior
 fetch('datos.json',{method:'HEAD'}).catch(()=>{});          // adelanta la descarga
