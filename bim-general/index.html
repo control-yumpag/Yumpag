@@ -117,8 +117,8 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 .rcam{font:600 9.5px/1 "IBM Plex Mono",monospace;color:#4a3117;background:rgba(255,248,235,.88);border-radius:3px;padding:2px 4px;white-space:nowrap}
 .rmd{font:500 9.5px/1.1 "IBM Plex Sans",sans-serif;color:#fff;background:rgba(110,45,30,.78);border-radius:4px;padding:2px 5px;white-space:nowrap}
 .pan{position:absolute;z-index:4;background:var(--glass);backdrop-filter:blur(8px);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:11px;overflow:auto}
-#izq{left:10px;top:58px;bottom:52px;width:246px;padding:9px 11px}
-#der{right:10px;top:10px;bottom:52px;width:340px;padding:11px 13px}
+#izq{left:10px;top:58px;bottom:156px;width:246px;padding:9px 11px}
+#der{right:10px;top:10px;bottom:156px;width:340px;padding:11px 13px}
 .pan h2{font-size:.6rem;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-mut);margin:11px 0 5px;font-weight:700}
 .pan h2:first-child{margin-top:1px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
@@ -155,10 +155,52 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 .lista button i{width:8px;height:8px;border-radius:2px;flex:none}
 .lista button em{font-style:normal;margin-left:auto;font:.62rem "IBM Plex Mono",monospace;color:var(--ink-mut)}
 #buscar{width:100%;font:inherit;font-size:.74rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--ink);margin:8px 0 2px}
-#pie{position:absolute;left:10px;right:10px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:5;pointer-events:none}
-#pie>*{pointer-events:auto}
+/* 23-Oct-26 (pedido del usuario: «que pueda ser más navegable, tipo Google Earth… moverte a lo largo del trazo y poderte ubicar») */
+#dock{position:absolute;left:10px;right:10px;bottom:8px;height:140px;z-index:5;display:flex;gap:8px;background:var(--glass);backdrop-filter:blur(8px);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:11px;padding:7px 9px}
+#dock .mini{flex:0 0 230px;position:relative;border-radius:8px;overflow:hidden;background:var(--panel-3);cursor:crosshair}
+#mini{width:100%;height:100%;display:block}
+#mini .ttl{font:700 8.5px "IBM Plex Sans",sans-serif;fill:var(--ink-2);letter-spacing:.4px;text-transform:uppercase}
+#dock .cuerpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+#dock .fila{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0}
+#dock .fila .seg button{padding:4px 9px;font-size:.68rem;white-space:nowrap}
+#dock .fila>button{padding:4px 9px;font-size:.72rem;white-space:nowrap}
+#dock .fila>button.on{background:var(--sky);color:#fff;border-color:var(--sky)}
+#dkPos{margin-left:auto;font:.64rem "IBM Plex Mono",monospace;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#perfil{flex:1;min-height:0;width:100%;display:block;border-radius:7px;background:var(--panel-2);cursor:pointer;touch-action:none}
+#dkAyuda{font-size:.58rem;color:var(--ink-mut);white-space:nowrap;display:flex;gap:10px;min-width:0}
+#dkAyuda span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#dkAyuda .dkFte{flex:0 1 auto;opacity:.8}
+#dkXY{margin-left:auto;font-family:"IBM Plex Mono",monospace;flex:none;color:var(--ink-2)}
+#vista canvas{cursor:grab}
+#visor.mover #vista canvas{cursor:grabbing}
+#visor.girar #vista canvas{cursor:move}
+#mini .mL{fill:var(--ink);font-family:"IBM Plex Sans",sans-serif;font-weight:700;paint-order:stroke;stroke:var(--panel-3);stroke-width:3px;vector-effect:non-scaling-stroke;pointer-events:none}
+.f4d{margin:8px 0 4px;border-top:1px solid var(--line);padding-top:8px}
+.f4d .f4h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+.f4d .f4h b{font:800 1.3rem "Archivo",sans-serif;color:var(--ink)}
+.f4d .fte{font-size:.62rem;color:var(--ink-mut);margin:4px 0;line-height:1.35}
+.f4d .fte b{color:var(--ink-2)}
+.f4d table td:first-child{width:auto}
+.fotos figure{margin:0;min-width:0}
+#cajaFoto>div{text-align:center}
+.f4d .act{display:grid;grid-template-columns:92px 1fr 40px;gap:6px;align-items:center;font-size:.66rem;margin:2px 0}
+.f4d .act i{display:block;height:7px;border-radius:4px;background:var(--line)}
+.f4d .act i b{display:block;height:100%;border-radius:4px;background:#b1cc3d}
+.f4d .act i b.fin{background:#22a04b}
+.f4d .act span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace}
+.patas{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0}
+.patas div{background:var(--panel-3);border-radius:7px;padding:5px 6px;font-size:.56rem;line-height:1.25;color:var(--ink-2);border-top:3px solid #9aa3ab;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.patas div.prog{border-top-color:#b1cc3d}.patas div.fin{border-top-color:#22a04b}
+.patas b{display:block;font:700 .78rem "Archivo",sans-serif;color:var(--ink)}
+.fotos{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0}
+.fotos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;cursor:zoom-in;background:var(--panel-3);display:block}
+.fotos span{font-size:.55rem;color:var(--ink-mut);display:block;text-align:center}
+#cajaFoto{position:fixed;inset:0;z-index:50;background:rgba(10,18,16,.88);display:grid;place-items:center;padding:20px;cursor:zoom-out}
+#cajaFoto img{max-width:96vw;max-height:84vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#cajaFoto p{color:#e8efec;font-size:.8rem;margin:8px 0 0;text-align:center}
+.boton4d{display:block;text-align:center;background:var(--sky);color:#fff!important;border-radius:8px;padding:8px 10px;font-weight:700;font-size:.76rem;text-decoration:none;margin:8px 0 2px}
+.boton4d small{display:block;font-weight:500;font-size:.62rem;opacity:.85}
 .caja{background:var(--glass);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.66rem;color:var(--ink-2)}
-#coord{font:.66rem "IBM Plex Mono",monospace;min-width:330px}
 #atrib{font-size:.6rem;max-width:520px}
 #vcBox{position:absolute;z-index:5;right:360px;top:10px;width:104px;height:104px}
 .vc-cv{width:104px;height:104px;cursor:pointer}
@@ -170,7 +212,7 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 @keyframes car{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
 .cerrar{float:right;border:0;background:none;font-size:18px;line-height:1;padding:2px 6px;color:var(--ink-mut)}
 #movTabs{display:none}
-#hud{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:6;pointer-events:none;background:rgba(18,32,28,.86);color:#fff;font-size:.7rem;padding:6px 12px;border-radius:14px;max-width:92%;text-align:center;line-height:1.35}
+#hud{position:absolute;left:50%;bottom:160px;transform:translateX(-50%);z-index:6;pointer-events:none;background:rgba(18,32,28,.86);color:#fff;font-size:.7rem;padding:6px 12px;border-radius:14px;max-width:92%;text-align:center;line-height:1.35}
 .tbv{position:absolute;z-index:5;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tbv .seg{box-shadow:var(--shadow)}
 .tbv>button{background:var(--glass);box-shadow:var(--shadow);font-size:.72rem}
@@ -179,10 +221,15 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
   body{padding:6px;gap:6px}
   .tb-m,.badge,.tb-l .sub{display:none}
   .solo-pc{display:none!important}
-  #izq,#der{left:6px;right:6px;width:auto;top:auto;bottom:46px;max-height:58%}
+  #izq,#der{left:6px;right:6px;width:auto;top:auto;bottom:136px;max-height:54%}
+  #dock{left:6px;right:6px;bottom:6px;height:124px;padding:6px}
+  #dock .fila>*{flex:none}
+  #movTabs button{white-space:nowrap}
+  #hud{bottom:140px}
+  #dock .mini,#dkAyuda,#dkPos,.solo-pc{display:none!important}
+  #dock .fila{overflow-x:auto}
   #izq.cerrado,#der.cerrado{display:none}
-  #pie{left:6px;right:6px;bottom:6px}
-  #coord,#atrib{display:none}
+  #atrib{display:none}
   #movTabs{display:flex;gap:6px}
   #vcBox{right:6px;top:52px;width:80px;height:80px}.vc-cv{width:80px;height:80px}
   .tbv{left:6px;top:6px;right:6px}
@@ -197,7 +244,7 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 <header class="topbar">
   <div class="tb-l"><h1>BIM general del proyecto <span>· Derivación L-1123 a SE Yumpag</span></h1>
     <div class="sub">SE Paragsha II · L-1123 existente · seccionamiento en el vano T107–T108 · derivación 138 kV doble terna · SE Yumpag · SE Uchucchacua</div></div>
-  <div class="tb-m"><span>Subestaciones <b>3</b></span><span>L-1123 <b>47,3 km</b></span><span>Derivación <b>8,30 km · 23 torres</b></span><span>Altitud <b>4 366 – 4 662 m</b></span></div>
+  <div class="tb-m"><span>Subestaciones <b>3</b></span><span>L-1123 <b>47,3 km</b></span><span>Derivación <b>8,30 km · 23 torres</b></span><span id="tbCorte">Obra <b>—</b></span></div>
   <div class="tb-r"><span class="badge">Vista digital y ortofoto</span><a class="iconbtn" href="../" title="Volver a la portada">⌂ Portada</a><button class="iconbtn" id="bTema" title="Tema claro u oscuro">◐</button></div>
 </header>
 <nav class="nav" id="nav" aria-label="Pestañas">
@@ -242,7 +289,7 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
         <label class="capa"><input type="checkbox" id="vRot" checked> Rótulos</label>
         <label class="capa"><input type="checkbox" id="vCur" checked> Curvas de nivel</label>
         <label class="capa"><input type="checkbox" id="vAgua" checked> Lagunas (zonas planas del DEM)</label>
-        <label class="capa"><input type="checkbox" id="vAva"> Avance de obra civil por torre (tablero LT)</label>
+        <label class="capa"><input type="checkbox" id="vAva" checked> Estado de obra del último corte (tablero LT)</label>
         <label class="capa"><input type="checkbox" id="vMod" checked> Modelos 3D de las SE al acercarse</label>
       </aside>
       <aside id="der" class="pan">
@@ -251,12 +298,21 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
         <div id="lista" class="lista"></div>
       </aside>
       <div id="hud" class="oculto"></div>
-      <div id="pie">
-        <div class="caja" id="coord">Rueda: acercar al punto · doble clic: girar alrededor de ese punto · arrastre derecho: desplazar</div>
-        <span style="flex:1"></span>
-        <div id="movTabs"><button id="tIzq">Ir a y capas</button><button id="tDer">Alcance y elementos</button></div>
-        <div class="caja solo-pc" id="atrib">UTM WGS-84 18S · relieve: Terrain Tiles (AWS Open Data, SRTM) · ortofoto: Esri, Maxar, Earthstar Geographics · L-1123: © OpenStreetMap</div>
+      <div id="dock">
+        <div class="mini" title="Mapa de ubicación: clic para ir a ese punto"><svg id="mini" role="img" aria-label="Mapa de ubicación del proyecto"></svg></div>
+        <div class="cuerpo">
+          <div class="fila">
+            <div class="seg" id="sTramo" role="group" aria-label="Tramo a recorrer"></div>
+            <button id="tAnt" title="Torre anterior (tecla ,)">◀</button><button id="tPlay" title="Recorrer el tramo (barra espaciadora)">▶ Recorrer</button><button id="tSig" title="Torre siguiente (tecla .)">▶</button>
+            <div class="seg solo-pc" id="sVel" role="group" aria-label="Velocidad"><button data-v="1" class="on">×1</button><button data-v="2">×2</button><button data-v="4">×4</button></div>
+            <span id="dkPos">—</span>
+            <div id="movTabs"><button id="tIzq">Ir a</button><button id="tDer">Fichas</button></div>
+          </div>
+          <canvas id="perfil" aria-label="Perfil del tramo: clic o arrastre para ir a ese punto de la línea"></canvas>
+          <div id="dkAyuda"><span>Arrastrar: mover el terreno · clic derecho (o Mayús) + arrastrar: girar e inclinar · rueda: acercar al cursor · doble clic: acercar ahí · clic en un elemento: centrarlo · flechas, Q/E, +/−</span><span class="dkFte">relieve: Terrain Tiles (AWS) · ortofoto: Esri, Maxar, Earthstar Geographics · L-1123: © OpenStreetMap</span><span id="dkXY"></span></div>
+        </div>
       </div>
+      <div id="cajaFoto" class="oculto"></div>
     </div>
   </section>
   <section id="v-fue" class="view"></section>
@@ -269,7 +325,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { ViewCube } from './navsala.js';
 import { aGeo, ESTAD } from './geo.js';
 import { ORIGEN, aEsc, deEsc, definirParches, cargarDEM, cotaDEM, AJUSTES, fijarOffset, OFFSET_DEM, cotaDetalle, cotaSegura, mallaParche, cotaEn, cargarOrto, Foco, U } from './terreno.js';
-import { construirRed, ajustesDeTerreno, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js';
+import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -397,7 +453,13 @@ scene.fog = new THREE.Fog(0xdde6ea, 60000, 260000);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 600000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.1; controls.rotateSpeed = 0.8; controls.zoomSpeed = 0.6; controls.panSpeed = 0.9;
-controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 6; controls.maxDistance = 160000; controls.screenSpacePanning = true; controls.zoomToCursor = true;
+controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 6; controls.maxDistance = 160000; controls.zoomToCursor = true;
+// Navegación tipo Google Earth (23-Oct-26): el botón izquierdo arrastra el terreno (el punto agarrado sigue al cursor), el derecho
+// o Mayús/Ctrl + izquierdo gira e inclina alrededor del centro de la vista y la rueda acerca al cursor (pasoZoom). En el celular,
+// un dedo mueve y dos dedos acercan y giran (OrbitControls).
+controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: null };
+controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
+controls.screenSpacePanning = false;
 scene.add(new THREE.HemisphereLight(0xe6f0fa, 0x7a705c, 1.15));
 const sol = new THREE.DirectionalLight(0xfff4e2, 2.3); sol.position.set(-0.55, 0.62, -0.55).multiplyScalar(1000); scene.add(sol); // del NO, como un sombreado cartográfico
 let renderPend = true; const pedir = () => (renderPend = true);
@@ -501,34 +563,33 @@ function visibilidad() {
 }
 let hudT = 0; function hud(t, ms = 3800) { const h = $('#hud'); h.textContent = t; h.classList.remove('oculto'); clearTimeout(hudT); if (ms) hudT = setTimeout(() => h.classList.add('oculto'), ms); }
 
-// ---------- avance de obra civil por torre (último corte del tablero de la LT, opcional)
+// ---------- estado de obra: el último corte del tablero de la LT (../datos.json, el mismo que arma su BIM 4D): % por torre,
+// cimentación por pata, montaje y caminos. No se copia: se lee en vivo cada vez que se abre la página.
 let AVANCE = null;
-const COL_EST = { fin: 0x22a04b, prog: 0xb1cc3d, none: 0x9aa3ab };
-const matEst = Object.fromEntries(Object.entries(COL_EST).map(([k, c]) => [k, new THREE.MeshStandardMaterial({ color: c, metalness: 0.35, roughness: 0.5 })]));
 async function cargarAvance() {
   if (AVANCE) return AVANCE;
-  hud('Leyendo el último corte del tablero de la LT…', 0);
   try {
     const d = await fetch('../datos.json', { cache: 'no-cache' }).then((r) => r.json());
-    let B = d.completo ? d.completo.bloques.DATA : d.DATA; if (typeof B === 'string') B = JSON.parse(B);
-    AVANCE = { corte: d.corte_txt || d.corte, reporte: d.reporte, t: Object.fromEntries(B.towers.map((t) => [t.t, t])) };
-    hud(`Avance de obra civil del corte ${AVANCE.corte} (reporte N.° ${AVANCE.reporte})`, 4200);
-  } catch (e) { hud('No se pudo leer el avance del tablero de la LT', 4200); $('#vAva').checked = false; }
+    const C = d.completo || d.visita || d, J = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+    const B = J(C.bloques ? C.bloques.DATA : d.DATA), CAM = C.bloques ? J(C.bloques.CAMINOS_DET) : null;
+    AVANCE = { corte: d.corte_txt || d.corte, corteISO: d.corte, reporte: d.reporte, t: Object.fromEntries(B.towers.map((t) => [t.t, t])), caminos: CAM, ocGlobal: B.ocGlobal, counts: B.counts, fases: B.phaseRollup };
+  } catch (e) { console.warn('datos.json', e); AVANCE = null; }
   return AVANCE;
 }
 function pintarAvance() {
-  const on = $('#vAva').checked && AVANCE && escenario === 'despues';
+  const on = $('#vAva').checked && AVANCE;
+  RED.aplicar4D(on ? AVANCE : null);
   RED.torresDer.forEach((T) => {
-    const a = AVANCE && AVANCE.t[T.t.t]; const m = T.grupo.children[0];
-    if (escenario === 'despues') m.material = on && a ? matEst[a.st] || MAT.acero : MAT.acero;
-    const r = ROT.find((o) => o.userData.r.ficha === T.f); if (r) r.userData.el.innerHTML = esc(T.t.t) + (on && a ? `<i>${fmt(a.pct, 0)} %</i>` : '');
+    const a = on && AVANCE.t[T.t.t]; const r = ROT.find((o) => o.userData.r.ficha === T.f);
+    if (r) { r.userData.el.innerHTML = esc(T.t.t) + (a && escenario === 'despues' ? `<i>${fmt(a.pct, 0)} %</i>` : ''); r.userData.w = 0; }
   });
-  pedir();
+  $('#tbCorte').innerHTML = AVANCE ? `Obra al <b>${esc(fCorta(AVANCE.corteISO))}</b>${AVANCE.ocGlobal != null ? ` · civil <b>${fmt(AVANCE.ocGlobal, 1)} %</b>` : ''}` : 'Obra <b>—</b>';
+  dibujarPerfil(); pedir();
 }
 $('#vAva').onchange = async (e) => { if (e.target.checked) await cargarAvance(); pintarAvance(); if (actual) seleccionar(actual); };
 
 // ---------- modelos 3D de las SE (se cargan al acercarse; los mismos módulos de sus páginas)
-const MODELOS = { yumpag: { k: 'yumpag' }, paragsha2: { k: 'paragsha2' } };
+const MODELOS = { yumpag: { k: 'yumpag' }, paragsha2: { k: 'paragsha2' }, uchucchacua: { k: 'uchucchacua' } };
 async function cargarModelo(M) {
   if (M.estado) return; M.estado = 'cargando';
   const S = D.se[M.k], m = S.modelo; hud(`Cargando el modelo 3D de la ${S.nombre}…`, 0);
@@ -542,6 +603,7 @@ async function cargarModelo(M) {
     try { await mod.construir(g, (t) => hud(`${S.nombre}: ${t}`, 0)); } finally { window.fetch = f0; }
     (mod.CAPAS.terreno || []).forEach((o) => (o.visible = false));
     if (M.k === 'yumpag') (mod.CAPAS.linea || []).forEach((o) => (o.visible = false)); // la llegada de la línea la dibuja el BIM general
+    if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
     g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
     M.grupo = g; M.mod = mod; M.estado = 'listo'; hud(`${S.nombre}: modelo 3D cargado (el mismo de su página)`, 3000); actualizarModelos(true);
   } catch (e) { console.warn(e); M.estado = 'error'; hud(`No se pudo cargar el modelo 3D de la ${S.nombre}`, 4000); }
@@ -606,28 +668,116 @@ const selBox = new THREE.Box3Helper(new THREE.Box3(), new THREE.Color(0xf0a500))
 let actual = null;
 const ORI = { D: ['Dato de documento', 'var(--D)'], R: ['Referencial / aproximado', 'var(--R)'] };
 function objsDe(f) { const out = []; scene.traverse((o) => { if (o.userData.ficha === f && (o.isMesh || o.isGroup || o.isInstancedMesh)) out.push(o); }); return out; }
+const MES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+const fCorta = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}-${MES[+m[2] - 1]}-${m[1].slice(2)}` : String(iso || '—'); };
+const normCam = (c) => String(c || '').replace(/^P(\d)$/, 'CP$1');
+// bloque «estado de obra» de una torre: el registro del último corte del tablero de la LT (no se recalcula nada aquí)
+function bloque4D(t) {
+  if (!$('#vAva').checked) return '';
+  if (!AVANCE) return `<div class="f4d"><p class="nom">Estado de obra: no se pudo leer el último corte del tablero de la LT.</p></div>`;
+  const a = AVANCE.t[t]; if (!a) return '';
+  const [eT, eC] = { fin: ['Obra civil terminada', '#22a04b'], prog: ['Obra civil en curso', '#7d922a'], none: ['Obra civil por iniciar', '#6b8880'] }[a.st] || [a.st, '#6b8880'];
+  const barra = (n, v) => (typeof v === 'number'
+    ? `<div class="act"><span>${esc(n)}</span><i><b class="${v >= 99.5 ? 'fin' : ''}" style="width:${Math.max(0, Math.min(100, v))}%"></b></i><span>${fmt(v, 0)} %</span></div>`
+    : `<div class="act"><span>${esc(n)}</span><i></i><span>N/A</span></div>`);
+  const d = a.d || {};
+  const acts = [['Acceso (camino)', d.Caminos], ...RED.ACTS.map((k) => [k, d[k]])].map(([n, v]) => barra(n, v)).join('');
+  const patas = ['A', 'B', 'C', 'D'].map((p) => { const e = RED.estadoPata(a, p), tx = a.patas && a.patas[p];
+    return `<div class="${e ? e.est : ''}" title="${esc(tx || '')}"><b>${p} · ${e ? fmt(e.pct, 0) + ' %' : '—'}</b>${esc(tx || 'sin dato por pata')}</div>`; }).join('');
+  const cam = AVANCE.caminos && (AVANCE.caminos.torres || []).find((x) => x.t === t);
+  // qué camino la sirve y cuántos metros (hoja PORCENTAJE POR TORRE); el % que manda es el oficial de la barra «Acceso»
+  const camTx = cam ? [(cam.deps || []).map((x) => `${normCam(x.c)}${x.m ? ' (' + fmt(x.m, 0) + ' m)' : ''}`).join(' + '), cam.peat ? `peatonal ${normCam(cam.peat.c)}${cam.peat.m ? ' (' + fmt(cam.peat.m, 0) + ' m)' : ''}` : ''].filter(Boolean).join(' · ') : '';
+  const elm = a.ph && typeof a.ph.elm === 'number' ? a.ph.elm : null;
+  return `<div class="f4d"><div class="f4h"><span class="est" style="background:${eC}">${eT}</span><b>${fmt(a.pct, 1)} %</b></div>
+    <p class="fte">Último corte del tablero de la LT: ${esc(fCorta(AVANCE.corteISO))} · reporte N.° ${esc(AVANCE.reporte)} · % de la torre = media de sus actividades con dato (N/A no cuenta)</p>
+    ${acts}<div class="patas">${patas}</div>
+    ${camTx ? `<p class="fte"><b>Camino de acceso:</b> ${esc(camTx)}</p>` : ''}
+    <p class="fte"><b>Montaje electromecánico:</b> ${elm == null ? '—' : fmt(elm, 0) + ' %'}${a.soladoNA ? ` · solado N/A (${esc(a.soladoNA)})` : ''}</p></div>`;
+}
+// SE Uchucchacua: avance del control diario de AXON (el mismo módulo de su página)
+let UCH = null;
+import('../se-uchucchacua/uchu4d.js').then((m) => { UCH = m.U4D; if (actual === RED.fSE.uchucchacua) seleccionar(actual); }).catch(() => {});
+function bloqueSE(f) {
+  if (f === RED.fSE.uchucchacua && UCH) {
+    const T = UCH.total, i = T.ejec.map((v, k) => (v == null ? -1 : k)).filter((k) => k >= 0).pop();
+    if (i == null || i < 0) return '';
+    const e = T.ejec[i] * 100, p = T.prog[i] * 100;
+    return `<div class="f4d"><div class="f4h"><span class="est" style="background:${e >= p - 0.05 ? '#22a04b' : '#b5452a'}">Tablero CPM L-1123 · AXON</span><b>${fmt(e, 1)} %</b></div>
+      <div class="act"><span>Ejecutado</span><i><b style="width:${Math.min(100, e)}%"></b></i><span>${fmt(e, 0)} %</span></div>
+      <div class="act"><span>Programado</span><i><b style="width:${Math.min(100, p)}%;background:#9aa3ab"></b></i><span>${fmt(p, 0)} %</span></div>
+      <p class="fte">${esc(UCH.titulo)} · control diario de AXON al ${esc(fCorta(UCH.fechas[i]))}</p></div>`;
+  }
+  if (f === RED.fSE.yumpag && AVANCE && AVANCE.ocGlobal != null && $('#vAva').checked) {
+    const t23 = AVANCE.t.T23;
+    return `<div class="f4d"><p class="fte"><b>Línea que llega:</b> derivación con obra civil al ${fmt(AVANCE.ocGlobal, 1)} % (media de las 23 torres)${t23 ? ` · T23, la del pórtico: ${fmt(t23.pct, 1)} %` : ''} · corte ${esc(fCorta(AVANCE.corteISO))}</p></div>`;
+  }
+  return '';
+}
+// camino de acceso: a qué torres sirve y su avance (hoja PORCENTAJE POR TORRE, vía el tablero de la LT)
+function bloqueCamino(f) {
+  if (!AVANCE || !AVANCE.caminos || !$('#vAva').checked) return '';
+  const id = f.key.replace(/^cam_/, '');
+  const filas = (AVANCE.caminos.torres || []).map((x) => {
+    const dep = (x.deps || []).find((d) => normCam(d.c) === id), pe = x.peat && normCam(x.peat.c) === id ? x.peat : null;
+    if (!dep && !pe && normCam(x.req) !== id) return null;
+    const ofi = AVANCE.t[x.t] && AVANCE.t[x.t].d ? AVANCE.t[x.t].d.Caminos : null;
+    return `<tr><td><button class="link" data-t="${x.t}">${x.t}</button></td><td>${dep && dep.m ? fmt(dep.m, 0) + ' m' : pe ? 'peatonal' + (pe.m ? ' ' + fmt(pe.m, 0) + ' m' : '') : '—'}</td><td>${typeof ofi === 'number' ? fmt(ofi, 0) + ' %' : 'N/A'}</td></tr>`;
+  }).filter(Boolean);
+  if (!filas.length) return '';
+  return `<div class="f4d"><b style="font-size:.7rem">Torres a las que sirve</b><table><tr><td>Torre</td><td>Metros de este camino</td><td>Acceso de la torre (oficial)</td></tr>${filas.join('')}</table>
+    <p class="fte">Caminos y metros: ${esc(AVANCE.caminos.fuente || 'hoja PORCENTAJE POR TORRE')} · % oficial de la hoja Avance Acumulado LT (corte ${esc(fCorta(AVANCE.corteISO))})</p></div>`;
+}
+// fotos de obra de la torre: el mismo índice del tablero (../fotos/fotos.json, rostros difuminados); se lee al abrir la primera ficha
+let FOTOS = null;
+async function cargarFotos() { if (FOTOS) return FOTOS; try { FOTOS = (await fetch('../fotos/fotos.json', { cache: 'no-cache' }).then((r) => r.json())).fotos || []; } catch (e) { FOTOS = []; } return FOTOS; }
+async function fotosTorre(t) {
+  const caja = $('#fFotos'); if (!caja) return; const f0 = actual;
+  caja.innerHTML = '<p class="fte">Cargando las fotos de obra…</p>';
+  const F = await cargarFotos(); if (actual !== f0) return;
+  const L = F.filter((x) => x.torre === t).sort((a, b) => (b.fecha + (b.hora || '')).localeCompare(a.fecha + (a.hora || '')));
+  if (!L.length) { caja.innerHTML = ''; return; }
+  const obra = L.filter((x) => x.categoria === 'Avance'), ver = (obra.length ? obra : L).slice(0, 8);
+  caja.innerHTML = `<div class="f4d"><b style="font-size:.7rem">Fotos de obra · ${fmt(L.length, 0)}</b> <span class="fte">las ${ver.length} más recientes${obra.length ? ' de avance' : ''}</span>
+    <div class="fotos">${ver.map((x, i) => `<figure><img loading="lazy" src="../fotos/${esc(x.archivo)}" data-i="${i}" alt="${esc(t)} · ${esc(x.fase || '')}"><span>${esc(fCorta(x.fecha))}${x.fase ? ' · ' + esc(x.fase) : ''}</span></figure>`).join('')}</div>
+    <a href="../tablero.html#torre=${t}" class="fte">Todas sus fotos y la línea de tiempo en el BIM 4D →</a></div>`;
+  caja.querySelectorAll('img').forEach((im) => (im.onclick = () => {
+    const x = ver[+im.dataset.i], c = $('#cajaFoto');
+    c.innerHTML = `<div><img src="../fotos/${esc(x.archivo)}" alt=""><p>${esc(t)} · ${esc(fCorta(x.fecha))}${x.hora ? ' ' + esc(x.hora.slice(0, 5)) : ''}${x.fase ? ' · ' + esc(x.fase) : ''}${x.camino ? ' · ' + esc(x.camino) : ''} · clic para cerrar</p></div>`;
+    c.classList.remove('oculto'); c.onclick = () => c.classList.add('oculto');
+  }));
+}
 function seleccionar(f, volarA = false, extra = null) {
   actual = f;
   if (!f) { $('#ficha').classList.add('oculto'); $('#alcance').classList.remove('oculto'); selBox.visible = false; alcance(); pedir(); return; }
   const datos = [...(f.datos || [])];
-  if (f.tipo === 'torre' && f.key.startsWith('der_') && AVANCE && $('#vAva').checked) {
-    const a = AVANCE.t[f.nombre.replace('Torre ', '')];
-    if (a) datos.unshift(['Avance de obra civil', `${fmt(a.pct, 1)} % · ${({ fin: 'terminada', prog: 'en curso', none: 'por iniciar' })[a.st] || a.st}`, `tablero de la LT, corte ${AVANCE.corte} (reporte N.° ${AVANCE.reporte})`]);
+  if (f.key === 'derivacion' && AVANCE && AVANCE.ocGlobal != null && $('#vAva').checked) {
+    const c = AVANCE.counts || {}, fu = `tablero de la LT, corte ${fCorta(AVANCE.corteISO)} (reporte N.° ${AVANCE.reporte})`;
+    datos.unshift(['Obra civil', `${fmt(AVANCE.ocGlobal, 1)} % (media de las 23 torres)${c.civilFin != null ? ` · ${c.civilFin} de ${c.total} torres terminadas` : ''}`, fu],
+      ...(AVANCE.fases && typeof AVANCE.fases.acceso === 'number' ? [['Accesos', `${fmt(AVANCE.fases.acceso, 1)} %${c.accesoOK != null ? ` · ${c.accesoOK} de ${c.total} torres con acceso` : ''}`, fu]] : []));
   }
   if (extra) datos.unshift(['Elemento tocado', extra, 'modelo 3D de la SE']);
   const filas = datos.map(([k, v, s]) => `<tr><td>${esc(k)}</td><td>${esc(v)}${s ? `<small>${esc(s)}</small>` : ''}</td></tr>`).join('');
   const [ot, oc] = ORI[f.origen] || ORI.R;
+  const kT = f.tipo === 'torre' && f.key.startsWith('der_') ? f.nombre.replace('Torre ', '') : null;
+  const extra4d = kT ? bloque4D(kT) : f.tipo === 'se' ? bloqueSE(f) : f.tipo === 'camino' ? bloqueCamino(f) : '';
+  const boton = kT ? `<a class="boton4d" href="../tablero.html#torre=${kT}">Ver la ${kT} en el BIM 4D de la LT →<small>avance por actividad y por pata, fotos y línea de tiempo</small></a>`
+    : f.tipo === 'se' && f.url ? `<a class="boton4d" href="${f.url}">${esc(f.enlaceTxt || 'Abrir')} →<small>${f === RED.fSE.uchucchacua ? 'su BIM 4D: tablero CPM, sala y avance diario' : 'el modelo 3D completo de la subestación'}</small></a>`
+    : f.key === 'derivacion' ? `<a class="boton4d" href="../tablero.html">Abrir el BIM 4D de la LT →<small>las 23 torres, curva S y proceso constructivo</small></a>` : '';
+  const otros = kT ? [['Detalle de cimentación (4D)', `../tablero.html#torre=${kT}&detalle`]] : f.tipo === 'se' ? [] : [...(f.url ? [[f.enlaceTxt || 'Abrir', f.url]] : []), ...(f.enlaces || [])];
   $('#ficha').innerHTML = `<button class="cerrar" id="fCerrar" aria-label="Cerrar ficha">×</button>
     <span class="est" style="background:${oc}">${ot}</span><h3>${esc(f.nombre)}</h3><p class="nom">${esc(f.sub || '')}</p>
+    ${boton}${extra4d}<div id="fFotos"></div>
     ${filas ? `<table>${filas}</table>` : ''}${f.nota ? `<div class="nota">${esc(f.nota)}</div>` : ''}
-    <div class="acc"><button id="fIr">🎯 Ir al elemento</button>${f.url ? `<a href="${f.url}">${esc(f.enlaceTxt || 'Abrir')} →</a>` : ''}${(f.enlaces || []).map(([t, u]) => `<a href="${u}">${esc(t)} →</a>`).join('')}</div>`;
+    <div class="acc"><button id="fIr">🎯 Centrar en el 3D</button>${otros.map(([t, u]) => `<a href="${u}">${esc(t)} →</a>`).join('')}</div>`;
   $('#ficha').classList.remove('oculto'); $('#alcance').classList.add('oculto');
   $('#fCerrar').onclick = () => seleccionar(null);
   $('#fIr').onclick = () => irA(f);
+  $('#ficha').querySelectorAll('button[data-t]').forEach((b) => (b.onclick = () => { const x = FICHAS['der_' + b.dataset.t]; if (x) seleccionar(x, true); }));
   const objs = objsDe(f).filter((o) => !o.isInstancedMesh && !o.isLineSegments);
   const b = new THREE.Box3(); objs.forEach((o) => o.visible !== false && b.expandByObject(o));
   if (!b.isEmpty() && b.getSize(new THREE.Vector3()).length() < 3000) { selBox.box.copy(b); selBox.visible = true; } else selBox.visible = false;
   if (volarA) irA(f);
+  if (kT) fotosTorre(kT);
   if (movil) { $('#der').classList.remove('cerrado'); $('#izq').classList.add('cerrado'); }
   $('#der').scrollTop = 0; pedir();
 }
@@ -692,23 +842,76 @@ function tocar(e, conObjetos = true) {
   }
   return ht;
 }
-let abajo = null;
-renderer.domElement.addEventListener('pointerdown', (e) => (abajo = { x: e.clientX, y: e.clientY }));
-renderer.domElement.addEventListener('pointerup', (e) => {
-  if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5) return;
-  const h = tocar(e); if (!h || h.terreno) { seleccionar(null); return; }
-  const f = fichaDe(h.object); const inf = infoSE(h.object);
-  if (f) seleccionar(f, false, inf && inf.nombre ? inf.nombre : null);
+// ---------- navegación tipo Google Earth (pedido del usuario, 23-Oct-26: «no me estoy pudiendo desplazar tan fácilmente»):
+// arrastrar mueve el terreno (el punto agarrado sigue al cursor, con inercia al soltar), clic derecho o Mayús/Ctrl + arrastrar gira
+// e inclina alrededor del centro de la vista, la rueda acerca al cursor, doble clic acerca a ese punto y un clic en un elemento lo
+// centra. Teclado: flechas o WASD mueven, Q/E giran, Re Pág/Av Pág inclinan, + y − acercan, N orienta al norte.
+const _r = new THREE.Raycaster(), _p = new THREE.Vector3(), _vZ = new THREE.Vector3();
+let abajo = null, arrastre = null, inercia = null;
+function rayoPantalla(cx, cy) { const rc = renderer.domElement.getBoundingClientRect(); ptr.set(((cx - rc.left) / rc.width) * 2 - 1, -((cy - rc.top) / rc.height) * 2 + 1); _r.setFromCamera(ptr, camera); return _r.ray; }
+function centroEnSuelo() { const rc = renderer.domElement.getBoundingClientRect(); const h = rayoTerreno(rayoPantalla(rc.left + rc.width / 2, rc.top + rc.height / 2)); return h ? h.point : null; }
+function repivotar() { const P = centroEnSuelo(); if (P && P.distanceTo(camera.position) < 300000) controls.target.copy(P); }
+function orbitar(dx, dy) {
+  const off = camera.position.clone().sub(controls.target), sp = new THREE.Spherical().setFromVector3(off);
+  sp.theta -= dx * 0.0055; sp.phi = Math.min(Math.PI * 0.49, Math.max(0.03, sp.phi - dy * 0.0055));
+  camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sp));
+}
+function pasoInercia(dt) {
+  const k = Math.min(dt, 0.05); camera.position.addScaledVector(inercia, k); controls.target.addScaledVector(inercia, k);
+  inercia.multiplyScalar(Math.exp(-k / 0.3));
+  if (inercia.length() < Math.max(2, camera.position.distanceTo(controls.target) * 0.015)) { inercia = null; repivotar(); }
+}
+function parar() { anim = null; zoomP = null; inercia = null; if (recorrido) pararRecorrido(); }
+function centrarEn(P, ms = 700) { const off = camera.position.clone().sub(controls.target); volar(P.clone().add(off), P.clone(), ms); }
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  abajo = { x: e.clientX, y: e.clientY };
+  parar();
+  if (e.pointerType !== 'mouse') return; // táctil: un dedo mueve, dos dedos acercan y giran (OrbitControls)
+  const girar = e.button === 2 || (e.button === 0 && (e.shiftKey || e.ctrlKey || e.altKey));
+  if (girar) { repivotar(); arrastre = { modo: 'girar', x: e.clientX, y: e.clientY }; }
+  else if (e.button === 0) {
+    const h = rayoTerreno(rayoPantalla(e.clientX, e.clientY)); const P = h ? h.point : controls.target.clone();
+    arrastre = { modo: 'mover', y0: P.y, P0: P.clone(), v: new THREE.Vector3(), t: performance.now(), movio: false };
+  }
+  if (arrastre) { renderer.domElement.setPointerCapture(e.pointerId); visor.classList.add(arrastre.modo); }
 });
-let tCoord = 0;
 renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!arrastre) { coordenadas(e); return; }
+  if (arrastre.modo === 'mover') {
+    const r = rayoPantalla(e.clientX, e.clientY); if (r.direction.y > -0.003) return;
+    const t = (arrastre.y0 - r.origin.y) / r.direction.y, alto = Math.max(40, camera.position.y - arrastre.y0);
+    if (t <= 0 || t > alto * 35) return; // cerca del horizonte no se arrastra (saltaría lejos)
+    _p.copy(r.origin).addScaledVector(r.direction, t);
+    const dl = new THREE.Vector3(arrastre.P0.x - _p.x, 0, arrastre.P0.z - _p.z);
+    camera.position.add(dl); controls.target.add(dl);
+    const now = performance.now(), dts = Math.max(8, now - arrastre.t) / 1000; arrastre.v.lerp(dl.divideScalar(dts), 0.45); arrastre.t = now; arrastre.movio = true;
+  } else { orbitar(e.clientX - arrastre.x, e.clientY - arrastre.y); arrastre.x = e.clientX; arrastre.y = e.clientY; }
+  pedir();
+});
+function soltar() {
+  if (!arrastre) return;
+  if (arrastre.modo === 'mover' && arrastre.movio) { if (performance.now() - arrastre.t < 90 && arrastre.v.length() > 2) inercia = arrastre.v.clone(); else repivotar(); }
+  visor.classList.remove('mover', 'girar'); arrastre = null; pedir();
+}
+renderer.domElement.addEventListener('pointerup', (e) => {
+  soltar();
+  if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5 || e.button === 2) return;
+  const h = tocar(e); if (!h || h.terreno) { seleccionar(null); return; }
+  const f = fichaDe(h.object); const inf = infoSE(h.object); if (!f) return;
+  // un clic centra el elemento; en una línea, el punto tocado; dentro de una SE ya cercana solo se abre la ficha (para no saltar
+  // mientras se recorre el patio con su modelo 3D)
+  if (f.tipo === 'linea') { seleccionar(f, false); centrarEn(h.point); return; }
+  const dentroSE = f.tipo === 'se' && f.foco && camera.position.distanceTo(f.foco) < (f.radio || 150) * 3.2;
+  seleccionar(f, !dentroSE, inf && inf.nombre ? inf.nombre : null);
+});
+renderer.domElement.addEventListener('pointercancel', soltar);
+let tCoord = 0;
+function coordenadas(e) {
   const now = performance.now(); if (now - tCoord < 70 || movil) return; tCoord = now;
   const h = tocar(e, false); if (!h) return; const [E, N] = deEsc(h.point); const [lon, lat] = aGeo(E, N);
-  $('#coord').textContent = `E ${fmt(E, 1)} · N ${fmt(N, 1)} · ${fmt(h.point.y, 1)} m s.n.m. · ${lat.toFixed(5)}°, ${lon.toFixed(5)}°`;
-});
-
-// ---------- navegación: rueda suave hacia el punto bajo el cursor y doble clic para centrar (como en las páginas de las SE)
-const _vZ = new THREE.Vector3();
+  $('#dkXY').textContent = `E ${fmt(E, 0)} · N ${fmt(N, 0)} · ${fmt(h.point.y, 0)} m s.n.m. · ${lat.toFixed(5)}°, ${lon.toFixed(5)}°`;
+}
 function puntoZoom(ev) {
   const h = tocar(ev);
   if (h) return { P: h.point.clone(), dMin: h.terreno ? 4 : 1.5 };
@@ -717,9 +920,10 @@ function puntoZoom(ev) {
 const enVisor = (t) => t === renderer.domElement || $('#rotulos').contains(t);
 $('#visor').addEventListener('wheel', (ev) => {
   if (!enVisor(ev.target)) return;
-  ev.preventDefault(); ev.stopPropagation(); anim = null;
+  ev.preventDefault(); ev.stopPropagation(); anim = null; inercia = null;
   let d = ev.deltaY * (ev.deltaMode === 1 ? 33 : ev.deltaMode === 2 ? 400 : 1); if (!d) return;
   d = Math.max(-200, Math.min(200, d));
+  if (recorrido) { recorrido.d = Math.max(140, Math.min(3000, recorrido.d * Math.pow(1.0018, d))); pedir(); return; } // en el recorrido la rueda acerca o aleja la cámara de seguimiento
   const now = performance.now(); const quieto = xyPick && Math.hypot(ev.clientX - xyPick[0], ev.clientY - xyPick[1]) < 6;
   if (!zoomP || !quieto || now - tPick > 160) { const z = puntoZoom(ev); zoomP = { ...z, f: zoomP && quieto ? zoomP.f : 1 }; tPick = now; xyPick = [ev.clientX, ev.clientY]; }
   zoomP.f = Math.max(0.35, Math.min(2.8, zoomP.f * Math.pow(1.0014, d)));
@@ -735,11 +939,207 @@ function pasoZoom(dt) {
   camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
   if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
 }
+// doble clic: acerca a ese punto (como Google Earth) conservando el rumbo y la inclinación
 renderer.domElement.addEventListener('dblclick', (e) => {
-  const h = tocar(e); if (!h) return; zoomP = null;
-  const P = h.point.clone(); const off = camera.position.clone().sub(controls.target).normalize();
-  const d = Math.max(15, Math.min(camera.position.distanceTo(P) * 0.75, camera.position.distanceTo(controls.target)));
-  volar(P.clone().addScaledVector(off, d), P, 700);
+  const h = tocar(e); if (!h) return; parar();
+  const P = h.point.clone(), off = camera.position.clone().sub(controls.target).normalize();
+  const d = Math.max(25, camera.position.distanceTo(P) * 0.42);
+  volar(P.clone().addScaledVector(off, d), P, 750);
+});
+function zoomCentro(f) { const t = controls.target.clone(); volar(t.clone().add(camera.position.clone().sub(t).multiplyScalar(f)), t, 420); }
+function norte() { // rumbo norte con la misma distancia e inclinación
+  const t = controls.target.clone(), sp = new THREE.Spherical().setFromVector3(camera.position.clone().sub(t)); sp.theta = 0;
+  volar(t.clone().add(new THREE.Vector3().setFromSpherical(sp)), t, 650);
+}
+addEventListener('keydown', (e) => {
+  const tg = e.target && e.target.closest ? e.target : null;
+  if (tg && tg.closest('input, textarea, select')) return;
+  if (tg && tg.closest('button, a') && (e.key === ' ' || e.key === 'Enter')) return;
+  if (!$('#v-bim').classList.contains('on')) return;
+  if (e.key === 'Escape' && !$('#cajaFoto').classList.contains('oculto')) { $('#cajaFoto').classList.add('oculto'); return; }
+  const dist = camera.position.distanceTo(controls.target), fw = new THREE.Vector3().subVectors(controls.target, camera.position).setY(0).normalize(), rt = new THREE.Vector3(-fw.z, 0, fw.x);
+  const mover = (v) => { parar(); camera.position.add(v); controls.target.add(v); repivotar(); pedir(); };
+  const k = e.key; let ok = true;
+  if (k === 'ArrowUp' || k === 'w') mover(fw.multiplyScalar(dist * 0.12)); else if (k === 'ArrowDown' || k === 's') mover(fw.multiplyScalar(-dist * 0.12));
+  else if (k === 'ArrowLeft' || k === 'a') mover(rt.multiplyScalar(-dist * 0.12)); else if (k === 'ArrowRight' || k === 'd') mover(rt.multiplyScalar(dist * 0.12));
+  else if (k === 'q' || k === 'e') { parar(); repivotar(); orbitar(k === 'q' ? -55 : 55, 0); pedir(); }
+  else if (k === 'PageUp' || k === 'PageDown') { parar(); repivotar(); orbitar(0, k === 'PageUp' ? -40 : 40); pedir(); }
+  else if (k === '+' || k === '=') zoomCentro(0.65); else if (k === '-' || k === '_') zoomCentro(1.5);
+  else if (k === ' ') alternarRecorrido(); else if (k === ',') torreVecina(-1); else if (k === '.') torreVecina(1);
+  else if (k === 'n' || k === 'N') norte(); else if (k === 'Escape') { seleccionar(null); if (recorrido) pararRecorrido(); }
+  else ok = false;
+  if (ok) e.preventDefault();
+});
+
+// ---------- recorrido por la línea (barra inferior): tramos, perfil con las torres, ◀ ▶, «Recorrer» y «usted está aquí»
+const TRAMOS = RED.tramos, NOM_T = { der: 'Derivación', l1123: 'L-1123 → Paragsha II', l1724: 'L-1724 → Uchucchacua' };
+let tramoAct = TRAMOS[0], recorrido = null, velRec = 1, sHover = null, perfilArr = null, tramoFijo = 0;
+$('#sTramo').innerHTML = TRAMOS.map((t) => `<button data-t="${t.id}" class="${t === tramoAct ? 'on' : ''}" title="${esc(t.nombre)} · ${fmt(t.largo / 1000, 2)} km">${NOM_T[t.id]}</button>`).join('');
+function elegirTramo(id, ir) {
+  tramoAct = TRAMOS.find((t) => t.id === id) || TRAMOS[0]; tramoFijo = performance.now();
+  $('#sTramo').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === tramoAct.id));
+  if (recorrido) pararRecorrido();
+  if (ir) camaraEn(tramoAct, 0, 900, false); else dibujarPerfil();
+}
+$('#sTramo').onclick = (e) => { const b = e.target.closest('button[data-t]'); if (b) elegirTramo(b.dataset.t, true); };
+$('#sVel').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; velRec = +b.dataset.v; $('#sVel').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+function enTramo(T, s) {
+  s = Math.max(0, Math.min(T.largo, s)); let lo = 0, hi = T.s.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (T.s[m] <= s) lo = m; else hi = m; }
+  const a = T.pts[lo], b = T.pts[hi], u = (s - T.s[lo]) / Math.max(1e-6, T.s[hi] - T.s[lo]);
+  const p = a.clone().lerp(b, u); const h = cotaXZ(p.x, p.z); if (Number.isFinite(h)) p.y = h; return p;
+}
+function rumbo(T, s, v) { const a = enTramo(T, s - v), b = enTramo(T, s + v); const d = new THREE.Vector3(b.x - a.x, 0, b.z - a.z); return d.lengthSq() > 1e-6 ? d.normalize() : new THREE.Vector3(0, 0, -1); }
+function proyectar(T, P) { // progresiva y distancia horizontal del punto P al eje del tramo
+  let best = { d: Infinity, s: 0 };
+  for (let i = 0; i < T.pts.length - 1; i++) {
+    const a = T.pts[i], b = T.pts[i + 1], vx = b.x - a.x, vz = b.z - a.z, L2 = vx * vx + vz * vz || 1;
+    const u = Math.max(0, Math.min(1, ((P.x - a.x) * vx + (P.z - a.z) * vz) / L2)), d = Math.hypot(P.x - a.x - u * vx, P.z - a.z - u * vz);
+    if (d < best.d) best = { d, s: T.s[i] + u * (T.s[i + 1] - T.s[i]) };
+  }
+  return best;
+}
+function poseEn(T, s, d) { // cámara detrás del punto, mirando a lo largo de la línea, ≈ 32° sobre el horizonte
+  d = Math.max(140, Math.min(3000, d)); const p = enTramo(T, s), dir = rumbo(T, s, Math.max(90, d * 0.4)), el = 0.56;
+  const tgt = p.clone().setY(p.y + 18), pos = tgt.clone().addScaledVector(dir, -d * Math.cos(el)); pos.y = tgt.y + d * Math.sin(el);
+  const suelo = cotaXZ(pos.x, pos.z); if (Number.isFinite(suelo) && pos.y < suelo + 25) pos.y = suelo + 25;
+  return { pos, tgt };
+}
+function camaraEn(T, s, d, inmediato) {
+  const { pos, tgt } = poseEn(T, s, d ?? Math.min(1400, Math.max(320, camera.position.distanceTo(controls.target))));
+  if (inmediato) { anim = null; camera.position.copy(pos); controls.target.copy(tgt); pedir(); } else volar(pos, tgt, 900);
+  dibujarPerfil();
+}
+function sActual(T = tramoAct) { const dist = camera.position.distanceTo(controls.target); if (dist > 9000) return null; const pr = proyectar(T, controls.target); return pr.d < Math.max(500, dist * 0.6) ? pr : null; }
+function torreVecina(dir) {
+  const pr = sActual(), s0 = pr ? pr.s : dir > 0 ? -1 : tramoAct.largo + 1, tk = tramoAct.ticks;
+  const t = dir > 0 ? tk.find((x) => x.s > s0 + 8) : [...tk].reverse().find((x) => x.s < s0 - 8);
+  if (!t) { hud(dir > 0 ? `Fin del tramo: ${tramoAct.fin.nombre}` : `Inicio del tramo: ${tramoAct.ini.nombre}`, 2200); return; }
+  parar(); camaraEn(tramoAct, t.s, Math.min(700, Math.max(260, camera.position.distanceTo(controls.target))), false);
+  if (t.nombre) seleccionar(t.ficha, false);
+}
+$('#tAnt').onclick = () => torreVecina(-1); $('#tSig').onclick = () => torreVecina(1);
+function alternarRecorrido() {
+  if (recorrido) { pararRecorrido(); return; }
+  parar(); const pr = sActual(); let s0 = pr ? pr.s : 0; if (s0 > tramoAct.largo - 30) s0 = 0;
+  recorrido = { s: s0, d: Math.min(1200, Math.max(300, camera.position.distanceTo(controls.target))) };
+  $('#tPlay').textContent = '⏸ Pausa'; $('#tPlay').classList.add('on');
+  hud(`Recorriendo ${NOM_T[tramoAct.id]} · rueda: acercar o alejar · espacio o arrastrar: pausa`, 3500); pedir();
+}
+function pararRecorrido() { recorrido = null; $('#tPlay').textContent = '▶ Recorrer'; $('#tPlay').classList.remove('on'); repivotar(); dibujarPerfil(); }
+$('#tPlay').onclick = alternarRecorrido;
+function pasoRecorrido(dt) {
+  const v = Math.max(35, Math.min(260, recorrido.d * 0.13)) * velRec; recorrido.s += v * Math.min(dt, 0.1);
+  if (recorrido.s >= tramoAct.largo) { recorrido.s = tramoAct.largo; const fin = tramoAct.fin; pararRecorrido(); hud(`Llegó a ${fin.nombre}`, 2500); return; }
+  const { pos, tgt } = poseEn(tramoAct, recorrido.s, recorrido.d), k = 1 - Math.exp(-dt / 0.45);
+  camera.position.lerp(pos, k); controls.target.lerp(tgt, k);
+}
+// perfil del tramo: terreno, torres con su estado de obra y extremos; clic o arrastre llevan a ese punto de la línea
+const cvP = $('#perfil');
+function muestrasPerfil(T) {
+  if (T._perfil) return T._perfil;
+  const n = Math.min(700, Math.max(120, Math.round(T.largo / 12))), hs = [];
+  for (let k = 0; k <= n; k++) hs.push(enTramo(T, (T.largo * k) / n).y);
+  const mn = Math.min(...hs), mx = Math.max(...hs); return (T._perfil = { n, hs, mn: mn - (mx - mn) * 0.08 - 5, mx: mx + (mx - mn) * 0.32 + 12 });
+}
+const ML = 40, MR = 10, MT = 15, MB = 4;
+const xDeS = (s, W) => ML + (s / tramoAct.largo) * (W - ML - MR), sDeX = (x, W) => Math.max(0, Math.min(tramoAct.largo, ((x - ML) / (W - ML - MR)) * tramoAct.largo));
+const estTick = (t) => { if (!AVANCE || !$('#vAva').checked || !t.ficha || !t.ficha.key.startsWith('der_')) return null; const a = AVANCE.t[t.nombre]; return a ? a.st : null; };
+const COLE = { fin: '#22a04b', prog: '#b1cc3d', none: '#9aa3ab' };
+let tPerfil = 0, tmPerfil = 0;
+function dibujarPerfil(forzar = true) {
+  const now = performance.now(); if (!forzar && now - tPerfil < 120) { clearTimeout(tmPerfil); tmPerfil = setTimeout(() => dibujarPerfil(), 140); return; } tPerfil = now;
+  const W = cvP.clientWidth, H = cvP.clientHeight; if (W < 20 || H < 20) return;
+  const dpr = Math.min(2, devicePixelRatio); if (cvP.width !== Math.round(W * dpr) || cvP.height !== Math.round(H * dpr)) { cvP.width = Math.round(W * dpr); cvP.height = Math.round(H * dpr); }
+  const g = cvP.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const cs = getComputedStyle(document.documentElement), tinta = cs.getPropertyValue('--ink').trim(), tinta2 = cs.getPropertyValue('--ink-mut').trim(), linea = cs.getPropertyValue('--line-2').trim();
+  // si se está mirando otro tramo, el perfil cambia solo (salvo en el arranque común de la T1)
+  if (!recorrido && !perfilArr && !anim && performance.now() - tramoFijo > 5000) {
+    const pr0 = proyectar(tramoAct, controls.target);
+    if (pr0.d > 150) { const otro = TRAMOS.map((T) => [T, proyectar(T, controls.target)]).filter(([T, p]) => T !== tramoAct && p.d < 400 && p.d < pr0.d * 0.5).sort((a, b) => a[1].d - b[1].d)[0];
+      if (otro) { tramoAct = otro[0]; $('#sTramo').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === tramoAct.id)); } }
+  }
+  const T = tramoAct, P = muestrasPerfil(T), Y = (h) => MT + (1 - (h - P.mn) / (P.mx - P.mn)) * (H - MT - MB), col = '#' + T.color.toString(16).padStart(6, '0');
+  const X = (k) => ML + (k / P.n) * (W - ML - MR);
+  g.beginPath(); g.moveTo(ML, H - MB); P.hs.forEach((h, k) => g.lineTo(X(k), Y(h))); g.lineTo(W - MR, H - MB); g.closePath(); g.fillStyle = col + '30'; g.fill();
+  g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath(); P.hs.forEach((h, k) => (k ? g.lineTo(X(k), Y(h)) : g.moveTo(X(k), Y(h)))); g.stroke();
+  g.font = '9px "IBM Plex Mono", monospace'; g.textAlign = 'right';
+  for (const f of [0.18, 0.72]) { const h = P.mn + (P.mx - P.mn) * f; g.fillStyle = tinta2; g.fillText(fmt(h, 0), ML - 4, Y(h) + 3); g.strokeStyle = linea; g.lineWidth = 0.5; g.beginPath(); g.moveTo(ML, Y(h)); g.lineTo(W - MR, Y(h)); g.stroke(); }
+  g.textAlign = 'center'; let ultX = -99;
+  for (const t of T.ticks) {
+    const x = xDeS(t.s, W), y = Y(enTramo(T, t.s).y), alto = t.nombre ? 13 : 7;
+    g.strokeStyle = t.nombre ? tinta : tinta2; g.lineWidth = t.nombre ? 1.2 : 0.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - alto); g.stroke();
+    if (!t.nombre) continue;
+    const e = estTick(t); g.fillStyle = e ? COLE[e] : '#ffffff'; g.beginPath(); g.arc(x, y - 13, 3.3, 0, 7); g.fill(); g.strokeStyle = tinta; g.lineWidth = 0.8; g.stroke();
+    if (x - ultX > 24) { g.fillStyle = tinta; g.font = '600 9px "IBM Plex Mono", monospace'; g.fillText(t.nombre.replace(/^T0/, 'T'), x, Math.max(9, y - 19)); ultX = x; }
+  }
+  if (W > 520) { g.font = '700 9.5px "IBM Plex Sans", sans-serif'; g.fillStyle = tinta; g.textAlign = 'left'; g.fillText('◂ ' + T.ini.nombre, ML + 2, 10); g.textAlign = 'right'; g.fillText(`${T.fin.nombre} ▸ · ${fmt(T.largo / 1000, 2)} km`, W - MR, 10); }
+  const pr = recorrido ? { s: recorrido.s, d: 0 } : sActual();
+  if (pr) { const x = xDeS(pr.s, W); g.strokeStyle = '#d9714f'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, MT - 3); g.lineTo(x, H - MB); g.stroke(); g.fillStyle = '#d9714f'; g.beginPath(); g.moveTo(x - 5, MT - 7); g.lineTo(x + 5, MT - 7); g.lineTo(x, MT - 1); g.fill(); }
+  if (sHover != null) {
+    const x = xDeS(sHover, W), h = enTramo(T, sHover).y; g.strokeStyle = tinta2; g.setLineDash([3, 3]); g.lineWidth = 1; g.beginPath(); g.moveTo(x, MT); g.lineTo(x, H - MB); g.stroke(); g.setLineDash([]);
+    const der = x > W - 150; g.fillStyle = tinta; g.font = '600 9.5px "IBM Plex Mono", monospace'; g.textAlign = der ? 'right' : 'left'; g.fillText(`km ${fmt(sHover / 1000, 2)} · ${fmt(h, 0)} m`, x + (der ? -6 : 6), H - MB - 4);
+  }
+  const tk = pr ? T.ticks.filter((x) => x.nombre && x.s <= pr.s + 15).pop() : null;
+  $('#dkPos').textContent = pr ? `${NOM_T[T.id]} · km ${fmt(pr.s / 1000, 2)}${tk ? ' · pasando la ' + tk.nombre : ''}${pr.d > 60 ? ` · a ${fmt(pr.d, 0)} m del eje` : ''}` : (camera.position.distanceTo(controls.target) > 9000 ? 'Vista general · elija un tramo o haga clic en el perfil para bajar a la línea' : `${NOM_T[T.id]} · fuera del tramo (clic en el perfil para ir)`);
+}
+function sEnPerfil(e) { const rc = cvP.getBoundingClientRect(); return sDeX(e.clientX - rc.left, rc.width); }
+cvP.addEventListener('pointerdown', (e) => {
+  parar(); const rc = cvP.getBoundingClientRect(), x = e.clientX - rc.left, s = sEnPerfil(e);
+  const tk = tramoAct.ticks.filter((t) => t.nombre && Math.abs(xDeS(t.s, rc.width) - x) < 7).sort((a, b) => Math.abs(xDeS(a.s, rc.width) - x) - Math.abs(xDeS(b.s, rc.width) - x))[0];
+  if (tk) { camaraEn(tramoAct, tk.s, Math.min(600, Math.max(250, camera.position.distanceTo(controls.target))), false); seleccionar(tk.ficha, false); return; }
+  perfilArr = { x: e.clientX }; cvP.setPointerCapture(e.pointerId); camaraEn(tramoAct, s, null, false);
+});
+cvP.addEventListener('pointermove', (e) => {
+  sHover = sEnPerfil(e);
+  if (perfilArr && Math.abs(e.clientX - perfilArr.x) > 3) camaraEn(tramoAct, sHover, null, true); else dibujarPerfil();
+});
+cvP.addEventListener('pointerup', () => { if (perfilArr) repivotar(); perfilArr = null; });
+cvP.addEventListener('pointerleave', () => { sHover = null; dibujarPerfil(); });
+new ResizeObserver(() => dibujarPerfil()).observe(cvP);
+
+// ---------- mapa de ubicación (abajo a la izquierda): todo el proyecto o el entorno, con la huella de lo que se mira
+const svgM = $('#mini');
+const BB = (() => { const xs = [], zs = []; TRAMOS.forEach((T) => T.pts.forEach((p) => { xs.push(p.x); zs.push(p.z); })); return { x0: Math.min(...xs) - 1500, x1: Math.max(...xs) + 1500, z0: Math.min(...zs) - 2500, z1: Math.max(...zs) + 2500 }; })();
+(function armarMini() {
+  const path = (pts, col, w) => `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(0) + ' ' + p.z.toFixed(0)).join('')}" fill="none" stroke="${col}" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let h = '';
+  TRAMOS.forEach((T) => (h += path(T.pts, '#' + T.color.toString(16).padStart(6, '0'), T.id === 'der' ? 2.6 : 2)));
+  RED.torresDer.forEach((T) => (h += `<circle cx="${T.p.x.toFixed(0)}" cy="${T.p.z.toFixed(0)}" r="1" class="mT" fill="#1a352f"/>`));
+  const NSE = { paragsha2: 'Paragsha II', yumpag: 'Yumpag', uchucchacua: 'Uchucchacua' };
+  for (const k of Object.keys(NSE)) { const c = RED.fSE[k].foco; h += `<circle cx="${c.x.toFixed(0)}" cy="${c.z.toFixed(0)}" r="5" class="mS" fill="#1f4e45" stroke="#fff" stroke-width="1.2" vector-effect="non-scaling-stroke"/><text class="mL" x="${c.x.toFixed(0)}" y="${c.z.toFixed(0)}" data-k="${k}">${NSE[k]}</text>`; }
+  h += '<polygon id="mVista" fill="rgba(217,113,79,.18)" stroke="#d9714f" stroke-width="1.2" vector-effect="non-scaling-stroke"/><circle id="mYo" r="4" fill="#d9714f" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+  svgM.innerHTML = h;
+})();
+let tMini = 0, tmMini = 0;
+const _pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), _q = new THREE.Vector3(), _v2 = new THREE.Vector2();
+function actualizarMini(forzar) {
+  if (movil) return;
+  const now = performance.now(); if (!forzar && now - tMini < 90) { clearTimeout(tmMini); tmMini = setTimeout(() => actualizarMini(true), 110); return; } tMini = now;
+  const W = svgM.clientWidth || 230, H = svgM.clientHeight || 120, asp = W / H, tg = controls.target, dist = camera.position.distanceTo(tg), lejos = dist > 6500;
+  let x0, x1, z0, z1;
+  if (lejos) ({ x0, x1, z0, z1 } = BB); else { const r = Math.max(1200, dist * 2.2); x0 = tg.x - r * asp; x1 = tg.x + r * asp; z0 = tg.z - r; z1 = tg.z + r; }
+  let w = x1 - x0, hg = z1 - z0;
+  if (w / hg < asp) { const c = (x0 + x1) / 2; w = hg * asp; x0 = c - w / 2; } else { const c = (z0 + z1) / 2; hg = w / asp; z0 = c - hg / 2; }
+  svgM.setAttribute('viewBox', `${x0.toFixed(0)} ${z0.toFixed(0)} ${w.toFixed(0)} ${hg.toFixed(0)}`);
+  const k = w / W;
+  svgM.querySelectorAll('.mT').forEach((c) => c.setAttribute('r', (k * (lejos ? 0.9 : 2.4)).toFixed(1)));
+  svgM.querySelectorAll('.mS').forEach((c) => c.setAttribute('r', (k * 4.5).toFixed(1)));
+  svgM.querySelectorAll('.mL').forEach((t) => { t.setAttribute('font-size', (k * 9.5).toFixed(1)); t.setAttribute('dx', (k * 7).toFixed(1)); t.setAttribute('dy', (t.dataset.k === 'yumpag' ? -k * 6 : k * 13).toFixed(1)); });
+  const yo = svgM.querySelector('#mYo'); yo.setAttribute('cx', tg.x.toFixed(0)); yo.setAttribute('cy', tg.z.toFixed(0)); yo.setAttribute('r', (k * 3.5).toFixed(1));
+  _pl.constant = -tg.y; const pts = [];
+  for (const [nx, ny] of [[-1, -1], [1, -1], [1, 0.55], [-1, 0.55]]) {
+    _r.setFromCamera(_v2.set(nx, ny), camera);
+    if (_r.ray.direction.y < -0.02 && _r.ray.intersectPlane(_pl, _q) && _q.distanceTo(camera.position) < dist * 6) pts.push(_q.clone());
+    else { const d = _r.ray.direction.clone().setY(0).normalize(); pts.push(tg.clone().addScaledVector(d, dist * 4)); }
+  }
+  svgM.querySelector('#mVista').setAttribute('points', pts.map((q) => `${q.x.toFixed(0)},${q.z.toFixed(0)}`).join(' '));
+}
+svgM.addEventListener('click', (e) => {
+  const pt = svgM.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svgM.getScreenCTM().inverse());
+  parar(); const h = cotaXZ(q.x, q.y); const tg = new THREE.Vector3(q.x, Number.isFinite(h) ? h : controls.target.y, q.y);
+  const off = camera.position.clone().sub(controls.target); if (off.length() > 9000) off.setLength(9000);
+  volar(tg.clone().add(off), tg, 1100);
 });
 
 // ---------- pantalla completa, celular, teclado
@@ -747,7 +1147,6 @@ $('#bFull').onclick = () => (document.fullscreenElement ? document.exitFullscree
 if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
 $('#tIzq').onclick = () => { $('#izq').classList.toggle('cerrado'); $('#der').classList.add('cerrado'); };
 $('#tDer').onclick = () => { $('#der').classList.toggle('cerrado'); $('#izq').classList.add('cerrado'); };
-addEventListener('keydown', (e) => { if (e.key === 'Escape') seleccionar(null); });
 
 // ---------- bucle (dibuja solo cuando algo cambia)
 controls.addEventListener('change', pedir);
@@ -767,19 +1166,30 @@ function ajustesPorDistancia() {
 function bucle(now = performance.now()) {
   requestAnimationFrame(bucle);
   const dt = Math.max(0, (now - tAnt) / 1000); tAnt = now;
+  const activo = !!(anim || zoomP || inercia || recorrido);
   if (anim) anim(now);
-  const zoom = !!zoomP; if (zoomP) pasoZoom(dt);
+  if (zoomP) pasoZoom(dt);
+  if (inercia) pasoInercia(dt);
+  if (recorrido) pasoRecorrido(dt);
   const mov = controls.update();
-  if (!renderPend && !anim && !mov && !zoom) return;
+  if (!renderPend && !activo && !mov) return;
   renderPend = false;
   ajustesPorDistancia(); rotulosVis();
   renderer.render(scene, camera); css.render(scene, camera); vc.dibujar();
+  actualizarMini(false); dibujarPerfil(false);
 }
 fijarEscenario(ESC0); visibilidad();
 if (fallasDem) { U.uAgua.value = 0; $('#vAgua').checked = false; }
 if (fallasDem) hud(`Relieve incompleto: ${fallasDem} teselas del DEM no se descargaron (sin conexión a AWS). El terreno faltante queda plano.`, 7000);
 $('#cargando').classList.add('oculto');
 requestAnimationFrame(bucle);
+cargarAvance().then(() => { pintarAvance(); if (actual) seleccionar(actual); });
+// la torre del BIM 4D de la LT (su código, leído de ../plantilla.html) reemplaza a la silueta propia en cuanto llega
+setTimeout(() => torreDelTablero().then((TB) => {
+  RED.usarTorresTablero(TB);
+  RED.torresDer.forEach((T) => { if (!T.fuenteGeo) return; const r = T.f.datos.find((x) => x[0] === 'Geometría en el 3D'); if (r) { r[1] = `${T.fuenteGeo} · familia TS2, extensión de cuerpo ${T.tp.ext >= 0 ? '+' : ''}${T.tp.ext} m`; r[2] = 'ME_TS2-Rev.B · el mismo código de la plantilla del tablero'; } });
+  window.__bim.torreTablero = TB.version || 'sí'; if (actual) seleccionar(actual); pedir();
+}).catch((e) => console.warn('torre del tablero', e)), 600);
 if (new URLSearchParams(location.search).get('vista') === 'orto') fijarVista('orto');
 // foto(w, h): captura del 3D a otro tamaño (para revisar la página desde un panel chico; los rótulos HTML no salen)
 const foto = (w = 1600, h = 900) => { const w0 = visor.clientWidth, h0 = visor.clientHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(1); renderer.setSize(w, h, false);

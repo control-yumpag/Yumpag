@@ -43,6 +43,13 @@
       const chip = '<div id="sesionChip">👤 <b id="sesionUser"></b> · acceso completo · <a href="index.html" onclick="try{sessionStorage.clear()}catch(e){}">Cerrar sesión</a></div>\n<style>#sesionChip{position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:6px;align-items:center;background:#1f4e45;color:#fff;font:600 12px/1 "IBM Plex Sans",system-ui,sans-serif;padding:8px 12px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.18)}\n#sesionChip a{color:#d8f0a8;text-decoration:none;font-weight:700}</style>\n<script>try{document.getElementById("sesionUser").textContent=sessionStorage.getItem("yumpagUser")||"usuario"}catch(e){}<\/script>';
       const j = t.lastIndexOf('</body>'); t = t.slice(0, j) + chip + t.slice(j);
     }
+    /* 23-Oct-26 · enlace directo desde el BIM general (pedido del usuario: «si quisiese irme al detalle, que me lleve al 4D de esa
+       parte de un clic»): tablero.html#torre=T12 abre el BIM 4D con esa torre centrada y #torre=T12&detalle, su detalle. */
+    const ir = /(?:^#|&)torre=(T\d{2})(&detalle)?/.exec(location.hash);
+    if (ir) {
+      const sc = '<script>(function(){var t="' + ir[1] + '",det=' + (ir[2] ? 'true' : 'false') + ',n=0;(function go(){n++;if(typeof window.dcGoTower!=="function"){if(n<160)setTimeout(go,250);return;}window.dcGoTower(t);if(!det)return;var k=0;(function d(){k++;var ok=typeof GLB_READY!=="undefined"&&GLB_READY&&typeof towerObjs!=="undefined"&&towerObjs&&towerObjs.length;if(!ok){if(k<160)setTimeout(d,250);return;}setTimeout(function(){try{openTowerDetail();}catch(e){console.warn("detalle",e);}},900);})();})();})();<\/script>\n';
+      const j = t.lastIndexOf('</body>'); t = t.slice(0, j) + sc + t.slice(j);
+    }
     document.open(); document.write(t); document.close();
   } catch (e) {
     document.getElementById('m').innerHTML = '<b>No se pudo armar el tablero</b><span>' + (e && e.message ? e.message : e) + '. Recarga la página (Ctrl+F5) o vuelve a <a href="index.html">la portada</a>.</span>';

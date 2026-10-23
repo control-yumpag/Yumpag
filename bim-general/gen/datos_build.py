@@ -163,6 +163,17 @@ UCHU_OSM = [[-76.688127, -10.618201], [-76.688235, -10.618109], [-76.688312, -10
             [-76.688098, -10.617896], [-76.688068, -10.617862], [-76.687931, -10.61798]]
 uch_pol = [utm(*p) for p in UCHU_OSM]
 cen = lambda pol: [round(sum(p[0] for p in pol) / len(pol), 2), round(sum(p[1] for p in pol) / len(pol), 2)]
+# SE Uchucchacua: el modelo (se-uchucchacua/se3d.js) está en coordenadas del DWG OE-204 (X = Xdwg − 73 400, Y = Ydwg − 24 900)
+# sin UTM. Giro: el norte del plano es (X 0,777 ; Y 0,629) → el eje X va a 51,0° del este. Posición: la L-1123 de OSM llega por
+# el eje de fases X = 26,7 (lineaX del modelo) y su último nodo cae en la viga norte del pórtico 138 kV (Y = 34,2); el borde
+# este del patio 138 kV (X = 34,6) y los bordes N y O del cerco coinciden con la huella OSM a ± 3 m.
+_n = math.hypot(0.777, 0.629); UCH_UX = [round(0.629 / _n, 6), round(0.777 / _n, 6)]; UCH_UY = [round(-0.777 / _n, 6), round(0.629 / _n, 6)]
+_cu = cen(uch_pol)
+def ucA(X, Y):
+    lx, ly = X - 18.4, Y - 20.1
+    return [round(_cu[0] + lx * UCH_UX[0] + ly * UCH_UY[0], 2), round(_cu[1] + lx * UCH_UX[1] + ly * UCH_UY[1], 2)]
+PLAT_UCH = [[-3.3, 7.6], [1.8, 5.8], [8.2, 3.5], [10.2, 1.2], [19.5, -7.8], [46, -7.8], [58, -7.8], [58, 21.5], [52.2, 21.5], [52.2, 34.0],
+            [47.2, 34.0], [47.2, 44.6], [6.6, 44.6], [0.6, 42.9], [-3.3, 39.2]]   # PLATAFORMA de se3d.js
 se = {
     'paragsha2': {
         'nombre': 'SE Paragsha II', 'tension': '220/138 kV', 'url': '../se-paragsha2/', 'cota': 4366,
@@ -181,8 +192,10 @@ se = {
     'uchucchacua': {
         'nombre': 'SE Uchucchacua', 'tension': '138 kV', 'url': '../se-uchucchacua/', 'cota': 4447.0,
         'cotaFuente': 'Planos de la SE (patio = 4 447,00 m s.n.m., se-uchucchacua)',
-        'poligono': uch_pol, 'centro': cen(uch_pol), 'aprox': True,
-        'fuente': 'OpenStreetMap, way 939080043 (ubicación aproximada: los planos de la SE no traen coordenadas UTM)'},
+        'poligono': [ucA(X, Y) for X, Y in PLAT_UCH], 'huellaOSM': uch_pol, 'centro': ucA(26, 18), 'aprox': True,
+        'modelo': {'modulo': '../se-uchucchacua/se3d.js', 'o': ucA(0, 0), 'ux': UCH_UX, 'uy': UCH_UY, 'aprox': True},
+        'fuente': 'Georreferencia estimada (± 5 m): orientación del norte del DWG OE-204 (bloque NM, rot. 309°) y posición por la llegada '
+                  'de la L-1123 y la huella del patio en OpenStreetMap (way 939080043); los planos de la SE no traen coordenadas UTM'},
 }
 
 out = {

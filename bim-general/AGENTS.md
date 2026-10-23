@@ -11,15 +11,29 @@ Uchucchacua (L-1123) a SE Yumpag, desde CC Pomayaros»: las **tres subestaciones
 Pedido del usuario (23-Oct-26): «un apartado para el BIM general, donde esté todo el proyecto, que son 3 subestaciones y
 una línea… se va a partir una línea y ahí es donde ingresa Yumpag… una vista digital y una vista en ortofoto».
 
-**No toques archivos fuera de `bim-general/`** salvo el `AGENTS.md` raíz. La tarjeta de la portada (`index.html` raíz) la
-publica el generador v72 (`publicar.py`, espejo en `g72__portal__index.html` del Proyecto). Los modelos de Paragsha II y de
-Yumpag se **importan tal cual** desde `../se-paragsha2/pg2_3d.js` y `../se-yumpag/ypg3d.js` (su `construir(escena)`): si
-cambias su API (`construir`, `CAPAS`, `aUTM`, `COTA0`) revisa también esta página.
+**No toques archivos fuera de `bim-general/`** salvo el `AGENTS.md` raíz. La portada (`index.html` raíz: tarjeta, mapa del
+sistema y perfil de las 23 torres) y `tablero.html` (enlace `#torre=Txx`) los publica el generador v72 (espejos
+`g72__portal__index.html` y `g72__portal__tablero.html` del Proyecto): si los cambias, actualiza también esos espejos.
+
+**Esta página no copia lo que ya existe: lo lee en vivo** (pedido del usuario, 23-Oct-26: «no se requiere que crees algo de
+cero… relaciónalo, jálalo, es información ya trabajada»):
+- Torre: el código de la torre paramétrica del BIM 4D de la LT se extrae de `../plantilla.html` (`torreDelTablero()` en
+  `red.js`: de «TORRE PARAMÉTRICA 138 kV» al final de `buildTorreParam()`). Si la plantilla cambia esos nombres, la página
+  sigue con su silueta propia y lo avisa en la consola.
+- Estado de obra: `../datos.json` (DATA.towers: % por torre y actividad, `patasReal`, `ph.elm`; ocGlobal, counts,
+  phaseRollup; CAMINOS_DET). Nada se recalcula aquí: N/A se muestra como N/A.
+- Fotos: `../fotos/fotos.json` (las mismas copias con rostros difuminados del tablero), solo al abrir la ficha de una torre.
+- SE: los modelos de Paragsha II, Yumpag y Uchucchacua se **importan tal cual** desde `../se-paragsha2/pg2_3d.js`,
+  `../se-yumpag/ypg3d.js` y `../se-uchucchacua/se3d.js` (su `construir(escena)`), y el avance de AXON desde
+  `../se-uchucchacua/uchu4d.js`. Si cambias su API (`construir`, `CAPAS`, `aUTM`, `COTA0`, `U4D.total`) revisa esta página.
+- Detalle: los botones llevan a `../tablero.html#torre=Txx` (BIM 4D con la torre centrada) y `#torre=Txx&detalle`
+  (su detalle de cimentación), y a las páginas de cada SE con `#bim`.
 
 ## Archivos
 | Archivo | Contenido |
 |---|---|
-| `index.html` | Pestañas Resumen y alcance / BIM general / Fuentes; vista Digital u Ortofoto, escenario Antes o Después, «Ir a», capas, fichas con la fuente de cada dato, lista con buscador, avance de obra civil por torre (opcional, de `../datos.json`), carga de los modelos de las SE al acercarse, celular |
+| `index.html` | Pestañas Resumen y alcance / BIM general / Fuentes; vista Digital u Ortofoto, escenario Antes o Después, «Ir a», capas, fichas con la fuente de cada dato y el estado de obra (actividades, patas, camino, montaje, fotos), botones al BIM 4D, lista con buscador, carga de los modelos de las SE al acercarse, **navegación tipo Google Earth** y **barra de recorrido** (tramos, perfil, ◀ ▶, Recorrer, mapa de ubicación), celular |
+| `gen/portada_svg.py` | Arma el mapa del sistema y el perfil de las 23 torres del panel izquierdo de la portada (`../index.html`) desde `proyecto.json` |
 | `geo.js` | UTM WGS-84 18 S ⇄ geográficas (Krüger, < 1 mm), teselas Web Mercator, cola de descargas |
 | `terreno.js` | DEM Terrarium en parches (F 640 m · R 160 m · D, P, U 20 m), corrección vertical, ajustes en torres y plataformas, material digital/ortofoto, ortofoto por parche y foco z17–z18 que sigue a la cámara |
 | `red.js` | Torres (familia TS2 del tablero; T23 con el OE-604), conductores, L-1123 existente, seccionamiento, trazos de lectura, SE, caminos, MDIA, fichas, escenarios |
@@ -52,9 +66,21 @@ cambias su API (`construir`, `CAPAS`, `aUTM`, `COTA0`) revisa también esta pág
 - Origen del dato en cada ficha: `D` documento · `R` referencial/aproximado. **Nunca inventes un dato**: cada fila de `datos`
   lleva su fuente; lo calculado dice «calculado».
 - Colores: L-1123 `#e07b1f`, L-1724 `#3d7fe0`, derivación `#9fbf2a`, L-1123 antes `#c0652a`, caminos `#8a6036`.
+  Estado de obra (como en el BIM 4D): terminada `#22a04b`, en curso `#b1cc3d`, por iniciar `#9aa3ab`; torre sin montaje
+  en acero translúcido, montada en acero.
+- **Navegación (no cambiar sin pedirlo)**: arrastrar con el botón izquierdo mueve el terreno (el punto agarrado sigue al
+  cursor, con inercia); clic derecho o Mayús/Ctrl + arrastrar gira e inclina alrededor del centro de la vista; rueda: acerca
+  al cursor (en el recorrido, acerca o aleja la cámara de seguimiento); doble clic: acerca a ese punto; un clic en un
+  elemento lo centra y abre su ficha (en una línea, centra el punto tocado; dentro de una SE cercana solo abre la ficha);
+  teclado: flechas/WASD, Q/E, Re Pág/Av Pág, + y −, N (norte), espacio (recorrer), «,» y «.» (estructura anterior/siguiente).
+  En el celular: un dedo mueve, dos dedos acercan y giran.
+- **Barra de recorrido**: tramos Derivación (T1 → SE Yumpag), L-1123 (T1 → Paragsha II) y L-1724 (T1 → Uchucchacua)
+  (`RED.tramos`); el perfil muestra el terreno, las torres con su estado y «usted está aquí»; un clic o arrastre lleva la
+  cámara a ese punto de la línea; el tramo cambia solo cuando se mira otro (salvo 5 s después de elegirlo).
 
 ## Pendientes (preguntar al usuario, no resolver inventando)
-- Coordenadas UTM de la SE Uchucchacua (sus planos no las traen): con ellas se inserta aquí su modelo 3D.
+- Coordenadas UTM de la SE Uchucchacua (sus planos no las traen): hoy su modelo va con una georreferencia **estimada**
+  (± 5 m; giro del norte del DWG y llegada de la L-1123 en OSM, en `gen/datos_build.py`); con las coordenadas reales se corrige.
 - Planos de las familias T2, T2D, A2 y SR2 (hoy heredan la TS2) · trazo de la L-1123 dentro de la SE Paragsha II · destino
   de las T107 y T108 · lado real de cada circuito en la doble terna.
 

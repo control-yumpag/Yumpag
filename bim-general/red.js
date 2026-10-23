@@ -1,13 +1,15 @@
 // BIM general · red eléctrica del proyecto sobre el terreno: L-1123 existente (Paragsha II – Uchucchacua), seccionamiento en el
 // vano T107–T108, derivación en doble terna T1–T23 hasta el pórtico de la SE Yumpag, las tres subestaciones, los caminos de
-// acceso y los componentes auxiliares de la MDIA. Torres y conductores son de geometría paramétrica (ver fichas: qué es dato
-// y qué es referencial). Coordenadas: proyecto.json (UTM 18 S) → escena con aEsc().
+// acceso y los componentes auxiliares de la MDIA. Las torres de la derivación usan la torre paramétrica del BIM 4D de la LT
+// (se lee de ../plantilla.html: usarTorresTablero) y su estado de obra sale del último corte del tablero (aplicar4D); mientras
+// tanto se dibujan con la misma familia TS2 aquí. Coordenadas: proyecto.json (UTM 18 S) → escena con aEsc().
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-import { aEsc } from './terreno.js';
+import { aEsc, ORIGEN } from './terreno.js';
+const ORIGEN_E = ORIGEN.E, ORIGEN_N = ORIGEN.N;
 
 export const COL = { l1123: 0xe07b1f, l1724: 0x3d7fe0, der: 0x9fbf2a, antes: 0xc0652a, camino: 0x8a6036, mdia: 0xb5452a, tendido: 0x7b5cc4, aux: 0x2a8f86 };
 const hex = (c) => '#' + c.toString(16).padStart(6, '0');
@@ -24,6 +26,9 @@ export const MAT = {
   conductor: new THREE.LineBasicMaterial({ color: 0x40464c }),
   guarda: new THREE.LineBasicMaterial({ color: 0x6b7278 }),
   conductorFant: new THREE.LineBasicMaterial({ color: 0x8a949b, transparent: true, opacity: 0.35 }),
+  // torre proyectada (aún sin montaje): acero galvanizado translúcido, como en el BIM 4D de la LT
+  proyectada: new THREE.MeshStandardMaterial({ color: 0xb9c3c9, metalness: 0.45, roughness: 0.45, transparent: true, opacity: 0.5, depthWrite: false }),
+  fund: { none: new THREE.MeshLambertMaterial({ color: 0x9aa3ab }), prog: new THREE.MeshLambertMaterial({ color: 0xb1cc3d }), fin: new THREE.MeshLambertMaterial({ color: 0x22a04b }) },
 };
 
 // ---------- celosía paramétrica: montantes, X por cara, horizontales, crucetas (cuerda inferior y superior) y aisladores
@@ -65,23 +70,28 @@ function celosia(F) {
     }
   }));
   let guardas;
-  if (F.punta) guardas = [-1, 1].map((l) => cruceta(F.punta.y, F.punta.l, F.punta.vol, l));
+  if (F.punta) guardas = [-1, 1].map((l) => cruceta(F.punta.y, F.punta.l, F.punta.vol, l).add(new THREE.Vector3(0, -0.24, 0)));
   else { const t = new THREE.Vector3(0, F.yTop, 0), yu = ys[ys.length - 1]; if (F.yTop - yu > 0.3) for (let i = 0; i < 4; i++) bar(acero, Nd(yu, i), t, F.wP * 0.8); guardas = [t, t]; }
-  return { acero: mergeGeometries(acero), aisl: aisl.length ? mergeGeometries(aisl) : null, fases, guardas, alto: F.yTop };
+  // cimentación: zapata 2,40 × 0,60 y pedestal 0,60 en el eje de cada pata (A, B, C, D como en el BIM 4D de la LT)
+  const fund = F.sinFund ? null : [[-1, 1], [-1, -1], [1, -1], [1, 1]].map(([sx, sz]) => {
+    const h = semi(0), z = new THREE.BoxGeometry(2.4, 0.6, 2.4), pd = new THREE.BoxGeometry(0.6, 1.3, 0.6);
+    z.translate(sx * h, -1.3, sz * h); pd.translate(sx * h, -0.35, sz * h); [z, pd].forEach((g) => g.deleteAttribute('uv')); return mergeGeometries([z, pd]);
+  });
+  return { acero: mergeGeometries(acero), aisl: aisl.length ? mergeGeometries(aisl) : null, fund, fases, guardas, alto: F.yTop };
 }
 
 // familia TS2 (plano ME_TS2-Rev.B, la misma que dibuja el tablero de la LT; y de plano − 0,83 = y de escena) con la extensión
 // de cuerpo del tipo (−3, +0, +6). T2, T2D, A2 y SR2 aún no tienen cotas de plano: heredan la TS2, como en el tablero.
 const TG = 0.06105611, NPT = 0.83;
 const _cacheT = new Map();
-export function torreTS2(ext, anclaje) {
-  const k = ext + (anclaje ? 'A' : 'S'); if (_cacheT.has(k)) return _cacheT.get(k);
+export function torreTS2(ext) {
+  const k = 'TS2' + ext; if (_cacheT.has(k)) return _cacheT.get(k);
   const hTr = 32.1 + ext, ys = [0.83, 6.8, 10.8, 15.8, 23.95];
   if (hTr - 23.95 > 9) ys.push((23.95 + hTr) / 2);
   ys.push(hTr, 37.6 + ext, 43.1 + ext, 44.4 + ext, 46.1 + ext);
   const F = { yTr: hTr - NPT, s0: 0.65 + TG * (hTr - NPT), sR: 0.65, nodos: ys.map((y) => y - NPT), yTop: 46.1 + ext - NPT, wP: 0.17, wD: 0.08,
     brazos: [{ y: 32.1 + ext - NPT, l: 3.2, vol: 1.3 }, { y: 37.6 + ext - NPT, l: 4.2, vol: 1.3 }, { y: 43.1 + ext - NPT, l: 3.2, vol: 1.3 }],
-    punta: { y: 46.1 + ext - NPT, l: 2.7, vol: -0.85 }, anclaje, hCad: anclaje ? 2.5 : 2.3 };
+    punta: { y: 46.1 + ext - NPT, l: 2.7, vol: -0.85 }, anclaje: false, hCad: 1.5 }; // cadena del BIM 4D de la LT (1,45 m + grapa)
   const t = celosia(F); _cacheT.set(k, t); return t;
 }
 // T23: fases a 16,30 / 21,75 / 27,20 m y cable de guarda a 32,50 m sobre su base, brazo 3,6 m (OE-604, como en el modelo de la SE Yumpag)
@@ -95,7 +105,7 @@ export function torreT23() {
 export function torreExistente() {
   if (_cacheT.has('EX')) return _cacheT.get('EX');
   const F = { yTr: 18, s0: 2.2, sR: 0.7, nodos: [0, 6, 12, 18, 22.5, 27], yTop: 27, wP: 0.15, wD: 0.075,
-    brazos: [{ y: 18, l: 3.0, vol: 1.2, lados: [-1] }, { y: 18, l: 3.0, vol: 1.2, lados: [1] }, { y: 22.5, l: 2.6, vol: 1.2, lados: [1] }], punta: null, anclaje: false, hCad: 1.8 };
+    brazos: [{ y: 18, l: 3.0, vol: 1.2, lados: [-1] }, { y: 18, l: 3.0, vol: 1.2, lados: [1] }, { y: 22.5, l: 2.6, vol: 1.2, lados: [1] }], punta: null, anclaje: false, hCad: 1.8, sinFund: true };
   const t = celosia(F); _cacheT.set('EX', t); return t;
 }
 /** tipo del tablero (S2+6, SR2-3, A2+0, T2-3, T2d-3) → familia y extensión */
@@ -139,6 +149,32 @@ export const fmt = (v, d = 0) => (v == null || Number.isNaN(v) ? '—' : v.toLoc
 export const fUTM = (p) => `E ${fmt(p[0], 2)} · N ${fmt(p[1], 2)}`;
 const aff = (m) => (X, Y) => [m.o[0] + X * m.ux[0] + Y * m.uy[0], m.o[1] + X * m.ux[1] + Y * m.uy[1]];
 
+// ---------- torre paramétrica del BIM 4D de la LT: se lee el mismo código de ../plantilla.html (buildTorreParam, plano
+// ME_TS2-Rev.B) y se arma aquí con su extensión de cuerpo; así el BIM general muestra la misma torre que el tablero, sin copiarla.
+export async function torreDelTablero(url = '../plantilla.html') {
+  const t = await fetch(url, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('plantilla ' + r.status); return r.text(); });
+  const i = t.indexOf('TORRE PARAMÉTRICA 138 kV'), j = t.indexOf('function buildTorreParam()', i);
+  if (i < 0 || j < 0) throw new Error('la plantilla ya no trae la torre paramétrica');
+  const i0 = t.lastIndexOf('/*', i); let p = t.indexOf('{', j), d = 0;
+  for (; p < t.length; p++) { if (t[p] === '{') d++; else if (t[p] === '}' && --d === 0) break; }
+  const T = new Function('THREE', t.slice(i0, p + 1) + '\n;return { buildTorreParam, FAM_TORRE, fijar: (fam, pata, cuerpo) => { TORRE_FAM_ACT = fam; TORRE_PATA_EXT = pata; TORRE_CUERPO_EXT = cuerpo; } };')(THREE);
+  const cache = new Map(), un = (arr) => (arr.length ? mergeGeometries(arr) : null);
+  const vm = (t.match(/TPL_VERSION\s*=\s*['"]([^'"]+)/) || t.match(/plantilla\s+(v72\.\d+)/) || [])[1] || '';
+  return {
+    version: vm,
+    torre(ext) {
+      const k = String(ext); if (cache.has(k)) return cache.get(k);
+      T.fijar('TS2', '+2', (ext >= 0 ? '+' : '') + ext);
+      const R = T.buildTorreParam(), B = R.buckets;
+      const cond = R.anclas.filter((a) => a.k === 'cond'), opgw = R.anclas.filter((a) => a.k === 'opgw').sort((a, b) => a.x - b.x);
+      const fases = cond.map((a, n) => { const q = new THREE.Vector3(a.x, a.y - 1.5, 0); return { k: Math.floor(n / 2), lado: a.x < 0 ? -1 : 1, atras: q, adelante: q }; });
+      const g = { acero: un([...B.patas, ...B.cuerpo, ...B.crucetas]), aisl: un(B.aisladores), fund: [1, 2, 3, 4].map((n) => un(B['fund_' + n])),
+        fases, guardas: opgw.map((a) => new THREE.Vector3(a.x, a.y - 0.24, 0)), alto: R.hT - NPT + (R.f.hTotal - R.f.hTronco), plano: R.f.plano, piezas: Object.values(B).reduce((s, a) => s + a.length, 0) };
+      cache.set(k, g); return g;
+    },
+  };
+}
+
 // ---------- ajustes del terreno (antes de armar las mallas): torres a su cota del KMZ y plataformas a la cota de sus planos
 export function ajustesDeTerreno(D) {
   const aj = [];
@@ -174,7 +210,7 @@ export function construirRed(escena, D, cota) {
     const p = pos[i], ant = i ? pos[i - 1] : null, sig = i < T.length - 1 ? pos[i + 1] : porticoC;
     const dIn = ant ? new THREE.Vector3(p.x - ant.x, 0, p.z - ant.z).normalize() : null, dOut = new THREE.Vector3(sig.x - p.x, 0, sig.z - p.z).normalize();
     const bis = dIn ? dIn.clone().add(dOut).normalize() : dOut; const ang = Math.atan2(bis.x, bis.z);
-    const tp = leerTipo(t.tp); const geo = t.t === 'T23' ? torreT23() : torreTS2(tp.ext, tp.anclaje);
+    const tp = leerTipo(t.tp); const geo = t.t === 'T23' ? torreT23() : torreTS2(tp.ext);
     const vtx = V.find((v) => dist2(v.utm, t.utm) < 6);
     const f = ficha('der_' + t.t, {
       tipo: 'torre', grupo: 'Torres de la derivación', nombre: `Torre ${t.t}`, origen: 'D',
@@ -186,31 +222,37 @@ export function construirRed(escena, D, cota) {
         ...(vtx ? [['Vértice', `${vtx.v} · deflexión ${vtx.deflexion}`, yLin + ' (cuadro N.° 1)']] : []),
         ['Progresiva', `${fmt(prog[i] / 1000, 3)} km desde la T1`, 'calculada entre torres del KMZ'],
         ['Vano siguiente', i < T.length - 1 ? `${fmt(dist2(t.utm, T[i + 1].utm), 1)} m a la ${T[i + 1].t}` : `${fmt(dist2(t.utm, D.derivacion.portico.utm), 1)} m al pórtico de la SE Yumpag`, 'calculado (horizontal)'],
-        ['Geometría en el 3D', t.t === 'T23' ? 'fases a 16,30 / 21,75 / 27,20 m y guarda a 32,50 m (OE-604)' : `familia TS2 · ${fmt(geo.alto + NPT, 2)} m de altura total${tp.verif ? '' : ' · su familia aún no tiene cotas: se dibuja con la TS2, como en el tablero'}`, t.t === 'T23' ? 'OE-604 (modelo de la SE Yumpag)' : 'ME_TS2-Rev.B (tablero de la LT)'],
+        ['Geometría en el 3D', t.t === 'T23' ? 'fases a 16,30 / 21,75 / 27,20 m y guarda a 32,50 m (OE-604)' : `torre paramétrica del BIM 4D de la LT (familia TS2) · ${fmt(geo.alto + NPT, 2)} m de altura total${tp.verif ? '' : ' · su familia aún no tiene cotas: se dibuja con la TS2, como en el tablero'}`, t.t === 'T23' ? 'OE-604 (modelo de la SE Yumpag)' : 'ME_TS2-Rev.B (tablero de la LT)'],
       ],
       nota: i === 0 ? 'Torre de derivación: aquí se secciona la L-1123. Sus dos circuitos reciben los extremos de la línea existente (hacia la T106 y hacia la T109).' : null,
-      enlaces: [['Ver en el tablero de la LT', '../tablero.html']],
+      enlaces: [['Abrir en el BIM 4D de la LT', `../tablero.html#torre=${t.t}`], ['Detalle de cimentación (4D)', `../tablero.html#torre=${t.t}&detalle`]],
     });
     const grupo = new THREE.Group(); grupo.position.copy(p); grupo.rotation.y = ang;
-    const ma = new THREE.Mesh(geo.acero, MAT.acero); grupo.add(ma); if (geo.aisl) grupo.add(new THREE.Mesh(geo.aisl, MAT.porcelana));
-    grupo.userData = { ficha: f, mats: [ma] }; reg(ma, f); G.derivacion.add(grupo);
+    const ma = new THREE.Mesh(geo.acero, MAT.proyectada), mi = new THREE.Mesh(geo.aisl || new THREE.BufferGeometry(), MAT.porcelana);
+    const mf = (geo.fund || [null, null, null, null]).map((g) => new THREE.Mesh(g || new THREE.BufferGeometry(), MAT.fund.none));
+    grupo.add(ma, mi, ...mf); [ma, mi, ...mf].forEach((m) => reg(m, f));
+    grupo.userData = { ficha: f }; G.derivacion.add(grupo);
     ROT.push({ texto: t.t, pos: p.clone().setY(p.y + geo.alto + 6), clase: 'rt', lejos: [0, 2600], ficha: f });
     const mundo = (v) => v.clone().applyAxisAngle(UP, ang).add(p);
-    return { t, p, ang, geo, grupo, f, mundo };
+    return { t, p, ang, geo, grupo, f, mundo, ma, mi, mf, tp, i };
   });
   FICHAS.der_T01.datos.push(['Fibra óptica', 'ADSS de la T1 a las T-130 y T-129 de la L-1123 (caja de empalme del ADSS existente)', 'EPO INEL2601 §3']);
 
   // ----- derivación: conductores (lado −1 = derecha al avanzar de la T1 a la SE = L-1123; lado +1 = izquierda = L-1724)
-  const cond = [], guar = [];
-  for (let i = 0; i < torresDer.length - 1; i++) {
-    const A = torresDer[i], B = torresDer[i + 1];
-    for (const fa of A.geo.fases) { const fb = B.geo.fases.find((x) => x.k === fa.k && x.lado === fa.lado); if (fb) vano(cond, A.mundo(fa.adelante), B.mundo(fb.atras), 1500); }
-    for (let g = 0; g < 2; g++) vano(guar, A.mundo(A.geo.guardas[g]), B.mundo(B.geo.guardas[g]), 1800);
-  }
-  // último vano al pórtico 138 kV de la SE Yumpag: bahía L-1724 (eje 3–4) a la izquierda, L-1123 (eje 4–5) a la derecha (OE-605)
   const T23 = torresDer[torresDer.length - 1], DX = { 0: 7, 1: 10, 2: 4 };
-  for (const fa of T23.geo.fases) vano(cond, T23.mundo(fa.adelante), porticoF((fa.lado > 0 ? 22 : 36) + DX[fa.k], 13.0, 16.2), 900, 12);
-  for (const [g, x] of [[0, 22], [1, 36]]) vano(guar, T23.mundo(T23.geo.guardas[g]), porticoF(x, 13.5, 19.15), 900, 12);
+  function conductoresDer() {
+    const cond = [], guar = [];
+    for (let i = 0; i < torresDer.length - 1; i++) {
+      const A = torresDer[i], B = torresDer[i + 1];
+      for (const fa of A.geo.fases) { const fb = B.geo.fases.find((x) => x.k === fa.k && x.lado === fa.lado); if (fb) vano(cond, A.mundo(fa.adelante), B.mundo(fb.atras), 1500); }
+      for (let g = 0; g < 2; g++) vano(guar, A.mundo(A.geo.guardas[g]), B.mundo(B.geo.guardas[g]), 1800);
+    }
+    // último vano al pórtico 138 kV de la SE Yumpag: bahía L-1724 (eje 3–4) a la izquierda, L-1123 (eje 4–5) a la derecha (OE-605)
+    for (const fa of T23.geo.fases) vano(cond, T23.mundo(fa.adelante), porticoF((fa.lado > 0 ? 22 : 36) + DX[fa.k], 13.0, 16.2), 900, 12);
+    for (const [g, x] of [[0, 22], [1, 36]]) vano(guar, T23.mundo(T23.geo.guardas[g]), porticoF(x, 13.5, 19.15), 900, 12);
+    return [cond, guar];
+  }
+  const [cond, guar] = conductoresDer();
   const fLinea = ficha('derivacion', {
     tipo: 'linea', grupo: 'Líneas', nombre: 'LT 138 kV Derivación L-1123 a SE Yumpag', origen: 'D', sub: 'doble terna · 23 torres de celosía · 9 vértices',
     datos: [
@@ -283,23 +325,30 @@ export function construirRed(escena, D, cota) {
   // conductores existentes: vanos comunes, los tres del vano T106–T109 (antes) y los dos a la T1 (después)
   const fase = (i, f, atras) => { const p = pex[i]; return (atras ? f.atras : f.adelante).clone().applyAxisAngle(UP, angEx[i]).add(p); };
   const guardaEx = (i) => new THREE.Vector3(0, geoEx.alto, 0).applyAxisAngle(UP, angEx[i]).add(pex[i]);
-  const portUch = (f) => new THREE.Vector3((f.k - 1) * 3.5, 12, 0).applyAxisAngle(UP, angEx[0]).add(pex[0]); // pórtico de llegada en la SE (referencial)
+  // llegada a la SE Uchucchacua: viga norte del pórtico 138 kV (Y 34,2; fases X 22,7 / 26,7 / 30,7 a 11,5 m) del modelo de la SE
+  const ucA = aff(D.se.uchucchacua.modelo), XU = [22.7, 26.7, 30.7];
+  const ordenUch = [...geoEx.fases].sort((a, b) => a.lado - b.lado || a.k - b.k);
+  const portUch = (f) => aEsc(...ucA(XU[ordenUch.indexOf(f)], 34.2), D.se.uchucchacua.cota + 11.5);
   const cComun = [], gComun = [], cAntes = [], cDesp = [];
   const iMin = Math.min(idx.T106, idx.T109), iMax = Math.max(idx.T106, idx.T109);
   for (let i = 0; i < pex.length - 1; i++) {
     const enCorte = i >= iMin && i < iMax; const dest = enCorte ? cAntes : cComun;
     for (const f of geoEx.fases) vano(dest, i === 0 ? portUch(f) : fase(i, f, false), fase(i + 1, f, true), 1400);
-    vano(enCorte ? cAntes : gComun, i === 0 ? pex[0].clone().setY(pex[0].y + 14) : guardaEx(i), guardaEx(i + 1), 1700);
+    vano(enCorte ? cAntes : gComun, i === 0 ? aEsc(...ucA(26.7, 34.2), D.se.uchucchacua.cota + 14.8) : guardaEx(i), guardaEx(i + 1), 1700);
   }
   // después: T106 → T1 (lado derecho de la T1 = L-1123) y T109 → T1 (lado izquierdo = L-1724), fases por altura
   const T1 = torresDer[0], porK = (lado) => T1.geo.fases.filter((f) => f.lado === lado).sort((a, b) => a.k - b.k);
   const exK = [...geoEx.fases].sort((a, b) => (a.atras.y - b.atras.y) || (a.lado - b.lado));
   const ladoE = (i) => { const p = pex[i]; const loc = new THREE.Vector3(p.x - T1.p.x, 0, p.z - T1.p.z).applyAxisAngle(UP, -T1.ang); return loc.x < 0 ? -1 : 1; };
-  for (const k of ['T106', 'T109']) {
-    const i = idx[k], lado = ladoE(i), fT1 = porK(lado);
-    exK.forEach((f, j) => vano(cDesp, fase(i, f, false), T1.mundo(fT1[j].atras), 1400));
-    vano(cDesp, guardaEx(i), T1.mundo(T1.geo.guardas[lado > 0 ? 1 : 0]), 1700);
+  function vanosDespues(out) {
+    for (const k of ['T106', 'T109']) {
+      const i = idx[k], lado = ladoE(i), fT1 = porK(lado);
+      exK.forEach((f, j) => vano(out, fase(i, f, false), T1.mundo(fT1[j].atras), 1400));
+      vano(out, guardaEx(i), T1.mundo(T1.geo.guardas[lado > 0 ? 1 : 0]), 1700);
+    }
+    return out;
   }
+  vanosDespues(cDesp);
   const sCom = segmentos(cComun, MAT.conductor), sGCom = segmentos(gComun, MAT.guarda), sAntes = segmentos(cAntes, MAT.conductor), sDesp = segmentos(cDesp, MAT.conductor);
   [sCom, sGCom, sAntes, sDesp].forEach((s) => reg(s, fEx)); G.conductores.add(sCom, sGCom, sAntes, sDesp);
 
@@ -307,7 +356,7 @@ export function construirRed(escena, D, cota) {
   const SE = D.se;
   const fSE = {
     paragsha2: ficha('se_paragsha2', {
-      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Paragsha II', origen: 'D', sub: '220/138 kV · REP / ISA · origen de la L-1123', url: SE.paragsha2.url, enlaceTxt: 'Abrir el modelo 3D de la SE Paragsha II',
+      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Paragsha II', origen: 'D', sub: '220/138 kV · REP / ISA · origen de la L-1123', url: SE.paragsha2.url + '#bim', enlaceTxt: 'Abrir el BIM de la SE Paragsha II',
       datos: [
         ['Papel en el proyecto', 'extremo este de la L-1123; con el proyecto la L-1123 queda Paragsha II – Yumpag', 'EPO INEL2601 §3 y figura 2'],
         ['Etapa ES0', 'energización de la L-1123 en la SE Paragsha II 138 kV', 'EPO INEL2601, tabla 14'],
@@ -316,7 +365,7 @@ export function construirRed(escena, D, cota) {
         ['Cota', `${fmt(SE.paragsha2.cota, 0)} m s.n.m.`, SE.paragsha2.cotaFuente], ['Centro del recinto', fUTM(SE.paragsha2.centro), SE.paragsha2.fuente],
       ], nota: 'El modelo 3D de la SE es estimado (no hay planos de disposición): al acercarse se carga el mismo modelo que en su página.' }),
     yumpag: ficha('se_yumpag', {
-      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Yumpag', origen: 'D', sub: '138/10 kV · 10/12,5 MVA · llegada de la derivación', url: SE.yumpag.url, enlaceTxt: 'Abrir el modelo 3D de la SE Yumpag',
+      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Yumpag', origen: 'D', sub: '138/10 kV · 10/12,5 MVA · llegada de la derivación', url: SE.yumpag.url + '#bim', enlaceTxt: 'Abrir el BIM de la SE Yumpag',
       datos: [
         ['Papel en el proyecto', 'recibe los dos circuitos de la derivación: L-1123 a Paragsha II y L-1724 a Uchucchacua', 'EPO INEL2601 §3 · OE-605'],
         ['Configuración', 'simple barra 138 kV: 2 bahías de línea + 1 bahía de transformador', 'EPO INEL2601 §3'],
@@ -325,14 +374,14 @@ export function construirRed(escena, D, cota) {
         ['Cota del patio', `${fmt(SE.yumpag.cota, 2)} m s.n.m.`, SE.yumpag.cotaFuente], ['Pórtico (KMZ)', `${fUTM(SE.yumpag.portico)} · ${fmt(SE.yumpag.porticoCota, 2)} m`, kmz],
       ], nota: 'Al acercarse se carga el modelo 3D de la SE desde su ingeniería de detalle.' }),
     uchucchacua: ficha('se_uchucchacua', {
-      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Uchucchacua', origen: 'R', sub: '138 kV · extremo oeste de la L-1123', url: SE.uchucchacua.url, enlaceTxt: 'Abrir el tablero de la SE Uchucchacua',
+      tipo: 'se', grupo: 'Subestaciones', nombre: 'SE Uchucchacua', origen: 'R', sub: '138 kV · extremo oeste de la L-1123', url: SE.uchucchacua.url + '#bim', enlaceTxt: 'Abrir el BIM 4D de la SE Uchucchacua',
       datos: [
         ['Papel en el proyecto', 'extremo oeste; la línea que llega desde Yumpag pasa a ser la L-1724', 'EPO INEL2601 §9 y figura 2'],
         ['Etapa ES1', 'conexión de la L-1724 en la SE Uchucchacua 138 kV', 'EPO INEL2601, tabla 15'],
         ['Cargas', 'TP-383 (Iscaycruz) · TP-384 (Mina Carmen y Casa Fuerza) · TP-385 (plantas concentradoras 1 y 2)', 'EPO INEL2601 §9.1'],
         ['Cota del patio', `${fmt(SE.uchucchacua.cota, 2)} m s.n.m.`, SE.uchucchacua.cotaFuente],
-        ['Ubicación', fUTM(SE.uchucchacua.centro), SE.uchucchacua.fuente],
-      ], nota: 'Ubicación aproximada: el patio de llaves se ve en la imagen satelital donde termina la L-1123 en OpenStreetMap; los planos de la SE no traen coordenadas UTM, por eso su modelo 3D no se inserta aquí (se abre en su tablero).' }),
+        ['Ubicación del modelo', fUTM(SE.uchucchacua.centro), SE.uchucchacua.fuente],
+      ], nota: 'Al acercarse se carga el modelo 3D de su página (planos OE-204 y siguientes). Su ubicación es estimada (± 5 m): los planos de la SE no traen coordenadas UTM; el giro sale del norte del plano y la posición de la llegada de la L-1123 en OpenStreetMap. El avance es el del control diario de AXON.' }),
   };
   const huellas = {};
   for (const [k, s] of Object.entries(SE)) {
@@ -414,15 +463,59 @@ export function construirRed(escena, D, cota) {
     ROT.push({ texto: m.nombre.replace(/\s*\(.*$/, ''), pos: c.clone().setY(c.y + 10), clase: 'rmd', lejos: [0, 1100], ficha: f });
   }
 
+  // ----- estado de obra de cada torre (último corte del tablero de la LT): cimentación por pata y montaje
+  const ACTS = ['Excavación', 'Solado', 'Stub', 'Acero', 'Encofrado', 'Concreto'];
+  let AV = null, ESC = 'despues';
+  const estadoPata = (rec, pata) => {
+    const pr = rec && rec.patasReal; if (!pr) return null;
+    const v = ACTS.map((a) => (pr[a] ? pr[a][pata] : null)).filter((x) => typeof x === 'number');
+    if (!v.length) return null; const m = v.reduce((a, b) => a + b, 0) / v.length; return { pct: m, est: m >= 99.5 ? 'fin' : m > 0 ? 'prog' : 'none' };
+  };
+  function pintarTorres() {
+    const antes = ESC === 'antes';
+    for (const T of torresDer) {
+      const rec = AV && AV.t[T.t.t], montada = rec && rec.ph && rec.ph.elm > 0;
+      T.ma.material = antes ? MAT.fantasma : montada ? MAT.acero : MAT.proyectada; T.mi.visible = !antes && !!montada;
+      ['A', 'B', 'C', 'D'].forEach((pt, n) => { const e = estadoPata(rec, pt); T.mf[n].material = antes ? MAT.fantasma : MAT.fund[e ? e.est : 'none']; });
+    }
+  }
+  function aplicar4D(av) { AV = av; pintarTorres(); }
+  // ----- la torre paramétrica del BIM 4D de la LT reemplaza a la de aquí (misma familia y cotas): mallas, enganches y vanos
+  function usarTorresTablero(TB) {
+    for (const T of torresDer) {
+      if (T.t.t === 'T23') continue; // la T23 conserva sus alturas del OE-604 (las del pórtico de la SE Yumpag)
+      const g = TB.torre(T.tp.ext); T.geo = g; T.ma.geometry = g.acero; T.mi.geometry = g.aisl; T.mf.forEach((m, n) => (m.geometry = g.fund[n]));
+      T.fuenteGeo = `torre paramétrica del BIM 4D de la LT (${g.plano}${TB.version ? ', plantilla ' + TB.version : ''})`;
+    }
+    const [c2, g2] = conductoresDer();
+    sC.geometry.dispose(); sC.geometry = segmentos(c2, MAT.conductor).geometry; sG.geometry.dispose(); sG.geometry = segmentos(g2, MAT.guarda).geometry;
+    sDesp.geometry.dispose(); sDesp.geometry = segmentos(vanosDespues([]), MAT.conductor).geometry;
+  }
+  // ----- tramos para recorrer la línea (eje en el suelo, progresiva, torres): derivación, L-1123 a Paragsha II y L-1724 a Uchucchacua
+  const suelo = (v) => v.clone().setY(cota(...deXZ(v)));
+  const deXZ = (v) => [v.x + ORIGEN_E, -v.z + ORIGEN_N];
+  function tramo(id, nombre, color, puntos, ticks, ini, fin) {
+    const pts = puntos.map(suelo), s = [0];
+    for (let i = 1; i < pts.length; i++) s.push(s[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
+    return { id, nombre, color, pts, s, largo: s[s.length - 1], ticks: ticks.map(([i, n, f]) => ({ s: s[i], nombre: n, ficha: f, i })), ini, fin };
+  }
+  const tramos = [
+    tramo('der', 'Derivación T1 → SE Yumpag', COL.der, [...pos, porticoC], torresDer.map((T, i) => [i, T.t.t, T.f]), { nombre: 'T1 · seccionamiento', ficha: fSecc }, { nombre: 'SE Yumpag', ficha: fSE.yumpag }),
+    tramo('l1123', 'L-1123 · T1 → SE Paragsha II', COL.l1123, [pos[0], ...pex.slice(idx.T106), salidaPg],
+      [[1, 'T106', fichasEx.T106], ...pex.slice(idx.T106 + 1).map((_, k) => [k + 2, '', fEx])], { nombre: 'T1 · seccionamiento', ficha: fSecc }, { nombre: 'SE Paragsha II', ficha: fSE.paragsha2 }),
+    tramo('l1724', 'L-1724 · T1 → SE Uchucchacua', COL.l1724, [pos[0], ...pex.slice(0, idx.T109 + 1).reverse()],
+      [[1, 'T109', fichasEx.T109], ...pex.slice(1, idx.T109).map((_, k) => [k + 2, '', fEx])], { nombre: 'T1 · seccionamiento', ficha: fSecc }, { nombre: 'SE Uchucchacua', ficha: fSE.uchucchacua }),
+  ];
+
   // ----- escenarios: antes (L-1123 continua, derivación proyectada) y después (seccionada, dos circuitos hacia Yumpag)
   function escenario(e) {
-    const antes = e === 'antes';
+    ESC = e; const antes = e === 'antes';
     TR.antes.forEach((l) => (l.visible = antes)); TR.despues.forEach((l) => (l.visible = !antes));
     sAntes.visible = antes; sDesp.visible = !antes;
     for (const k of ['T107', 'T108']) { sueltasM[k][0].material = antes ? MAT.aceroExist : MAT.fantasma; sueltasM[k][1].visible = antes; }
-    torresDer.forEach((t) => t.grupo.children.forEach((m, j) => (m.material = antes ? MAT.fantasma : j ? MAT.porcelana : MAT.acero)));
+    pintarTorres();
     G.derCond.forEach((s) => (s.material = antes ? MAT.conductorFant : s === G.derCond[0] ? MAT.conductor : MAT.guarda));
     huellas.yumpag.children.forEach((m) => { m.material = antes ? MAT.fantasma : m === huellas.yumpag.children[0] ? MAT.grava : MAT.cerco; });
   }
-  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, largoDer, prog, porticoC };
+  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, estadoPata, ACTS };
 }
