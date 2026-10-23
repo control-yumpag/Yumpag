@@ -1,6 +1,6 @@
 # Repositorio control-yumpag/Yumpag — reglas para agentes
 
-Cinco cosas distintas conviven aquí:
+Seis cosas distintas conviven aquí:
 
 1. **Raíz** (`index.html`, `tablero.html`, `plantilla.html`, `datos.json`, `visita.html`, `fotos/`, `tex/`): el portal
    del tablero BIM 4D de la LT 138 kV Yumpag. **No se edita a mano desde este repositorio**: `plantilla.html` y
@@ -13,5 +13,8 @@ Cinco cosas distintas conviven aquí:
    Tiene su propio `AGENTS.md`.
 5. **`se-paragsha2/`**: modelo 3D estimado de la SE Paragsha II 220/138 kV (origen de la L-1123), desde el unifilar
    OE-250 y la imagen satelital. Tiene su propio `AGENTS.md`.
+6. **`bim-general/`**: BIM general del proyecto: las 3 SE, la L-1123 existente, su seccionamiento en el vano T107–T108 y la
+   derivación en doble terna a Yumpag, sobre el relieve (vista digital y ortofoto). Importa los modelos de `se-paragsha2/`
+   y `se-yumpag/`. Tiene su propio `AGENTS.md`.
 
 No empujes a `main` mientras una corrida de «Fotos automáticas» esté en curso (chocan los push).
