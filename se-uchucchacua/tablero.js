@@ -4,6 +4,9 @@
 // del personal: solo cantidades. Sin rojo de juicio: lo atrasado va en ámbar.
 import { COL4, TXT4, fCorta, fLarga, pct, dias } from './cuatrod.js?v=3';
 
+// Primera letra en minúscula dentro de una frase, sin tocar siglas (CPM, SSAA, L-1123).
+const minus1 = (t) => String(t || '').replace(/^(\p{Lu})(?=\p{Ll})/u, (c) => c.toLowerCase());
+
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const MES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
@@ -59,8 +62,8 @@ export function iniciarTablero(ctx) {
     const p0 = prox.length ? prox.filter((a) => a.ini === prox[0].ini) : [];
     const al = spi == null ? '' : spi >= 0.995 ? 'al día con su programa' : 'detrás de su programa';
     $('#resVer').innerHTML = `<div class="big">${spi == null ? 'Sin reporte' : spi >= 0.995 ? 'Según programa' : 'Detrás del programa'}</div><div class="txt">Servicio de AXON ${al}: ejecutado <b>${pct(e)}</b> frente a <b>${pct(p)}</b> programado al ${fCorta(U4D.corte)} (SPI ${num(spi)}). ` +
-      (enCurso.length ? `En curso: ${enCurso.map((a) => `${esc_(a.nombre.toLowerCase())} (${esc_(a.n)})`).join('; ')}. ` : '') +
-      (p0.length ? `Desde el ${fCorta(p0[0].ini)}: ${p0.map((a) => `${esc_(a.nombre.toLowerCase())} (${esc_(a.n)})`).join('; ')}.` : '') + `</div>`;
+      (enCurso.length ? `En curso: ${enCurso.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}. ` : '') +
+      (p0.length ? `Desde el ${fCorta(p0[0].ini)}: ${p0.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}.` : '') + `</div>`;
     curvaS(); grupos(); personal(); plazo(); restricciones(); habilitantes();
   }
   function curvaS() {

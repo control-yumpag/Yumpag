@@ -55,7 +55,7 @@ CLAVES = [
     (r'desembalaje|anclaje|ingreso del tablero', ['7', '8']),
     (r'montaje de los equipos|equipos del tablero|\brele\b', ['9']),
     (r'registrador|tlrf', ['19']),
-    (r'preparacion de cables? (para conexionado|(en|para) el tablero)|conexionado del tablero', ['10']),
+    (r'preparacion de cables? (para conexionado|(en|para) (el )?tablero)|conexionado del tablero', ['10']),
     (r'preparacion de cables|preparado de cable|vulcanizado|proteccion de la punta|codificacion', ['4']),
 ]
 SSOMA = r'charla|orden y limpieza|segregacion|residuos|escalera|delimitacion'
