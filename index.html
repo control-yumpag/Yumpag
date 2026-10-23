@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag, SE Uchucchacua, SE Yumpag y SE Paragsha II</title>
+<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag, SE Uchucchacua, SE Yumpag, SE Paragsha II y BIM general</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -22,7 +22,23 @@ body{font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--tinta);backg
 .perfil .cota{fill:#9fbdb4;font-size:10px}
 .pie{font-size:13px;color:#9fbdb4}
 .acceso{display:flex;align-items:center;justify-content:center;padding:40px 28px}
+.acceso-in{display:flex;align-items:center;justify-content:center;gap:26px;width:100%}
 .panel{width:100%;max-width:380px}
+/* 23-Oct-26 (pedido del usuario: «crea un apartado para el BIM general, donde esté todo el proyecto», en el espacio a la izquierda de los botones) */
+.bimgen{flex:0 0 300px;display:flex;flex-direction:column;text-align:left;border:1.5px solid var(--pino);background:#fff;color:var(--tinta);border-radius:12px;padding:0;overflow:hidden;cursor:pointer;font:inherit;box-shadow:0 14px 34px -22px rgba(22,33,30,.55);transition:transform .15s,box-shadow .15s}
+.bimgen:hover{transform:translateY(-2px);box-shadow:0 18px 38px -20px rgba(22,33,30,.6)}
+.bimgen .mapa{background:#e4ebe6;border-bottom:1px solid var(--borde);padding:8px 6px 2px}
+.bimgen svg{display:block;width:100%;height:auto}
+.bimgen svg text{font:600 9.5px "IBM Plex Sans",sans-serif;fill:#3c4a46}
+.bimgen .tx{padding:14px 16px 16px}
+.bimgen i{display:block;font-style:normal;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6d8a1c;margin-bottom:2px}
+.bimgen b{display:block;font:800 22px/1.1 "Archivo",sans-serif;color:var(--pino);margin-bottom:6px}
+.bimgen span{display:block;font-size:14px;color:var(--gris);line-height:1.45}
+.bimgen .chips{display:flex;gap:6px;margin:10px 0 12px;flex-wrap:wrap}
+.bimgen .chips em{font-style:normal;font-size:12px;font-weight:600;color:var(--pino);background:#eef3e1;border:1px solid #d5e2b0;border-radius:999px;padding:2px 9px}
+.bimgen .ir{display:block;font-weight:600;font-size:15px;color:#fff;background:var(--pino);border-radius:8px;padding:10px 12px;text-align:center}
+.bimgen:hover .ir{background:var(--pino-2)}
+@media(max-width:1320px){.acceso-in{flex-direction:column;gap:18px}.bimgen{flex:none;width:100%;max-width:380px}.bimgen .tx{padding:12px 14px 14px}.bimgen b{font-size:19px}}
 .panel h2{font:600 24px/1.2 "Archivo",sans-serif;margin:0 0 28px}
 .panel .corte{color:var(--gris);margin:0 0 28px;font-size:15px}
 .visita{display:block;width:100%;text-align:left;border:1.5px solid var(--pino);background:#fff;color:var(--tinta);border-radius:10px;padding:14px 16px;cursor:pointer;font:inherit}
@@ -67,6 +83,26 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
 </section>
 
 <main class="acceso">
+  <div class="acceso-in">
+  <!-- 23-Oct-26 (pedido del usuario: «crea un apartado para el BIM general, donde esté todo el proyecto: 3 subestaciones y una línea»): esquema con las coordenadas reales del proyecto -->
+  <button class="bimgen" type="button" id="btnBIM" aria-label="Abrir el BIM general del proyecto">
+    <div class="mapa"><svg viewBox="-6 -20 312 128" role="img" aria-label="Esquema del proyecto: L-1123 de Paragsha II a Uchucchacua, seccionada en la T107–T108, y la derivación a la SE Yumpag">
+      <path d="M11.1 29.0 L11.8 26.5 L20.9 21.3 L76.7 37.6 L79.0 38.0" fill="none" stroke="#3d7fe0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M79.0 38.0 L81.4 38.9 L144.3 58.9 L149.2 59.2 L154.3 62.3 L175.7 66.2 L236.1 81.4 L261.4 79.5 L284.8 66.4" fill="none" stroke="#e07b1f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M79.0 38.0 L78.2 36.5 L71.5 29.6 L55.3 25.2 L51.6 21.9 L50.6 18.4 L38.9 10.7" fill="none" stroke="#86a81f" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="286.4" cy="65.1" r="6" fill="#1f4e45"/><circle cx="39" cy="10.6" r="6" fill="#1f4e45"/><circle cx="11.1" cy="29.1" r="6" fill="#1f4e45"/>
+      <rect x="74" y="33" width="10" height="10" rx="2" fill="#b5452a"/>
+      <text x="286" y="51" text-anchor="end">SE Paragsha II</text><text x="48" y="-6" text-anchor="middle">SE Yumpag</text><text x="2" y="48">SE Uchucchacua</text>
+      <text x="46" y="62" fill="#b5452a">✂ T107–T108</text><text x="170" y="94" text-anchor="middle" fill="#a8581a">L-1123 · 35,7 km</text><text x="100" y="18" fill="#5e7a12">derivación 8,3 km</text>
+    </svg></div>
+    <div class="tx">
+      <i>Proyecto completo</i>
+      <b>BIM general</b>
+      <span>Las 3 subestaciones y la L-1123: dónde se secciona la línea y cómo entra Yumpag en doble terna.</span>
+      <div class="chips"><em>Vista digital</em><em>Ortofoto</em><em>Antes / después</em></div>
+      <span class="ir">Abrir el BIM general →</span>
+    </div>
+  </button>
   <div class="panel">
     <h2>Acceso a los tableros</h2>
 
@@ -99,6 +135,7 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
 
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
   </div>
+  </div>
 </main>
 
 <script>
@@ -117,6 +154,8 @@ $('btnYPG').onclick = () => { $('msg').className = 'msg ok'; $('msg').textConten
   location.href = 'se-yumpag/'; };   // modelo aparte de la SE Yumpag (se-yumpag/), sin avance de obra aún
 $('btnPG2').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el modelo 3D de la SE Paragsha II…';
   location.href = 'se-paragsha2/'; };   // modelo estimado de la SE Paragsha II (se-paragsha2/)
+$('btnBIM').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el BIM general del proyecto…';
+  location.href = 'bim-general/'; };    // las 3 SE y la L-1123 con su seccionamiento y la derivación (bim-general/)
 addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
 try{ localStorage.removeItem('yumpagLlave'); }catch(e){}    // limpia el acceso recordado del esquema anterior
 fetch('datos.json',{method:'HEAD'}).catch(()=>{});          // adelanta la descarga

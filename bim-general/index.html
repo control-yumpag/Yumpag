@@ -780,7 +780,11 @@ if (fallasDem) hud(`Relieve incompleto: ${fallasDem} teselas del DEM no se desca
 $('#cargando').classList.add('oculto');
 requestAnimationFrame(bucle);
 if (new URLSearchParams(location.search).get('vista') === 'orto') fijarVista('orto');
-window.__nav = { camera, controls }; window.__bim = { RED, PAR, D, OFF, IR, fijarVista, fijarEscenario, MODELOS, ESTAD, foco, cotaXZ };
+// foto(w, h): captura del 3D a otro tamaño (para revisar la página desde un panel chico; los rótulos HTML no salen)
+const foto = (w = 1600, h = 900) => { const w0 = visor.clientWidth, h0 = visor.clientHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(1); renderer.setSize(w, h, false);
+  MATS_LINEA.forEach((m) => m.resolution.set(w, h)); renderer.render(scene, camera); const url = renderer.domElement.toDataURL('image/jpeg', 0.82);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, movil ? 1.5 : 2)); tamVista(); return url; };
+window.__nav = { camera, controls }; window.__bim = { RED, PAR, D, OFF, IR, fijarVista, fijarEscenario, MODELOS, ESTAD, foco, cotaXZ, foto };
 window.__listo = true;
 </script>
 </body>
