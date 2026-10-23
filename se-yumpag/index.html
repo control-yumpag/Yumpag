@@ -253,7 +253,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
       </div>
       <div id="hud" class="oculto"></div>
       <div id="pie">
-        <div class="caja" id="coord">Pase el puntero sobre el modelo</div>
+        <div class="caja" id="coord">Rueda: acercar al punto · doble clic: girar alrededor de ese punto · arrastre derecho: desplazar</div>
         <span style="flex:1"></span>
         <div id="movTabs"><button id="tIzq">Vistas y capas</button><button id="tDer">Elementos</button></div>
         <div class="caja solo-pc">UTM WGS-84 18S · patio 4 490,45 m s.n.m. · planos OE-604/605/606, ME_P, OC-703, OC-302</div>
@@ -268,7 +268,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { ViewCube } from './navsala.js';
-import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, p3, aUTM, COTA0, NORTE, actualizarHuecos, alturaTerreno } from './ypg3d.js?v=1';
+import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, p3, aUTM, COTA0, NORTE, actualizarHuecos, alturaTerreno } from './ypg3d.js?v=2';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -368,7 +368,8 @@ scene.background = cielo();
 scene.fog = new THREE.Fog(0xdde6ea, 260, 620);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 2000);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.09; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 1.2; controls.maxDistance = 600;
+controls.enableDamping = true; controls.dampingFactor = 0.1; controls.rotateSpeed = 0.8; controls.zoomSpeed = 0.6; controls.panSpeed = 0.9; // la rueda la maneja pasoZoom (abajo); esto queda para el pellizco
+ controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 1.2; controls.maxDistance = 600;
 controls.zoomToCursor = true; controls.screenSpacePanning = true;
 scene.add(new THREE.HemisphereLight(0xdbe9f7, 0x6f6450, 1.05));
 const sol = new THREE.DirectionalLight(0xfff3df, 2.4);
@@ -511,9 +512,10 @@ $('#cadSel').onclick = (e) => { const b = e.target.closest('button'); if (!b) re
 
 // ---------- cámara y vistas
 let anim = null;
+let zoomP = null, cajaM = null, tPick = 0, xyPick = null; // rueda suave (ver «navegación» más abajo)
 function volar(pos, tgt, ms = 950) {
   if (camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.2 + (0.85 - camera.aspect)));
-  const p0 = camera.position.clone(), t0 = controls.target.clone(), ini = performance.now();
+  zoomP = null; const p0 = camera.position.clone(), t0 = controls.target.clone(), ini = performance.now();
   anim = (now) => {
     let k = Math.min(1, (now - ini) / ms); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     camera.position.lerpVectors(p0, pos, k); controls.target.lerpVectors(t0, tgt, k);
@@ -622,7 +624,9 @@ const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let abajo = 
 renderer.domElement.addEventListener('pointerdown', (e) => (abajo = { x: e.clientX, y: e.clientY }));
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5) return;
-  const h = tocar(e); if (!h) return; seleccionar(infoDe(h.object), false, h.object);
+  const h = tocar(e); if (!h) return;
+  if (h.object === terreno) { seleccionar(null); return; } // clic en el suelo: cierra la ficha (el terreno sigue en la lista)
+  seleccionar(infoDe(h.object), false, h.object);
 });
 function tocar(e) {
   const r = renderer.domElement.getBoundingClientRect();
@@ -639,6 +643,56 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   const h = tocar(e); if (!h) return; const p = h.point; const X = p.x, Y = -p.z; const [E, N] = aUTM(X, Y);
   const info = infoDe(h.object);
   $('#coord').textContent = `E ${fmt(E)} · N ${fmt(N)} · ${fmt(COTA0 + p.y)} m s.n.m. · X ${fmt(X, 1)} Y ${fmt(Y, 1)}${info ? ' · ' + info.nombre : ''}`;
+});
+
+// ---------- navegación: rueda suave hacia el punto bajo el cursor y doble clic para centrar (como la SE Uchucchacua / Navisworks)
+// La rueda ya no la maneja OrbitControls (saltaba de golpe): cada muesca acerca ≈ 12 % de la distancia al punto que está bajo el
+// cursor, repartido en ~0,25 s; no atraviesa lo que se mira, no baja del suelo y no se aleja más allá del entorno del modelo.
+// El pellizco del celular sigue con OrbitControls.
+function cajaModelo() {
+  if (cajaM) return cajaM;
+  const b = new THREE.Box3(); REG.forEach(({ obj, capa }) => { if (capa !== 'terreno') b.expandByObject(obj); });
+  const c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length() / 2;
+  return (cajaM = { c, lejos: Math.max(160, r * 4.5), caja: b.clone().expandByScalar(20) });
+}
+const _vZ = new THREE.Vector3(), _pZ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function puntoZoom(ev) {
+  const h = tocar(ev);
+  if (h) {
+    const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : null;
+    const suelo = h.object === terreno || (n && n.y > 0.8 && h.point.y < 0.6);
+    return { P: h.point.clone(), dMin: suelo ? 2.5 : 1.0 };
+  }
+  const q = ray.ray.intersectPlane(_pZ, new THREE.Vector3()); if (q && q.distanceTo(camera.position) < 2500) return { P: q, dMin: 2.5 };
+  return { P: camera.position.clone().addScaledVector(ray.ray.direction, Math.max(20, camera.position.distanceTo(controls.target))), dMin: 0 };
+}
+const enVisor = (t) => t === renderer.domElement || $('#rotulos').contains(t);
+$('#visor').addEventListener('wheel', (ev) => {
+  if (!enVisor(ev.target)) return;
+  ev.preventDefault(); ev.stopPropagation(); anim = null;
+  let d = ev.deltaY * (ev.deltaMode === 1 ? 33 : ev.deltaMode === 2 ? 400 : 1); if (!d) return;
+  d = Math.max(-200, Math.min(200, d));
+  const now = performance.now(); const quieto = xyPick && Math.hypot(ev.clientX - xyPick[0], ev.clientY - xyPick[1]) < 6;
+  if (!zoomP || !quieto || now - tPick > 160) { const z = puntoZoom(ev); zoomP = { ...z, f: zoomP && quieto ? zoomP.f : 1 }; tPick = now; xyPick = [ev.clientX, ev.clientY]; }
+  zoomP.f = Math.max(0.35, Math.min(2.8, zoomP.f * Math.pow(1.0013, d))); // una muesca (100) ≈ 12 % más cerca o 14 % más lejos
+  pedir();
+}, { capture: true, passive: false });
+function pasoZoom(dt) {
+  const z = zoomP; const C = cajaModelo();
+  const lf = Math.log(z.f) * (1 - Math.exp(-Math.min(0.1, dt) / 0.085)); const f = Math.exp(lf); z.f = Math.exp(Math.log(z.f) - lf);
+  const np = _vZ.copy(camera.position).sub(z.P).multiplyScalar(f).add(z.P);
+  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || np.y < alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.0))) || (f > 1 && np.distanceTo(C.c) > C.lejos);
+  if (tope) { zoomP = null; return; }
+  camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
+  if (f > 1) C.caja.clampPoint(controls.target, controls.target); // al alejarse, el pivote no sale del entorno del modelo
+  if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
+}
+// doble clic sobre el modelo: el giro pasa a ser alrededor de ese punto (vuelo corto, sin saltos)
+renderer.domElement.addEventListener('dblclick', (e) => {
+  const h = tocar(e); if (!h) return; zoomP = null;
+  const P = h.point.clone(); const off = camera.position.clone().sub(controls.target).normalize();
+  const d = Math.max(6, Math.min(camera.position.distanceTo(P) * 0.8, camera.position.distanceTo(controls.target)));
+  volar(P.clone().addScaledVector(off, d), P, 650);
 });
 
 // ---------- unifilar OE-602
@@ -687,11 +741,14 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') { seleccionar(null)
 
 // ---------- bucle
 controls.addEventListener('change', pedir);
-function bucle() {
+let tAnt = performance.now();
+function bucle(now = performance.now()) {
   requestAnimationFrame(bucle);
-  if (anim) anim(performance.now());
+  const dt = Math.max(0, (now - tAnt) / 1000); tAnt = now;
+  if (anim) anim(now);
+  const zoom = !!zoomP; if (zoomP) pasoZoom(dt);
   const mov = controls.update();
-  if (!renderPend && !anim && !mov) return;
+  if (!renderPend && !anim && !mov && !zoom) return;
   renderPend = false;
   rotulosVis();
   renderer.render(scene, camera); css.render(scene, camera); vc.dibujar();
@@ -699,6 +756,7 @@ function bucle() {
 visibilidad(); aplicarColor();
 $('#cargando').classList.add('oculto');
 requestAnimationFrame(bucle);
+window.__nav = { camera, controls }; // pruebas automáticas de navegación
 window.__listo = true;
 </script>
 </body>
