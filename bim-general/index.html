@@ -478,17 +478,18 @@ function fijarEscenario(e) {
   if (!actual) alcance(); pintarAvance(); actualizarModelos(true); pedir();
 }
 document.addEventListener('click', (ev) => { const b = ev.target.closest('[data-e]'); if (b) fijarEscenario(b.dataset.e); });
-let vistaOrto = false;
+let vistaOrto = false; const curvas = { digital: true, orto: false };
 const foco = new Foco(scene, renderer, PAR, pedir);
 function fijarVista(v) {
   vistaOrto = v === 'orto'; U.uOrto.value = vistaOrto ? 1 : 0;
   $('#sVista').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
   if (vistaOrto) { const [E, N] = deEsc(controls.target), aqui = DET.find((P) => E > P.e0 && E < P.e1 && N > P.n0 && N < P.n1); [...(aqui ? [aqui] : []), R, ...DET.filter((P) => P !== aqui), FON].forEach((P) => cargarOrto(P, renderer, pedir)); hud('Ortofoto: Esri World Imagery (Esri, Maxar, Earthstar Geographics). Al acercarse se carga a mayor detalle.', 5200); }
   else foco.quitar();
+  $('#vCur').checked = curvas[v]; U.uCurvas.value = curvas[v] ? 1 : 0; // curvas de nivel: sí en la vista digital, no en la ortofoto (se pueden activar)
   scene.fog.color.set(vistaOrto ? 0xd7dee2 : 0xdde6ea); pedir();
 }
 $('#sVista').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) fijarVista(b.dataset.v); };
-$('#vCur').onchange = (e) => { U.uCurvas.value = e.target.checked ? 1 : 0; pedir(); };
+$('#vCur').onchange = (e) => { curvas[vistaOrto ? 'orto' : 'digital'] = e.target.checked; U.uCurvas.value = e.target.checked ? 1 : 0; pedir(); };
 $('#vAgua').onchange = (e) => { U.uAgua.value = e.target.checked ? 1 : 0; pedir(); };
 $('#vRot').onchange = () => { rotulosVis(); pedir(); };
 document.querySelectorAll('[data-c]').forEach((i) => (i.onchange = () => { capaOn[i.dataset.c] = i.checked; visibilidad(); }));

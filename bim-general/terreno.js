@@ -14,7 +14,7 @@ export const deEsc = (v) => [v.x + ORIGEN.E, -v.z + ORIGEN.N];
 export function definirParches(movil) {
   const d = movil ? 40 : 20;
   return [
-    { id: 'F', nombre: 'Entorno', e0: 279680, e1: 396160, n0: 8781920, n1: 8864480, paso: 640, zDem: 9, zOrto: movil ? 9 : 10, fondo: true },
+    { id: 'F', nombre: 'Entorno', e0: 279680, e1: 396160, n0: 8781920, n1: 8864480, paso: 640, zDem: 9, zOrto: movil ? 10 : 11, fondo: true },
     { id: 'R', nombre: 'Región Paragsha II – Uchucchacua', e0: 311680, e1: 364160, n0: 8813920, n1: 8832480, paso: 160, zDem: 11, zOrto: movil ? 12 : 13 },
     { id: 'D', nombre: 'Derivación y SE Yumpag', e0: 318880, e1: 327520, n0: 8823520, n1: 8829920, paso: d, zDem: 13, zOrto: movil ? 14 : 15, detalle: true },
     { id: 'P', nombre: 'SE Paragsha II', e0: 359040, e1: 361600, n0: 8818720, n1: 8821120, paso: d, zDem: 13, zOrto: movil ? 15 : 16, detalle: true },
