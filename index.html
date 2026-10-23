@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag, SE Uchucchacua y SE Yumpag</title>
+<title>Acceso · Control de construcción LT 138 kV Pomayaros – Yumpag, SE Uchucchacua, SE Yumpag y SE Paragsha II</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -90,6 +90,13 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
       <span>Modelo 3D desde la ingeniería de detalle: patio 138 kV, pórtico P-19 m, transformador, salas 10 kV y obras civiles.</span>
     </button>
 
+    <!-- 23-Oct-26 (pedido del usuario: «crea una similar para Paragsha 2, con toda la info que encuentres») -->
+    <button class="directo" type="button" id="btnPG2">
+      <i>Subestación</i>
+      <b>SE Paragsha II · 220/138 kV</b>
+      <span>Modelo 3D estimado del origen de la L-1123: patio 138 kV del unifilar OE-250 y planta desde la imagen satelital.</span>
+    </button>
+
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
   </div>
 </main>
@@ -108,6 +115,8 @@ $('btnEntrar').onclick = ir;
 $('btnSE').onclick = irSE;
 $('btnYPG').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el modelo 3D de la SE Yumpag…';
   location.href = 'se-yumpag/'; };   // modelo aparte de la SE Yumpag (se-yumpag/), sin avance de obra aún
+$('btnPG2').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el modelo 3D de la SE Paragsha II…';
+  location.href = 'se-paragsha2/'; };   // modelo estimado de la SE Paragsha II (se-paragsha2/)
 addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
 try{ localStorage.removeItem('yumpagLlave'); }catch(e){}    // limpia el acceso recordado del esquema anterior
 fetch('datos.json',{method:'HEAD'}).catch(()=>{});          // adelanta la descarga
