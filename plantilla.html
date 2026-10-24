@@ -2626,6 +2626,13 @@ th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
 .bb-right:fullscreen .bb-curve{height:calc(100vh - 210px)}
 .bb-right:fullscreen .bb-kpis{margin-top:14px}
 .bim-viewport:fullscreen #bimCanvasWrap{height:100%}
+/* v72.57: pantalla completa por CSS donde el navegador no la permite (iPhone) */
+.bim-viewport.fs-css,.bb-right.fs-css,#p-corte.fs-css{position:fixed!important;inset:0;z-index:9990;margin:0!important;max-width:none!important;width:auto!important;height:auto!important;background:var(--bg);padding:12px;overflow:auto;border-radius:0!important}
+.bim-viewport.fs-css #bimCanvasWrap{height:100%}
+.bb-right.fs-css .bb-curve{height:calc(100vh - 210px)}
+#p-corte.fs-css{display:block!important}
+.bim-viewport.fs-css .bim-fs-salir{display:block}
+body.fs-css-on{overflow:hidden}
 .avfis-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.64rem;color:var(--ink-2);margin:2px 0 6px}
 .avfis-leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:3px}
 #chAvFis svg{width:100%;height:100%;display:block}
@@ -8486,6 +8493,7 @@ function initBIM3D() {
   bimRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   bimRenderer.shadowMap.enabled = VIS.sombras;   // v72.50: según VIS (antes siempre apagadas al arrancar)
   bimRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  bimRenderer.shadowMap.autoUpdate = false; bimSombra(3000);   // v72.57: el sol y la caja de sombra no dependen de la cámara: se recalcula al cambiar la escena
   bimRenderer.outputEncoding = THREE.sRGBEncoding;
   bimRenderer.toneMapping = THREE.ACESFilmicToneMapping;
   bimRenderer.toneMappingExposure = VIS.exposicion;   // v72.50: según VIS (antes 0,40 fijo, todo apagado)
@@ -8629,9 +8637,14 @@ function initBIM3D() {
   if (vb) vb.addEventListener('pointermove', ev => { if (enSeparador(ev) || (ev.target === bimRenderer.domElement && !ev.buttons)) return; bimInvalidate(160); }, { capture: true, passive: true });
   document.addEventListener('keydown', () => bimInvalidate(1200), { passive: true });
   document.addEventListener('visibilitychange', () => bimInvalidate(600));
+  ['click', 'input', 'change', 'keydown'].forEach(n => document.addEventListener(n, () => bimSombra(1500), { capture: true, passive: true }));   // v72.57
+  document.addEventListener('visibilitychange', () => bimSombra(600)); document.addEventListener('dc:theme', () => bimSombra(1500));
+  // v72.57: en la ruta la cámara no baja del relieve (el desplazamiento y el zoom al cursor podían meterla bajo el terreno)
+  bimControls.addEventListener('change', () => { if (!bimRouteMode || typeof terrainYAtScene !== 'function') return;
+    const p = bimCamera.position, gy = terrainYAtScene(p.x, p.z) + 0.5; if (isFinite(gy) && p.y < gy){ const d = gy - p.y; p.y += d; bimControls.target.y += d; } });
   try { const LM = THREE.DefaultLoadingManager, _ol = LM.onLoad, _op = LM.onProgress;
-    LM.onLoad = function(){ bimInvalidate(600); if (_ol) return _ol.apply(this, arguments); };
-    LM.onProgress = function(){ bimInvalidate(300); if (_op) return _op.apply(this, arguments); }; } catch(e){}
+    LM.onLoad = function(){ bimInvalidate(600); bimSombra(600); if (_ol) return _ol.apply(this, arguments); };
+    LM.onProgress = function(){ bimInvalidate(300); bimSombra(300); if (_op) return _op.apply(this, arguments); }; } catch(e){}
 
   animateBIM();
 }
@@ -8740,6 +8753,13 @@ window.arrastrar = arrastrar;
    Se dibuja solo con la pestaña BIM visible y mientras algo cambia (cámara, interacción, animación, carga, tamaño);
    en reposo, un cuadro por segundo de resguardo. bimInvalidate(ms) pide cuadros durante ms. */
 var _bimSucio = 2, _bimActivoHasta = 0, _bimUltimo = 0;
+/* v72.57 · sombras a demanda: bimSombra(ms) pide recalcular el mapa de sombras durante ms. Lo piden cualquier clic, tecla o cambio de
+   un control (la escena puede cambiar), draw4D, las cargas, el tema y todo cambio de los objetos de la escena (se vigila su firma).
+   Girar, desplazar o acercar no lo recalculan. */
+var _sombraHasta = 0, _sombraFirma = -1;
+function bimSombra(ms){ _sombraHasta = Math.max(_sombraHasta, performance.now() + (ms || 400)); }
+window.bimSombra = bimSombra;
+function firmaEscena(){ let s = 0; [typeof bimTowerGroup !== 'undefined' && bimTowerGroup, typeof bimGroundGroup !== 'undefined' && bimGroundGroup].forEach((g, j) => { if (g) g.children.forEach(o => { s += o.id * (j + 1) + (o.visible ? 7 : 0); }); }); return s; }
 function bimInvalidate(ms){ _bimSucio = Math.max(_bimSucio, 2); if (ms) _bimActivoHasta = Math.max(_bimActivoHasta, performance.now() + ms); }
 window.bimInvalidate = bimInvalidate;
 function bimVisible(){
@@ -8757,6 +8777,7 @@ function animateBIM() {
   if (_bimSucio > 0) _bimSucio--;
   _bimUltimo = now;
   if ((_lblTick++ % 6) === 0) updateLabelDeclutter();
+  if (bimRenderer.shadowMap.enabled){ const f = firmaEscena(); if (f !== _sombraFirma){ _sombraFirma = f; bimSombra(400); } if (now < _sombraHasta) bimRenderer.shadowMap.needsUpdate = true; }
   renderBIM();
 }
 
@@ -8889,9 +8910,9 @@ window.TEX = (function(){
   const L = new THREE.TextureLoader(); const T = { ok: false, _copias: {} };
   // una copia (T.rep) hecha antes de que llegue la imagen se quedaría sin ella (Texture.clone copia la referencia en ese momento):
   // al cargar, la imagen se pasa a todas las copias pendientes de esa textura
-  const mk = (n, rep) => { const t = L.load('tex/' + n + '.jpg', img => { T.ok = true; (T._copias[n] || []).forEach(c => { c.image = img.image || img; c.needsUpdate = true; }); T.pinta(); }); t.nombre = n; t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rep, rep); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
+  const mk = (n, rep) => { const t = L.load('tex/' + n + '.jpg', img => { T.ok = true; (T._copias[n] || []).forEach(c => { c.image = img.image || img; c.needsUpdate = true; }); T._copias[n] = []; T.pinta(); }); t.nombre = n; t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rep, rep); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
   ['puna','tierra','roca','grava','concreto','madera'].forEach(n => T[n] = mk(n, 1));
-  T.rep = (t, r) => { const c = t.clone(); c.repeat.set(r, r); c.needsUpdate = true; if (!t.image) (T._copias[t.nombre] = T._copias[t.nombre] || []).push(c); return c; };
+  T.rep = (t, r) => { const c = t.clone(); c.repeat.set(r, r); if (t.image) c.needsUpdate = true; else (T._copias[t.nombre] = T._copias[t.nombre] || []).push(c); return c; };   // v72.57: sin imagen aún, se marca al llegar
   T.on = () => VIS.texturas !== false;
   // el visor solo dibuja cuando algo cambia: al llegar cada imagen se pide un redibujado (y se insiste si el 3D aún no existe)
   T.pinta = (n) => { if (window.bimInvalidate){ bimInvalidate(200); setTimeout(() => window.bimInvalidate && bimInvalidate(200), 700); } else if ((n || 0) < 12) setTimeout(() => T.pinta((n || 0) + 1), 500); };
@@ -9444,7 +9465,7 @@ function towerFundAt(t, i){ return towerActMean(t, i, KS_FUND); }
 /* Halo de desempeño (FASE 3): anillo plano bajo cada torre. Color = semáforo, nunca avance. */
 function actualizarHalos(){
   // v63: sin aureolas bajo las torres (el desempeño se ve en el listado y en los indicadores)
-  towerObjs.forEach(o=>{ const hl=o.userData.halo; if(hl){ o.remove(hl); hl.geometry.dispose(); hl.material.dispose(); o.userData.halo=null; } });
+  towerObjs.forEach(o=>{ const hl=o.userData.halo; if(hl){ if (hl.parent) hl.parent.remove(hl); hl.geometry.dispose(); hl.material.dispose(); o.userData.halo=null; } });   // v72.57: se quita de su grupo real
   return;
   if (!bimRouteMode) return;
   towerObjs.forEach((obj,i)=>{
@@ -9567,7 +9588,7 @@ function pintarBtnCaminos(){
    Cada foto: torre, fecha, hora, categoría, coordenadas UTM del sello.
    ===================================================================== */
 const UTM_AFIN = {"e": [1.000000748949733, 0.005430719019713405, -371012.3456911882], "n": [-0.005078827273133992, 0.9994791999975229, -8820318.574305268]};                         // UTM 18S → e/n del modelo (23 torres, residuo < 0,8 m)
-let FOTOS_CAMPO = ⟦bloque:FOTOS_CAMPO⟧;                            // índice cargado
+let FOTOS_CAMPO = ⟦bloque:FOTOS_CAMPO⟧ || [];                      // índice cargado (v72.57: [] si el corte no trae el bloque)
 /* v72.11: la más reciente primero, de cualquier categoría · v72.38: también las fotos de su camino de acceso (f.tacc = torre asociada por el camino) */
 const fotosDeTorre = (t, hasta) => FOTOS_CAMPO.filter(f => (f.torre===t || (!f.torre && f.tacc===t)) && (!hasta || f.fecha<=hasta))
                                                .sort((a,b)=>(b.fecha+(b.hora||'')).localeCompare(a.fecha+(a.hora||'')));
@@ -9728,6 +9749,7 @@ function pintarEvidResumen(){
   const L = [...new Set(E.flatMap(e => e.acts.flatMap(a => a.fotos)))];
   body.querySelectorAll('.ev-m img').forEach(im => im.onclick = () => abrirFoto(im.dataset.src, L));
   body.querySelectorAll('.ev-t').forEach(el => el.onclick = () => { const k = DATA.towers.findIndex(t => t.t === el.dataset.t); if (k < 0) return;
+    if (window.dcGoTower) { dcGoTower(DATA.towers[k].t); return; }   // v72.57
     const b = document.querySelector('#nav button[data-v="v-bim"]'); if (b) b.click(); setTimeout(() => { selectTower(k); if (typeof bimRouteMode !== 'undefined' && bimRouteMode) irATorreRuta(k); }, 300); });
 }
 /* =====================================================================
@@ -10145,7 +10167,8 @@ function abrirFoto(src, lista){
   if(!box){ box=document.createElement('div'); box.id='ftBox'; box.innerHTML='<div class="ftb-in"><img><div class="ftb-pie"></div><button class="ftb-x" aria-label="Cerrar">×</button><button class="ftb-nav ftb-prev" aria-label="Anterior">‹</button><button class="ftb-nav ftb-next" aria-label="Siguiente">›</button></div>';
     document.body.appendChild(box); box.onclick=e=>{ if(e.target===box||e.target.classList.contains('ftb-x')) box.style.display='none'; };
     box.querySelector('.ftb-prev').onclick=e=>{ e.stopPropagation(); ftMover(-1); }; box.querySelector('.ftb-next').onclick=e=>{ e.stopPropagation(); ftMover(1); };
-    document.addEventListener('keydown',e=>{ if(box.style.display!=='flex') return; if(e.key==='Escape') box.style.display='none'; else if(e.key==='ArrowLeft') ftMover(-1); else if(e.key==='ArrowRight') ftMover(1); }); }
+    // v72.57: en captura y sin propagarse — antes → pasaba la foto y además abría el detalle de la torre siguiente; Esc salía del detalle
+    window.addEventListener('keydown',e=>{ if(box.style.display!=='flex') return; if(!['Escape','ArrowLeft','ArrowRight'].includes(e.key)) return; e.preventDefault(); e.stopImmediatePropagation(); if(e.key==='Escape') box.style.display='none'; else if(e.key==='ArrowLeft') ftMover(-1); else ftMover(1); }, true); }
   ftNav.lista = (lista && lista.length>1) ? lista : null; ftNav.i = ftNav.lista ? ftNav.lista.findIndex(x=>x.src===src) : -1;
   const bp=box.querySelector('.ftb-prev'), bn=box.querySelector('.ftb-next');
   bp.style.display = bn.style.display = ftNav.lista ? '' : 'none'; bp.disabled = !ftNav.lista || ftNav.i<=0; bn.disabled = !ftNav.lista || ftNav.i>=ftNav.lista.length-1;
@@ -10591,6 +10614,7 @@ function getScheduleStatus(t, activity, cutoff){
   const dias = Math.max(1, Math.round((new Date(CONFIG.hitosPdR.civil) - new Date(cutoff))/86400000));
   const req  = (100-civ)/dias;                                   // %/día que exige el hito
   const ref  = CONFIG.ritmoLineaObs * DATA.towers.length / CONFIG.frentesActivos;   // %/día que logra un frente
+  if (!(ref > 0) || !isFinite(ref) || !(dias > 0)) return { code:'none', label:'⚪ SIN DATO', motivo:'sin ritmo observado o frentes activos en el corte' };   // v72.57
   const ratio= req/ref, th=CONFIG.scheduleThresholds;
   const det  = `requiere ${req.toFixed(2)} %/día hasta el ${CONFIG.hitosPdR.civil} · un frente logra ${ref.toFixed(2)} %/día`;
   if (ratio<=th.greenRatio) return { code:'green', label:'🟢 EN TIEMPO', motivo:det, ratio };
@@ -11164,7 +11188,7 @@ function buildRouteBIM(){
   }
 
   try{ encuadrarSombra(); }catch(e){}
-  if (bimRouteMode) setTimeout(()=>{ try{ fitCameraToCorridor(0); }catch(e){} }, 30);
+  if (bimRouteMode) window._fitRutaT1 = setTimeout(()=>{ try{ fitCameraToCorridor(0); }catch(e){} }, 30);   // v72.57: se cancela si antes se enfoca una torre
 }
 
 /* --- VISTA TORRE: una estructura a escala real --- */
@@ -11454,12 +11478,7 @@ function setupBIMUI() {
   if ($('btnNextT'))  $('btnNextT').onclick  = () => irATorre(d4sel + 1);
   if ($('btnFocusT')) $('btnFocusT').onclick = () => { if (bimRouteMode) focusTowerCam(d4sel); };
   if ($('btnFitAll')) $('btnFitAll').onclick = () => { if (bimRouteMode) fitAllCam(); };
-  document.addEventListener('keydown', e => {
-    if (!$('v-bim').classList.contains('on') || !bimRouteMode) return;
-    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
-    if (e.key === 'ArrowLeft')  { irATorre(d4sel - 1); e.preventDefault(); }
-    if (e.key === 'ArrowRight') { irATorre(d4sel + 1); e.preventDefault(); }
-  });
+  // v72.57: las flechas se atienden solo en el bloque de navegación del visor (aquí se duplicaban: una flecha avanzaba dos torres)
 
 
   // ---- Panel de ajustes de realismo -------------------------------
@@ -11495,6 +11514,7 @@ function setupBIMUI() {
   if ($('btnCaminos')) $('btnCaminos').onclick = ()=>{ VIS.caminos=!VIS.caminos; construirCaminos(); };
   if ($('btnOrto')) $('btnOrto').onclick = ()=>{
     if (ORTO.cargando) return;
+    if (typeof bimRouteMode !== 'undefined' && !bimRouteMode) return;   // v72.57: en el detalle no hay terreno del tramo (el botón se ve deshabilitado)
     if (ORTO.tex){ ORTO.on=!ORTO.on; if (espaciadoUniforme && bimRouteMode){ buildRouteBIM(); draw4D(); } else aplicarOrto(ORTO.on); }   // v72.11: con o sin ortofoto cambian los vanos (reales / separados)
     else { ORTO.on=true; cargarOrtofoto(ok=>{ if(!ok){ ORTO.on=false; alert('No se pudo descargar la imagen satelital (Esri World Imagery). Se requiere conexión a internet al abrir el tablero.'); } }); }
   };
@@ -11570,20 +11590,24 @@ function setupBIMUI() {
   
 
   // Pantalla completa del visor 3D y de la curva
+  // v72.57: con prefijo webkit, la promesa rechazada se atiende y, sin soporte (iPhone), el elemento ocupa la pantalla con CSS (.fs-css)
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const fsCambio = () => setTimeout(() => { try { onBIMResize(true); } catch(e){} try { drawLinkedCurve(); } catch(e){} try { bimInvalidate(600); } catch(e){} }, 120);
+  function fsSalir(){ const c = document.querySelector('.fs-css'); if (c){ c.classList.remove('fs-css'); document.body.classList.remove('fs-css-on'); fsCambio(); return true; }
+    if (fsEl()){ try { const p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(() => {}); } catch(e){} return true; } return false; }
   function fs(elm){
     if (!elm) return;
-    if (document.fullscreenElement) { document.exitFullscreen(); return; }
-    (elm.requestFullscreen || elm.webkitRequestFullscreen || function(){}).call(elm);
+    if (fsSalir()) return;
+    const alt = () => { elm.classList.add('fs-css'); document.body.classList.add('fs-css-on'); fsCambio(); };
+    const req = elm.requestFullscreen || elm.webkitRequestFullscreen; if (!req) return alt();
+    try { const p = req.call(elm); if (p && p.catch) p.catch(alt); } catch(e){ alt(); }
   }
+  window.fsAlternar = fs;
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.fs-css')){ e.preventDefault(); e.stopImmediatePropagation(); fsSalir(); } }, true);
   if ($('btnFsView'))  $('btnFsView').onclick  = () => fs(document.querySelector('.bim-viewport'));
-  if ($('btnFsSalir')) $('btnFsSalir').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); };
+  if ($('btnFsSalir')) $('btnFsSalir').onclick = () => { fsSalir(); };
   if ($('btnFsCurve')) $('btnFsCurve').onclick = () => fs(document.querySelector('.bb-right'));
-  document.addEventListener('fullscreenchange', () => {
-    setTimeout(() => {
-      try { onBIMResize(); } catch(e){}
-      try { drawLinkedCurve(); } catch(e){}
-    }, 120);
-  });
+  document.addEventListener('fullscreenchange', fsCambio); document.addEventListener('webkitfullscreenchange', fsCambio);
 
   // Modo realista (paleta de terreno y acero)
   const br = $('btnRealista');
@@ -11869,7 +11893,7 @@ function drawFlow(){
 
 
 /* ===== Caminos de acceso · detalle por camino (hoja PORCENTAJE POR TORRE del Resumen 113) ===== */
-window.CAMINOS_DET = ⟦bloque:CAMINOS_DET⟧;
+window.CAMINOS_DET = ⟦bloque:CAMINOS_DET⟧ || { fuente: '', torres: [] };   // v72.57: respaldo si el corte no trae el bloque
 let camSel = 'Todos';
 function renderCamProc(){
   const card=document.getElementById('camProc'); if(!card) return;
@@ -11925,7 +11949,8 @@ function renderCamProc(){
     (difs.length ? `<div class="cam-nota">⚠ En ${difs.length} torre(s) el «Avance real de acceso» de la hoja PORCENTAJE POR TORRE no coincide con la fila Caminos de acceso de la hoja Avance Acumulado LT del mismo resumen: la hoja no registra metros avanzados para esas torres.</div>` : '');
   /* v72.12: las fotos sobre los caminos ya no van en el Proceso Constructivo (se ven en la pestaña Fotos de obra) */
   $$('camTabla').querySelectorAll('.tw').forEach(td=>td.onclick=()=>{ const k=DATA.towers.findIndex(x=>x.t===td.dataset.t);
-    if(k>=0){ try{ const b=document.querySelector('#nav button[data-v="v-bim"]'); if(b) b.click(); setTimeout(()=>{ selectTower(k); if(bimRouteMode) irATorreRuta(k); },300);}catch(e){} } });
+    if(k>=0){ if (window.dcGoTower) { dcGoTower(DATA.towers[k].t); return; }   // v72.57
+      try{ const b=document.querySelector('#nav button[data-v="v-bim"]'); if(b) b.click(); setTimeout(()=>{ selectTower(k); if(bimRouteMode) irATorreRuta(k); },300);}catch(e){} } });
 }
 
 function drawSecTower(){
@@ -12293,6 +12318,9 @@ function pintarLeyenda(){
   L.classList.toggle('zonas', ruta && !!(window.zonasOn && zonasOn()));
 }
 function selectTower(i){
+  // v72.57: en el detalle, elegir otra torre (tira, Gantt, trazo, ◀ ▶, teclado, saltos) abre el detalle de ella, como pide v72.12;
+  // antes cambiaban el panel y la tira pero el 3D, el encabezado y la ventana Cimentaciones seguían en la torre anterior
+  const otraEnDetalle = typeof bimRouteMode !== 'undefined' && !bimRouteMode && GLB_READY && i !== currentSelectedTowerIdx && !!DATA.towers[i];
   try{ pintarBadges(i); }catch(e){}
   setTimeout(()=>{ try{ pintarFotosTorre(); }catch(e){} }, 0);
   d4sel = i;
@@ -12300,6 +12328,7 @@ function selectTower(i){
   if (sel && bimRouteMode) sel.value = 'route';
   const bd = $('btnDetail');
   if (bd){ bd.disabled = false; bd.innerHTML = '<span class="ic">🔍</span> Ver detalle · ' + DATA.towers[i].t; }
+  if (otraEnDetalle){ openTowerDetail(); return; }
   if (bimRouteMode) highlightRouteTower();
   draw4D();
 }
@@ -12324,6 +12353,7 @@ function vistaInicialBIM(){
 }
 function openTowerDetail(){
   if (!GLB_READY) return;
+  if (typeof bimRouteMode !== 'undefined' && !bimRouteMode && currentSelectedTowerIdx === d4sel && towerObjs.length){ draw4D(); toggleNavButtons(); return; }   // v72.57: ya está abierta (no se arma dos veces)
   const sel = $('bimTowerSelect'); if (sel) sel.value = String(d4sel);
   buildTowerBIM(d4sel);
   draw4D();
@@ -12402,9 +12432,14 @@ function stepCameraTween(){
   if (k >= 1) _camTween = null;
   return true;
 }
+/* v72.57 (auditoría 24-Oct-26): al armar la ruta quedan programados tres encuadres de toda la línea (30, 60 y 0 ms); si en ese
+   lapso se enfoca una torre (enlace #torre=Txx, salto desde el Resumen o Proceso, «ir a la torre» desde el detalle) llegaban después
+   y devolvían la cámara a la línea completa. Enfocar una torre los cancela. */
+function cancelarEncuadreRuta(){ ['_fitRutaT1','_fitRutaT2','_fitRutaT3'].forEach(k => { if (window[k]) clearTimeout(window[k]); window[k] = 0; }); }
 /* Encuadra una torre concreta mirando a lo largo del trazo */
 function focusTowerCam(i, dist){
   if(!GLB_READY || !bimRouteMode || !towerObjs[i]) return;
+  cancelarEncuadreRuta();
   const p = towerObjs[i].position.clone();
   const prev = towerObjs[i-1] ? towerObjs[i-1].position : p;
   const next = towerObjs[i+1] ? towerObjs[i+1].position : p;
@@ -12448,6 +12483,7 @@ function fitAllCam(){ fitCameraToCorridor(750); }
    lejos (vista general) se usa el encuadre estándar de focusTowerCam. */
 function irATorreRuta(i){
   if(!GLB_READY || !bimRouteMode || !towerObjs[i] || !bimCamera || !bimControls) return;
+  cancelarEncuadreRuta();
   const p = towerObjs[i].position.clone();
   const off = new THREE.Vector3().subVectors(bimCamera.position, bimControls.target);
   const d = off.length();
@@ -12466,6 +12502,7 @@ function frameCamera(){
 }
 function toggleNavButtons(){
   const bd=$('btnDetail'), bb=$('btnBackRoute');
+  const bo=$('btnOrto'); if (bo){ bo.disabled = !bimRouteMode; bo.title = bimRouteMode ? (bo.dataset.t0 || (bo.dataset.t0 = bo.title || '')) : 'La ortofoto se ve en la ruta (en el detalle de torre no aplica)'; }   // v72.57
   if(bd) bd.style.display = bimRouteMode ? '' : 'none';
   if(bb) bb.style.display = bimRouteMode ? 'none' : '';
 }
@@ -13007,24 +13044,33 @@ function draw4D(){
   drawTowerList();
   try{ encuadrarSombra(); }catch(e){}
   try{ pintarLeyenda(); pintarBadges(d4sel); }catch(e){}
-  try{ construirFranjaTrazo(); }catch(e){ console.warn('franja', e); }
-  try{ construirCaminos(); }catch(e){ console.warn('caminos', e); }
+  // v72.57: la franja del trazo y los caminos se rehacen solo si cambió la ruta, el terreno o lo que los define (antes, en cada llamada:
+  // ~25 ms con caminos encendidos, también al mover la barra de tiempo, que no los cambia)
+  try{ const terr = (typeof terrenoActual === 'function') ? terrenoActual() : null, hay = !!(bimGroundGroup && bimGroundGroup.getObjectByName('trazoResalte'));
+    if (!bimRouteMode || window._kFranja !== towerObjs || window._kFranjaT !== terr || !hay){ construirFranjaTrazo(); window._kFranja = towerObjs; window._kFranjaT = terr; } }catch(e){ console.warn('franja', e); }
+  try{ const terr = (typeof terrenoActual === 'function') ? terrenoActual() : null, hay = !!(bimGroundGroup && bimGroundGroup.getObjectByName('caminosKMZ'));
+    const k = [bimRouteMode, repartoActivo(), !!VIS.caminos, TEX.on(), _nivelCamara()].join('|'), debe = !!(bimRouteMode && !repartoActivo() && VIS.caminos && terr);
+    if (k !== window._kCam || terr !== window._kCamT || hay !== debe){ construirCaminos(); window._kCam = k; window._kCamT = terr; } }catch(e){ console.warn('caminos', e); }
   if (!FOTOS_CAMPO.length) cargarFotosCampo();
   drawRoute();
   drawPataGrid();
   drawLinkedCurve();
   try{ drawPanel4D(); }catch(e){ console.warn('panel 4D', e); }
   if (typeof updateBIM4D === 'function') updateBIM4D();
+  try{ bimSombra(800); }catch(e){}   // v72.57: la fecha cambió lo construido: recalcular sombras
   const t = DATA.towers[d4sel];
   $('d4SceneTitle').textContent = `${t.t} (${t.tp})`;
   $('d4Date').textContent = fmtDate(DATA.tl_weeks[d4i]);
-  $('d4Week').textContent = (typeof semObra === 'function' && d4i >= 21) ? `S${semObra(DATA.tl_weeks[d4i])} de obra · corte S${semObra(DATA.tl_weeks[DATA.tl_weeks.length-1])}` : `Semana ${d4i + 1} de ${DATA.tl_weeks.length}`;
+  $('d4Week').textContent = (typeof semObra === 'function' && d4i >= d4inicio()) ? `S${semObra(DATA.tl_weeks[d4i])} de obra · corte S${semObra(DATA.tl_weeks[DATA.tl_weeks.length-1])}` : `Semana ${d4i + 1} de ${DATA.tl_weeks.length}`;
   $('d4Slider').value = d4i;
 }
 
+/* v72.57: índice del inicio de obra (01-Jun-26) en la serie; antes estaba fijo en 21 en tres lugares */
+function d4inicio(){ const w = DATA.tl_weeks, i = w.indexOf('2026-06-01'); return i >= 0 ? i : Math.min(21, w.length - 1); }
 function d4ticks(){
   const el = $('d4Ticks'), w = DATA.tl_weeks;
-  const s0 = Math.min(21, w.length - 1), L = w.length - 1 - s0;
+  const s0 = d4inicio(), L = w.length - 1 - s0;
+  try { const sl = $('d4Slider'); if (sl){ sl.min = s0; sl.max = w.length - 1; } } catch(e){}   // v72.57: el rango sale de la serie aquí también
   const idxs = [s0, s0 + Math.floor(L / 3), s0 + Math.floor(2 * L / 3), w.length - 1];
   el.innerHTML = idxs.map(i => {
     const [y, m, d] = w[i].split('-');
@@ -13032,7 +13078,9 @@ function d4ticks(){
   }).join('');
 }
 
-$('d4Slider').oninput = e => { d4i = +e.target.value; draw4D(); };
+// v72.57: un redibujado por cuadro al arrastrar la barra (antes, uno por cada evento)
+let _d4Raf = 0;
+$('d4Slider').oninput = e => { d4i = +e.target.value; cancelAnimationFrame(_d4Raf); _d4Raf = requestAnimationFrame(() => draw4D()); };
 
 function d4togglePlay(){
   if (d4timer) {
@@ -13040,7 +13088,7 @@ function d4togglePlay(){
     $('d4Play').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
     return;
   }
-  if (d4i >= DATA.tl_weeks.length - 1) d4i = 21;
+  if (d4i >= DATA.tl_weeks.length - 1) d4i = d4inicio();
   $('d4Play').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
   d4timer = setInterval(() => {
     d4i++;
@@ -13067,6 +13115,7 @@ document.querySelectorAll('.d4-speed button').forEach(b => b.onclick = () => {
    ========================================================================= */
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
   if (!b.dataset.v) return;            // el botón "+" no es una pestaña
+  if (b.dataset.v !== 'v-bim' && typeof d4timer !== 'undefined' && d4timer){ try { d4togglePlay(); } catch(e){} }   // v72.57: ▶ no sigue corriendo con otra pestaña
   const antes = document.querySelector('.view.on');
   if (antes && antes.id === 'v-fot') { try { window._fotFirma = fotFirma(); } catch(e){} }   // v72.13: estado con que se dejó la pestaña Fotos
   document.querySelectorAll('#nav button[data-v]').forEach(x => x.classList.remove('active'));
@@ -13088,6 +13137,7 @@ document.querySelectorAll('#nav button').forEach(b => b.onclick = () => {
       const primera = !bimRenderer;   // v72.13: al volver a la pestaña se conserva la vista (antes se reencuadraba siempre)
       initBIM3D();
       onBIMResize();
+      if (window._d4Pend){ window._d4Pend = false; try { draw4D(); } catch(e){} }   // v72.57: cambio de tamaño con otra pestaña a la vista
       if (primera) frameCamera();
       renderSlide(curSlide);
       try { bimInvalidate(800); } catch(e){}   // v72.13: el bucle a demanda redibuja al volver a la pestaña
@@ -13154,9 +13204,15 @@ function initApp(){
 
 window.addEventListener('load', initApp);
 window.addEventListener('load', () => setTimeout(() => { try { const v = document.getElementById('v-res'); if (v && v.classList.contains('on') && typeof drawAvanceFisico === 'function') drawAvanceFisico(); } catch(e){} }, 400));   // v72.27: Resumen es la vista inicial
+// v72.57: al cambiar el tamaño se redibuja una vez por cuadro y solo con la pestaña BIM a la vista (en el celular el resize llega con
+// cada pliegue de la barra de direcciones); con otra pestaña queda pendiente para cuando se vuelva al BIM
+let _rzRaf = 0;
 window.addEventListener('resize', () => {
-  draw4D();
-  onBIMResize();
+  cancelAnimationFrame(_rzRaf);
+  _rzRaf = requestAnimationFrame(() => {
+    const v = $('v-bim'); if (v && v.classList.contains('on')) draw4D(); else window._d4Pend = true;
+    onBIMResize();
+  });
 });
 </script>
 <script id="pers-script">
@@ -13181,7 +13237,7 @@ window.addEventListener('resize', () => {
 </script>
 
 <script id="dc-script">
-const BRIEF = ⟦bloque:BRIEF⟧;
+const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restricciones: [], expediente: [], tendencias: [], agentes: [], resumen: {}, ritmo: {} };   // v72.57: respaldo si el corte no trae el bloque
 (function(){
   const $ = id => document.getElementById(id);
   const SEVN = {crit:'Crítico', warn:'Alerta', info:'Info', ok:'OK'};
@@ -13211,7 +13267,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     // esperar a que el modelo esté cargado y la ruta construida (primera visita al BIM) antes de enfocar la torre
     let n = 0; (function go(){ n++;
       const ready = (typeof GLB_READY !== 'undefined' && GLB_READY && typeof towerObjs !== 'undefined' && towerObjs && towerObjs.length);
-      if (!ready && n < 40) return setTimeout(go, 250);
+      if (!ready && n < 160) return setTimeout(go, 250);   // v72.57: hasta 40 s, como el enlace directo (antes se rendía a los 10 s)
       try { if (typeof bimRouteMode !== 'undefined' && !bimRouteMode) backToRoute(); selectTower(i); if (typeof focusTowerCam === 'function') focusTowerCam(i); } catch(e){ console.warn('goTower', e); }
     })();
   }
@@ -13469,7 +13525,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   const _buildRoute = window.buildRouteBIM;
   window.buildRouteBIM = function(){ const r = _buildRoute.apply(this, arguments); try { addStatusDiscs(); updateStatusDiscs(); } catch(e){ console.warn('discs', e); }
     // con vanos reales la línea es más larga: encuadrar toda la ruta al construirla
-    setTimeout(() => { try { if (bimRouteMode && typeof fitAllCam === 'function') fitAllCam(); } catch(e){} }, 60);
+    window._fitRutaT2 = setTimeout(() => { try { if (bimRouteMode && typeof fitAllCam === 'function') fitAllCam(); } catch(e){} }, 60);   // v72.57: cancelable
     return r; };
   const _upd = window.updateBIM4D;
   window.updateBIM4D = function(){ const r = _upd.apply(this, arguments); try { updateStatusDiscs(); } catch(e){} return r; };
@@ -13699,10 +13755,12 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     // la pestaña BIM activa y sin foco en un campo: teclado
     document.addEventListener('keydown', ev => {
       const v = $('v-bim'); if (!v || !v.classList.contains('on')) return;
-      const tag = (ev.target && ev.target.tagName || '').toLowerCase(); if (['input', 'select', 'textarea', 'button'].includes(tag)) return;
-      if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft'){
+      const tag = (ev.target && ev.target.tagName || '').toLowerCase(), flecha = ev.key === 'ArrowRight' || ev.key === 'ArrowLeft';
+      if (['input', 'select', 'textarea'].includes(tag) || (ev.target && ev.target.isContentEditable)) return;
+      if (tag === 'button' && !flecha) return;   // v72.57: tras pulsar un botón de la barra las flechas siguen moviendo de torre (Enter sigue siendo del botón)
+      if (flecha){
         const k = (d4sel + (ev.key === 'ArrowRight' ? 1 : -1) + DATA.towers.length) % DATA.towers.length;
-        selectTower(k); if (bimRouteMode) { try { irATorreRuta(k); } catch(e){} } else { buildTowerBIM(k); draw4D(); }
+        selectTower(k); if (bimRouteMode) { try { irATorreRuta(k); } catch(e){} }   // v72.57: en el detalle selectTower ya abre la otra torre
         ev.preventDefault();
       } else if (ev.key === 'Enter' && bimRouteMode){ openTowerDetail(); }
       else if (ev.key === 'Escape' && !bimRouteMode){ backToRoute(); }
@@ -14082,7 +14140,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (sub && !$('btnFsCorte')){
       sub.style.display = 'flex'; sub.style.alignItems = 'center'; sub.style.justifyContent = 'space-between';
       sub.insertAdjacentHTML('beforeend', '<button class="bim-expand sm" id="btnFsCorte" title="Ampliar el corte a pantalla completa (Esc para volver)">⛶ Ampliar</button>');
-      $('btnFsCorte').onclick = () => { const pnl = $('p-corte'); try { if (document.fullscreenElement) document.exitFullscreen(); else if (pnl.requestFullscreen) pnl.requestFullscreen(); } catch(e){} };
+      $('btnFsCorte').onclick = () => { const pnl = $('p-corte'); if (window.fsAlternar) return fsAlternar(pnl); try { if (document.fullscreenElement) document.exitFullscreen(); else if (pnl.requestFullscreen) pnl.requestFullscreen(); } catch(e){} };   // v72.57
     }
     const t = DATA.towers[d4sel], m = mtOf(t);
     if (!m){ ['mtCorte', 'mtCorteHead'].forEach(id => { const e0 = $(id); if (e0) e0.innerHTML = '<div class="mt-note">Sin metrado cargado para esta torre.</div>'; }); return; }
@@ -14942,8 +15000,8 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   let labels = [];
   function addOverlay(){
     if (typeof bimGroundGroup === 'undefined' || !bimGroundGroup) return;
-    const old = bimGroundGroup.getObjectByName('rtOverlay'); if (old) bimGroundGroup.remove(old);
-    labels.forEach(l => { try { bimGroundGroup.remove(l); } catch(e){} }); labels = [];
+    const old = bimGroundGroup.getObjectByName('rtOverlay'); if (old){ bimGroundGroup.remove(old); try { liberarGrupo(old); } catch(e){} }   // v72.57: liberar memoria de video
+    labels.forEach(l => { try { bimGroundGroup.remove(l); liberarGrupo(l); } catch(e){} }); labels = [];
     if (!show || typeof bimRouteMode === 'undefined' || !bimRouteMode) return;
     let ground = null; bimGroundGroup.traverse(o => { if (!ground && o.isMesh && o.geometry && o.geometry.type === 'PlaneGeometry') ground = o; });
     if (!ground) return;
@@ -15074,6 +15132,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
   NAV.hitPoint = hitPoint;
 
   // ---------- rueda: zoom hacia el punto bajo el cursor (como Revit / Navisworks) ----------
+  let _wT = 0, _wX = 0, _wY = 0, _wP = null;   // v72.57: anclaje de la ráfaga de rueda
   function bindWheel(){
     const wrap = $('bimCanvasWrap'); if (!wrap || wrap.dataset.navWheel) return; wrap.dataset.navWheel = '1';
     wrap.addEventListener('wheel', ev => {
@@ -15085,7 +15144,11 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       const d0 = cam.distanceTo(tg); if (d0 < 1e-6) return;
       const d1 = Math.max(bimControls.minDistance, Math.min(bimControls.maxDistance, d0 * k0)), k = d1 / d0;
       if (Math.abs(k - 1) < 1e-4) return;
-      const h = hitPoint(ev);
+      // v72.57: el punto bajo el cursor no se mueve al acercar hacia él; en una ráfaga (touchpad: >60 eventos/s) se reutiliza en vez de
+      // volver a lanzar el rayo contra todo el modelo (8–45 ms por evento)
+      const now = performance.now(), mismo = _wP && now - _wT < 150 && Math.abs(ev.clientX - _wX) < 4 && Math.abs(ev.clientY - _wY) < 4;
+      const h = mismo ? { p: _wP } : hitPoint(ev);
+      _wT = now; _wX = ev.clientX; _wY = ev.clientY; _wP = h.p ? h.p.clone() : null;
       const P = h.p || h.ray.at(d0, new THREE.Vector3());
       cam.sub(P).multiplyScalar(k).add(P); tg.sub(P).multiplyScalar(k).add(P);
       _camTween = null; bimControls.update();
@@ -15196,7 +15259,7 @@ const BRIEF = ⟦bloque:BRIEF⟧;
     if (!ready()) return;
     bimControls.maxPolarAngle = Math.PI / 2 - 0.01; bimCamera.near = 0.5; bimCamera.far = 3000; bimCamera.updateProjectionMatrix();
     NAV.ground = null; NAV.road = null; NAV.setSection(false);
-    setTimeout(() => { try { if (typeof bimRouteMode !== 'undefined' && bimRouteMode) NAV.fitRoute(0); } catch(e){} }, 0);   // v42 (M-06)
+    window._fitRutaT3 = setTimeout(() => { try { if (typeof bimRouteMode !== 'undefined' && bimRouteMode) NAV.fitRoute(0); } catch(e){} }, 0);   // v42 (M-06) · v72.57: cancelable
   }
   // "Ver todo" / tecla F / vuelta a la ruta: encuadre real de las 23 torres con margen para la leyenda (v42, M-06)
   try { if (typeof fitAllCam === 'function' && !window.fitAllCam.__nav){ const _fa = window.fitAllCam; const w = function(){ if (!NAV.fitRoute(750)) return _fa.apply(this, arguments); }; w.__nav = true; window.fitAllCam = w; } } catch(e){}
@@ -15283,16 +15346,13 @@ const BRIEF = ⟦bloque:BRIEF⟧;
       sph.theta -= dx * 0.012; sph.phi -= dy * 0.012; sph.phi = Math.max(0.02, Math.min(bimControls.maxPolarAngle - 0.001, sph.phi)); sph.makeSafe();
       bimCamera.position.copy(bimControls.target).add(new THREE.Vector3().setFromSpherical(sph)); _camTween = null; bimControls.update();
     }
+    // v72.57: el arrastre del cubo usa arrastrar() (termina con cualquier soltar, sin botón, al perder el foco, al ocultarse la página o con Esc)
     let pd = null;
-    cv.addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); });
-    cv.addEventListener('pointermove', e => {
-      if (pd && !(e.buttons & 1)) { pd = null; cv.classList.remove('drag'); }   // v72.13b: se soltó fuera (sin pointerup)
-      if (pd){ const dx = e.clientX - pd.x, dy = e.clientY - pd.y; if (Math.abs(dx) + Math.abs(dy) > 3) { pd.moved = true; cv.classList.add('drag'); } if (pd.moved){ orbit(dx, dy); pd.x = e.clientX; pd.y = e.clientY; hl.visible = false; } return; }
-      showHl(zoneAt(e));
-    });
-    cv.addEventListener('pointerup', e => { if (pd && !pd.moved){ const z = zoneAt(e); if (z) goto(z.dir); } pd = null; cv.classList.remove('drag'); });
-    cv.addEventListener('pointercancel', () => { pd = null; cv.classList.remove('drag'); });
-    cv.addEventListener('lostpointercapture', e => { if (!(e.buttons & 1)) { pd = null; cv.classList.remove('drag'); } });
+    cv.addEventListener('pointerdown', e => { if (e.button > 0) return; pd = { x: e.clientX, y: e.clientY, moved: false }; e.preventDefault();
+      const mover = ev => { if (!pd) return; const dx = ev.clientX - pd.x, dy = ev.clientY - pd.y; if (Math.abs(dx) + Math.abs(dy) > 3) { pd.moved = true; cv.classList.add('drag'); } if (pd.moved){ orbit(dx, dy); pd.x = ev.clientX; pd.y = ev.clientY; hl.visible = false; } };
+      const soltar = ev => { const p = pd; pd = null; cv.classList.remove('drag'); if (p && !p.moved && ev && ev.type === 'pointerup'){ const z = zoneAt(ev); if (z) goto(z.dir); } };
+      if (window.arrastrar) window.arrastrar(cv, e, mover, soltar); else { cv.onpointermove = mover; cv.onpointerup = ev => { cv.onpointermove = cv.onpointerup = null; soltar(ev); }; } });
+    cv.addEventListener('pointermove', e => { if (!pd) showHl(zoneAt(e)); });
     cv.addEventListener('pointerleave', () => { if (!pd) hl.visible = false; });
     $('vcHome').onclick = () => NAV.home();
     const hb = $('vcHelp');   // v42 (B-08): la ayuda también se abre con clic / toque (no solo con el title al pasar el cursor)
@@ -16712,7 +16772,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   document.addEventListener('DOMContentLoaded', () => { try { pinta(); } catch(e){ console.warn('reportes diarios', e); } });
 })();
 </script>
-<script id="hitos-data">window.HITOS = ⟦bloque:HITOS⟧;</script>
+<script id="hitos-data">window.HITOS = ⟦bloque:HITOS⟧ || { hitos: [], vacios: [], fuente: '', corte: null };</script>
 <script>
 (function(){
   const HI_CATS = [
@@ -16852,6 +16912,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     document.getElementById('hiFuente').textContent = `${(window.HITOS.fuente||'')}${vac?' Días sin informe: '+vac+'.':''}`;
   }
   function irTorre(t){ const k=DATA.towers.findIndex(x=>x.t===t); if(k<0) return;
+    if (window.dcGoTower) { dcGoTower(t); return; }   // v72.57
     const b=document.querySelector('#nav button[data-v="v-bim"]'); if(b) b.click();
     setTimeout(()=>{ try{ selectTower(k); if(typeof bimRouteMode!=='undefined' && bimRouteMode) irATorreRuta(k); }catch(e){} },300); }
   function elegir(id, desdeLista){

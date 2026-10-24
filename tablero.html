@@ -45,9 +45,17 @@
     }
     /* 23-Oct-26 · enlace directo desde el BIM general (pedido del usuario: «si quisiese irme al detalle, que me lleve al 4D de esa
        parte de un clic»): tablero.html#torre=T12 abre el BIM 4D con esa torre centrada y #torre=T12&detalle, su detalle. */
-    const ir = /(?:^#|&)torre=(T\d{2})(&detalle)?/.exec(location.hash);
-    if (ir) {
-      const sc = '<script>(function(){var t="' + ir[1] + '",det=' + (ir[2] ? 'true' : 'false') + ',n=0;(function go(){n++;if(typeof window.dcGoTower!=="function"){if(n<160)setTimeout(go,250);return;}window.dcGoTower(t);if(!det)return;var k=0;(function d(){k++;var ok=typeof GLB_READY!=="undefined"&&GLB_READY&&typeof towerObjs!=="undefined"&&towerObjs&&towerObjs.length;if(!ok){if(k<160)setTimeout(d,250);return;}setTimeout(function(){try{openTowerDetail();}catch(e){console.warn("detalle",e);}},900);})();})();})();<\/script>\n';
+    /* 24-Oct-26 (auditoría): también atiende el cambio de #torre sin recargar, acepta t12 o T5, avisa si la torre no existe y en el
+       celular desplaza la página hasta el visor (el detalle se abría con el 3D fuera de la pantalla). */
+    {
+      const sc = '<script>(function(){function leer(){var m=/(?:^#|&)torre=T?(\\d{1,2})(&detalle)?/i.exec(location.hash);return m?{t:"T"+("0"+(+m[1])).slice(-2),det:!!m[2]}:null;}' +
+        'function aviso(x){try{var d=document.createElement("div");d.textContent=x;d.style.cssText="position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:#1d2733;color:#fff;padding:9px 14px;border-radius:8px;font:600 13px system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)";document.body.appendChild(d);setTimeout(function(){d.remove();},4500);}catch(e){}}' +
+        'function ver(){if(innerWidth<=860){var v=document.querySelector(".bim-viewport");if(v)v.scrollIntoView({block:"start",behavior:"smooth"});}}' +
+        'function ir(){var p=leer();if(!p)return;var n=0;(function go(){n++;if(typeof window.dcGoTower!=="function"||typeof DATA==="undefined"){if(n<160)setTimeout(go,250);return;}' +
+        'if(!DATA.towers.some(function(x){return x.t===p.t;})){aviso("La torre "+p.t+" no está en el tablero (T01 a T"+("0"+DATA.towers.length).slice(-2)+").");return;}' +
+        'window.dcGoTower(p.t);var k=0;(function d(){k++;var ok=typeof GLB_READY!=="undefined"&&GLB_READY&&typeof towerObjs!=="undefined"&&towerObjs&&towerObjs.length;if(!ok){if(k<160)setTimeout(d,250);return;}' +
+        'setTimeout(function(){try{if(p.det)openTowerDetail();}catch(e){console.warn("detalle",e);}ver();},900);})();})();}' +
+        'ir();addEventListener("hashchange",ir);})();<\/script>\n';
       const j = t.lastIndexOf('</body>'); t = t.slice(0, j) + sc + t.slice(j);
     }
     document.open(); document.write(t); document.close();
