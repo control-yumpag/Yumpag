@@ -86,6 +86,9 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
   - **Regla 4D**: aisladores y conductores siguen al montaje de la torre (`AV.t[Txx].ph.elm`). Torre sin montaje → acero, porcelana y
     conductores **translúcidos** (`MAT.proyectada`, `porcelanaFant`, `conductorFant`); un vano se dibuja sólido solo cuando sus **dos**
     torres están montadas. Nada queda «en el aire»: si la torre no existe, la cadena existe igual, pero fantasma.
+    El conductor proyectado es el **mismo grafito** `#40464c` del tendido, al 60 % (`conductorFant`; guarda `guardaFant`): un gris claro
+    translúcido desaparecía sobre el terreno ocre (pedido del usuario, 24-Oct-26: «no logro ver el conductor, no está homogénea la
+    representación en color»). Los vanos del seccionamiento a la T1 (T106 → T1, T109 → T1) siguen la misma regla (`pintarDesp`).
   - **Selección**: el elemento elegido se resalta con brillo (emissive `#b1cc3d`) en sus propios materiales, **no** con una caja
     (`Box3Helper`: dibujaba líneas amarillas verticales que el usuario tomó por «puntos y colores raros»).
 - **Terreno bajo las torres (24-Oct-26)**: el tono de **agua** del sombreador solo aparece donde el DEM crudo es plano (±0,02 m a

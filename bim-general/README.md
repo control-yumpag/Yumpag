@@ -64,3 +64,5 @@ y representar… esa conexión mal hecha en Paragsha».
 - Sin «puntos azules» ni «líneas amarillas»: el tono de agua del relieve ya solo aparece en lagunas reales del DEM (nunca en las
   plataformas aplanadas de las torres) y la selección se marca con brillo verde-lima sobre el elemento, no con una caja de líneas.
   Las transiciones del terreno bajo las torres son suaves (pendiente ≤ 10 %), sin montículos cónicos.
+- Conductores proyectados del mismo grafito que los tendidos, translúcidos al 60 % (antes gris claro al 45 %, invisible sobre el
+  terreno); los vanos del seccionamiento a la T1 siguen la misma regla 4D.
