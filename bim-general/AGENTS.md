@@ -11,8 +11,8 @@ Uchucchacua (L-1123) a SE Yumpag, desde CC Pomayaros»: las **tres subestaciones
 Pedido del usuario (23-Oct-26): «un apartado para el BIM general, donde esté todo el proyecto, que son 3 subestaciones y
 una línea… se va a partir una línea y ahí es donde ingresa Yumpag… una vista digital y una vista en ortofoto».
 
-**No toques archivos fuera de `bim-general/`** salvo el `AGENTS.md` raíz. La portada (`index.html` raíz: tarjeta, mapa del
-sistema y perfil de las 23 torres) y `tablero.html` (enlace `#torre=Txx`) los publica el generador v72 (espejos
+**No toques archivos fuera de `bim-general/`** salvo el `AGENTS.md` raíz. La portada (`index.html` raíz: gráfico integral del
+proyecto —sistema y zoom de la derivación con sus 23 torres— y el botón «BIM general») y `tablero.html` (enlace `#torre=Txx`) los publica el generador v72 (espejos
 `g72__portal__index.html` y `g72__portal__tablero.html` del Proyecto): si los cambias, actualiza también esos espejos.
 
 **Esta página no copia lo que ya existe: lo lee en vivo** (pedido del usuario, 23-Oct-26: «no se requiere que crees algo de
@@ -33,7 +33,7 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
 | Archivo | Contenido |
 |---|---|
 | `index.html` | Pestañas Resumen y alcance / BIM general / Fuentes; vista Digital u Ortofoto, escenario Antes o Después, «Ir a», capas, fichas con la fuente de cada dato y el estado de obra (actividades, patas, camino, montaje, fotos), botones al BIM 4D, lista con buscador, carga de los modelos de las SE al acercarse, **navegación tipo Google Earth** y **barra de recorrido** (tramos, perfil, ◀ ▶, Recorrer, mapa de ubicación), celular |
-| `gen/portada_svg.py` | Arma el mapa del sistema y el perfil de las 23 torres del panel izquierdo de la portada (`../index.html`) desde `proyecto.json` |
+| `gen/portada_svg.py` | Arma el gráfico integral del panel izquierdo de la portada (`../index.html`) desde `proyecto.json`: el sistema con coordenadas reales y el zoom de la derivación con sus 23 torres, en dos variantes (`pc`: zoom al noreste del mapa · `movil`: zoom debajo). Se pega entre `<svg class="int pc"…>` y `<svg class="int movil"…>` |
 | `geo.js` | UTM WGS-84 18 S ⇄ geográficas (Krüger, < 1 mm), teselas Web Mercator, cola de descargas |
 | `terreno.js` | DEM Terrarium en parches (F 640 m · R 160 m · D, P, U 20 m), corrección vertical, ajustes en torres y plataformas, material digital/ortofoto, ortofoto por parche y foco z17–z18 que sigue a la cámara |
 | `red.js` | Torres (familia TS2 del tablero; T23 con el OE-604), conductores, L-1123 existente, seccionamiento, trazos de lectura, SE, caminos, MDIA, fichas, escenarios |

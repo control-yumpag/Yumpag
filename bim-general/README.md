@@ -28,3 +28,7 @@ Parámetros de la URL: `?esc=antes`, `?vista=orto`, `?tema=dark`; pestañas `#re
   tablero, estado de obra por actividad y pata, caminos, montaje y fotos en vivo, modelo de la SE Uchucchacua (ubicación
   estimada) con el avance de AXON, botones al BIM 4D (`tablero.html#torre=Txx` y `&detalle`); en la portada, mapa del
   sistema y perfil de las 23 torres enlazados a cada tablero.
+- 24-Oct-26 · portada sin gráficos repetidos (pedido del usuario: «redundancia de gráficos, crea una integral y completo»): un
+  solo gráfico del proyecto —el sistema con coordenadas reales y el zoom de la derivación con sus 23 torres y su estado— más
+  cinco cifras (3 SE, 2 circuitos, 23 torres, obra civil de la LT y avance de AXON, estas dos en vivo); la tarjeta «BIM
+  general» con su propio mapa se quitó y «BIM general» pasó a ser el primer botón de la lista.
