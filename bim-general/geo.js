@@ -51,7 +51,7 @@ export function bajarImagen(url, urgente = false) {
 function bombear() {
   while (activas < MAX && cola.length) {
     const t = cola.shift(); activas++;
-    fetch(t.url, { mode: 'cors', credentials: 'omit' })
+    fetch(t.url, { mode: 'cors', credentials: 'omit', signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined })
       .then((r) => { if (!r.ok) throw new Error(r.status + ' ' + t.url); return r.blob(); })
       .then((b) => createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
       .then((bm) => { ESTAD.ok++; t.res(bm); }, (e) => { ESTAD.error++; t.rej(e); })

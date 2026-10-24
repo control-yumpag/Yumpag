@@ -73,3 +73,10 @@ Revisar a ojo las hojas de contacto antes de publicar fotos (documentos, firmas 
 **Recorrer (tercera persona).** Una persona camina y la cámara la sigue desde atrás y arriba; dentro de la sala el techo se recorta
 para mirar los pasillos por encima de los tableros. Clic (o toque) en el piso: camina hasta ahí por los pasillos (A*); clic en el
 minimapa: igual; «Pasillos»: salta al extremo de cada fila de tableros; V o el botón cambia a primera persona; rueda: acercar.
+
+**Auditoría del 24-Oct-26 (código y navegación).** Las teclas solo actúan con la pestaña BIM 4D a la vista (y no con el
+buscador, el alzado o el visor de fotos); los obstáculos del recorrido siguen a las capas y etapas visibles; la casilla
+«Trabajos de AXON» y la fecha 4D ya no se pisan; el fin de un pellizco y el clic derecho no abren fichas; la cámara no
+entra al terreno; salir del recorrido por cualquier vía cierra también la inspección; elegir de la lista durante la
+inspección vuela al elemento; la rueda de un trackpad pasa un tablero por gesto; en celular, tocar el aviso del tablero
+inspeccionado abre su ficha; sombras solo al cambiar algo; los contadores de fotos respetan «Sin actividad identificada».

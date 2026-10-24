@@ -221,12 +221,13 @@ export function iniciarTablero(ctx) {
   // ---------------------------------------------------------------- FOTOS DE OBRA
   const diasFoto = [...new Set(FOTOS.map((x) => x.f))].sort().reverse();
   function fotosTab() {
-    const cnt = (f) => FOTOS.filter((x) => x.f === f && (!fotAct || String(x.act) === fotAct)).length;
-    $('#fotDias').innerHTML = `<button class="fd${fotDia ? '' : ' sel'}" data-d=""><b>Todas</b><span>${FOTOS.filter((x) => !fotAct || String(x.act) === fotAct).length}</span></button>` +
+    const okAct = (x) => !fotAct || (fotAct === '-' ? !x.act : String(x.act) === fotAct); // «Sin actividad identificada» también en los contadores
+    const cnt = (f) => FOTOS.filter((x) => x.f === f && okAct(x)).length;
+    $('#fotDias').innerHTML = `<button class="fd${fotDia ? '' : ' sel'}" data-d=""><b>Todas</b><span>${FOTOS.filter(okAct).length}</span></button>` +
       diasFoto.map((f) => `<button class="fd${fotDia === f ? ' sel' : ''}" data-d="${f}"><b>${fLarga(f)}</b><span>${cnt(f)}</span></button>`).join('');
     const opts = ACTS.filter((a) => FOTOS.some((x) => String(x.act) === String(a.n)));
     $('#fotAct').innerHTML = `<option value="">Todas las actividades</option>` + opts.map((a) => `<option value="${esc_(a.n)}"${fotAct === String(a.n) ? ' selected' : ''}>${esc_(a.n)} · ${esc_(a.nombre)}</option>`).join('') + `<option value="-"${fotAct === '-' ? ' selected' : ''}>Sin actividad identificada</option>`;
-    let lista = FOTOS.filter((x) => (!fotDia || x.f === fotDia) && (!fotAct || (fotAct === '-' ? !x.act : String(x.act) === fotAct)));
+    let lista = FOTOS.filter((x) => (!fotDia || x.f === fotDia) && okAct(x));
     const porDia = {}; lista.forEach((x) => (porDia[x.f] = porDia[x.f] || []).push(x));
     $('#fotGrid').innerHTML = Object.keys(porDia).sort().reverse().map((f) => `<div class="fdia"><h4>${fLarga(f)} · ${porDia[f].length} foto${porDia[f].length > 1 ? 's' : ''}${U4D.dias[f] && U4D.dias[f].reporte ? ` · reporte N.º ${U4D.dias[f].reporte}` : ''}</h4><div class="fgrid">${porDia[f].map((x) => { const a = byN[String(x.act)]; return `<button data-f="${esc_(x.id)}" title="${esc_(x.pie || x.detalle || '')}"><img loading="lazy" src="${x.th}" alt="${esc_(x.pie || 'Foto de obra')}"><span class="fp">${esc_(x.pie || x.detalle || 'sin descripción')}</span>${a ? `<span class="fa">Act. ${esc_(a.n)}</span>` : ''}</button>`; }).join('')}</div></div>`).join('') || '<div class="vacio">Sin fotos para este filtro.</div>';
     $('#fotNota').textContent = `${lista.length} de ${FOTOS.length} fotos · registro fotográfico de AXON y carpetas «REGISTRO FOTOGRÁFICO» de Drive · rostros difuminados · la actividad sale del registro de AXON o del pie de la foto.`;

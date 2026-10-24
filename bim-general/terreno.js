@@ -217,6 +217,9 @@ export function cargarOrto(P, renderer, alListo) {
 }
 
 // ---------- foco: ortofoto de alta resolución (z17, ≈ 1,2 m/px) alrededor del punto que se mira
+// la malla del foco usa los mismos búferes de posición y normal que su parche: se quitan antes de liberarla (si no, la GPU
+// los borra y el parche se vuelve a subir: ~3,5 MB por cambio de foco)
+const soltarGeo = (g) => { g.deleteAttribute('position'); g.deleteAttribute('normal'); g.dispose(); };
 export class Foco {
   constructor(escena, renderer, parches, pedir) { Object.assign(this, { escena, renderer, parches, pedir, malla: null, clave: '', tm: 0 }); }
   actualizar(objetivo, dist, activo) {
@@ -233,7 +236,7 @@ export class Foco {
   }
   quitar() {
     clearTimeout(this.tm); this.pendiente = ''; this.clave = '';
-    if (this.malla) { this.escena.remove(this.malla); this.malla.geometry.dispose(); this.malla.material.map.dispose(); this.malla.material.dispose(); this.malla = null; this.pedir(); }
+    if (this.malla) { this.escena.remove(this.malla); soltarGeo(this.malla.geometry); this.malla.material.map.dispose(); this.malla.material.dispose(); this.malla = null; this.pedir(); }
     vaciarCola((u) => u.includes('/tile/17/') || u.includes('/tile/18/'));
   }
   construir(P, z, cx, cy, clave) {
@@ -258,7 +261,7 @@ export class Foco {
     const poner = () => {
       if (puesta || this.pendiente !== clave) return; puesta = true;
       const vieja = this.malla; this.malla = malla; this.clave = clave; this.pendiente = ''; this.escena.add(malla);
-      if (vieja) { this.escena.remove(vieja); vieja.geometry.dispose(); vieja.material.map.dispose(); vieja.material.dispose(); }
+      if (vieja) { this.escena.remove(vieja); soltarGeo(vieja.geometry); vieja.material.map.dispose(); vieja.material.dispose(); }
     };
     let pend = false; const refrescar = () => { if (pend) return; pend = true; setTimeout(() => { pend = false; tex.needsUpdate = true; this.pedir(); }, 250); };
     for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) {

@@ -216,6 +216,7 @@ body.sinZonas .num.o-interv,body.sinZonas .num.o-rel{background:rgba(255,255,255
 body.dentro .num{font:600 12px/1.15 "IBM Plex Sans",sans-serif;padding:4px 8px 5px;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:auto;cursor:pointer}
 body.dentro .num b{display:block;font-size:17px;line-height:1.05}
 body.dentro .num span{display:block;font:500 11px/1.2 "IBM Plex Mono",monospace;opacity:.92;margin-top:1px}
+body.dentro #mirando{pointer-events:auto;cursor:pointer}
 #mirando{position:absolute;left:50%;bottom:calc(var(--mapaH,0px) + 14px);transform:translateX(-50%);z-index:5;pointer-events:none;background:rgba(18,32,28,.86);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 11px;border-radius:9px;max-width:min(440px,90%);text-align:center;border-left:4px solid #9aa4ad}
 #mirando b{font-size:13.5px}#mirando small{display:block;opacity:.8;font-size:11.5px}
 #mapa{position:absolute;z-index:5;bottom:10px;left:10px;background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);border-radius:10px;padding:5px 8px 7px;touch-action:none}
@@ -589,7 +590,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { construir, REG, CAPAS, ESTADOS, ETAPAS, etapaDe, ORIGEN, NORTE, alturaTerreno, NUMS, CTX, pisoEn, OBST_EXTRA, L as LAY } from './se3d.js?v=5';
 import { EQUIPOS, zonaObra } from './interior.js?v=5';
-import { Recorrido, obstaculosDe } from './recorrer.js?v=7';
+import { Recorrido, obstaculosDe } from './recorrer.js?v=8';
 import { ViewCube, ventanaMovil, suave, angLerp, bezier } from './navsala.js?v=1';
 import { crearPersona, Rejilla } from './persona.js?v=1';
 import { Pelicula } from './pelicula.js?v=2';
@@ -597,7 +598,7 @@ import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
 import { U4D } from './uchu4d.js?v=20261022';
 import { iniciar4D, axonAlCorte } from './cuatrod.js?v=3';
-import { iniciarTablero } from './tablero.js?v=4';
+import { iniciarTablero } from './tablero.js?v=5';
 const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
 
 const $ = (s) => document.querySelector(s);
@@ -617,6 +618,7 @@ renderer.setSize(tamVista().W, tamVista().H);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false; let sombras = true; // 24-Oct-26 (auditoría): antes se rehacía en cada cuadro
 renderer.localClippingEnabled = true;
 cont.appendChild(renderer.domElement);
 const css = new CSS2DRenderer({ element: $('#rotulos') }); css.setSize(tamVista().W, tamVista().H);
@@ -655,6 +657,7 @@ const matEstado = {
 REG.forEach(({ obj }) => obj.traverse((m) => { if (m.isMesh) m.userData.mat0 = m.material; }));
 let modo = 'real';
 function aplicarColor() {
+  sombras = true;
   REG.forEach(({ obj, info, capa }) => {
     if (capa === 'terreno') return;
     const e = info?.estado || 'E';
@@ -710,10 +713,10 @@ function rotulosVis() {
   if (cp.length) rotulos.forEach((r) => { if (r.visible && cp.some((p) => p.distanceToPoint(r.position) < 0)) r.visible = false; });
 }
 // placas tapadas por otros tableros o muros (las placas HTML no se ocultan solas): rayo cámara→placa contra las cajas de colisión
-let obstSala = null, tOcl = 0, oclKey = ''; const _rO = new THREE.Ray(), _pO = new THREE.Vector3(), _dirC = new THREE.Vector3(), _vC = new THREE.Vector3();
+let obstSala = null, obstSucio = false, tOcl = 0, oclKey = ''; const _rO = new THREE.Ray(), _pO = new THREE.Vector3(), _dirC = new THREE.Vector3(), _vC = new THREE.Vector3();
 function ocultamiento() {
   const now = performance.now(); const k = camera.position.toArray().map((v) => v.toFixed(2)).join() + camera.rotation.y.toFixed(2);
-  if (k === oclKey || now - tOcl < 120) return; tOcl = now; oclKey = k;
+  if (k === oclKey) return; if (now - tOcl < 120) { clearTimeout(ocultamiento._t); ocultamiento._t = setTimeout(pedir, 130); return; } tOcl = now; oclKey = k;
   if (!obstSala) obstSala = (obst || []).filter((b) => b.max.x > 17.5 && b.min.x < 46.5 && b.max.z > -1.2 && b.min.z < 5.6);
   const cam = camera.position;
   for (const n of nums) {
@@ -734,8 +737,10 @@ const NOMBRES = { patio138: 'Patio 138 kV', transformadores: 'Transformadores', 
 const capaOn = {}; Object.keys(NOMBRES).forEach((k) => (capaOn[k] = k !== 'tierra'));
 let etapa = 3;
 function visibilidad() {
+  sombras = true; obstSucio = true; // los obstáculos del recorrido siguen a lo que se ve (se recalculan en el bucle)
   REG.forEach(({ obj, capa, info }) => { obj.visible = capaOn[capa] && etapaDe(info) <= etapa && !(info && info.eqKey && EQ[info.eqKey] && EQ[info.eqKey].oculto); });
   if (typeof axonVis === 'function') axonVis();
+  if (m4d && m4d.pintarZonas) m4d.pintarZonas(); // las cajas 4D siguen a las capas y etapas
   rotulosVis();
   pedir();
 }
@@ -751,7 +756,7 @@ function txtEtapa() { const e = ETAPAS[etapa]; $('#etapaTxt').innerHTML = `<b>${
 $('#etapa').oninput = (e) => { etapa = +e.target.value; txtEtapa(); visibilidad(); };
 txtEtapa();
 $('#vRot').onchange = visibilidad;
-$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) m.material.needsUpdate = true; }); pedir(); };
+$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) m.material.needsUpdate = true; }); sombras = true; pedir(); };
 
 // ---------- plano CAD (líneas del DWG sobre el terreno)
 let cad = null;
@@ -789,7 +794,7 @@ function aplicarCorte() {
     if (corte === 'h') plano.set(new THREE.Vector3(0, -1, 0), t);           // muestra altura < t
     planes = [plano];
   }
-  renderer.clippingPlanes = planes; suelo.visible = corte !== 'no' || subsuelo; pedir();
+  renderer.clippingPlanes = planes; suelo.visible = corte !== 'no' || subsuelo; sombras = true; pedir();
 }
 $('#corteEje').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
@@ -823,7 +828,7 @@ const conv = (mat) => { if (!matSala.has(mat)) matSala.set(mat, mat.clone()); re
   m.material = m.userData.mat0 = Array.isArray(m.material) ? m.material.map(conv) : conv(m.material);
 }));
 matSala.forEach((m) => { m.clippingPlanes = [planoSala]; });
-function cortarTecho(modo_, piso = 1) { techo = modo_; planoSala.constant = modo_ === 'no' ? 1e5 : (piso === 2 ? Y2 : 0) + TECHO1; pedir(); }
+function cortarTecho(modo_, piso = 1) { techo = modo_; planoSala.constant = modo_ === 'no' ? 1e5 : (piso === 2 ? Y2 : 0) + TECHO1; sombras = true; pedir(); }
 function fijarSala(on) {
   enSala = on;
   cortarTecho(on ? 'sala' : 'no');
@@ -921,6 +926,7 @@ function seleccionar(info, volarA = false, abrirFicha = true) {
   if (mapa) { mapa.sel = eq ? eq.key : null; mapa.dibujar(); }
   if (abrirFicha) tabDer('ficha');
   if (volarA) {
+    if (rec && rec.activo) (enc ? salirInspeccion() : salirRecorrido());
     const s = b.getSize(new THREE.Vector3()).length();
     const dir = camera.position.clone().sub(controls.target).normalize();
     const dist = Math.min(90, Math.max(7, s * 1.5));
@@ -956,8 +962,11 @@ function pick(ev, soloTerreno = false) {
   });
   return hits;
 }
-renderer.domElement.addEventListener('pointerdown', (e) => (abajo = [e.clientX, e.clientY]));
+const ptrs = new Set(); let multi = false;
+renderer.domElement.addEventListener('pointerdown', (e) => { ptrs.add(e.pointerId); if (ptrs.size > 1) { multi = true; if (ultTap) { clearTimeout(ultTap.timer); ultTap = null; } } abajo = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointercancel', (e) => { ptrs.delete(e.pointerId); if (!ptrs.size) multi = false; abajo = null; });
 function tocar(e) {
+  if (encAnim) return; // un clic durante el vuelo de inspección se mide contra una cámara en movimiento
   const hits = pick(e);
   if (rec && rec.activo && !enc && hits[0]) { // recorriendo: un clic en el piso camina hasta ahí
     const h0 = hits[0]; const inf0 = infoDe(h0.object);
@@ -971,6 +980,7 @@ function tocar(e) {
   seleccionar(inf);
 }
 renderer.domElement.addEventListener('pointerup', (e) => {
+  const era = multi; ptrs.delete(e.pointerId); if (!ptrs.size) multi = false; if (era || e.button > 0) { abajo = null; return; }
   if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 5) return;
   if (e.pointerType === 'touch') { // doble toque: el primer toque espera un instante para no abrir la ficha encima del segundo
     const now = performance.now();
@@ -984,13 +994,13 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 });
 let tCoord = 0;
 renderer.domElement.addEventListener('pointermove', (e) => {
-  const now = performance.now(); if (now - tCoord < 60 || movil) return; tCoord = now;
+  const now = performance.now(); if (now - tCoord < 60 || movil || e.buttons) return; tCoord = now; // no se lanza el rayo mientras se orbita
   const h = pick(e)[0];
   if (!h) { $('#coord').textContent = 'Fuera del modelo'; return; }
   const p = h.point; const inf = infoDe(h.object);
   $('#coord').innerHTML = `X ${(ORIGEN.X + p.x).toFixed(2)} · Y ${(ORIGEN.Y - p.z).toFixed(2)} · cota ${(ORIGEN.cota + p.y).toFixed(2)}${inf ? ' · ' + inf.id : ''}`;
 });
-addEventListener('keydown', (e) => { if (e.key === 'Escape') seleccionar(null); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#visor').classList.contains('on') && !$('#alzado').classList.contains('on')) seleccionar(null); }); // Esc del visor o del alzado no cierra también la ficha
 
 // ---------- tema, pantalla completa, paneles móviles
 const iconoTema = () => ($('#bTema').textContent = document.documentElement.dataset.theme === 'dark' ? '☾' : '☀');
@@ -1016,7 +1026,7 @@ function fijarDestapado(on) {
   destapado = on;
   REG.forEach(({ obj }) => obj.traverse((x) => { if (x.userData.tapa || x.userData.rejilla || x.userData.gravaBase) x.visible = !on && !subsuelo; }));
   (CTX.puertas || []).forEach((p) => { p.rotation.y = on ? p.userData.puerta.abierta : p.userData.puerta.cerrada; });
-  pedir();
+  sombras = true; pedir();
 }
 $('#vDes').onchange = (e) => { $('#vDes2').checked = e.target.checked; fijarDestapado(e.target.checked); };
 
@@ -1039,7 +1049,7 @@ function fijarVista(tercera) {
 function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0, opt = {}) {
   if (pel && pel.activa) terminarPelicula();
   if (!obst) obst = obstaculosDe(REG).concat(OBST_EXTRA);
-  if (!rec) { rec = new Recorrido(camera, renderer.domElement, { pisoEn, obstaculos: obst, onCambio: pedir }); rec.avatar = crearPersona(); rec.avatar.visible = false; scene.add(rec.avatar); rec.tercera = vistaTercera;
+  if (!rec) { rec = new Recorrido(camera, renderer.domElement, { pisoEn, obstaculos: obst, onCambio: pedir, puedeTeclas: (e) => bimActivo() && !tecleando() && !e.metaKey && !e.ctrlKey }); rec.avatar = crearPersona(); rec.avatar.visible = false; scene.add(rec.avatar); rec.tercera = vistaTercera;
     if (movil) rec.boomSet = { dentro: { a: 1.0, L: 6.2 }, fuera: { a: 0.42, L: 6.4 } }; } // celular en vertical: la cámara más atrás
   if (!rec.activo) {
     camAntes = { p: camera.position.clone(), t: controls.target.clone() };
@@ -1058,6 +1068,7 @@ function entrarRecorrido(X = 39.6, Y = -7.2, yaw = 180, yPie = 0, pitch = 0, opt
 }
 function salirRecorrido() {
   if (!rec || !rec.activo) return;
+  const prI = insp; insp = null; histInsp.length = 0;
   const adentro = enc || cajaEdif(pRef()); salirEncuadre(false); marcaRuta.visible = false;
   rec.desactivar(); controls.enabled = true; camera.fov = 40; camera.updateProjectionMatrix(); if (techo === 'persona') cortarTecho('no');
   if (adentro && camAntes) { camera.position.copy(camAntes.p); controls.target.copy(camAntes.t); }
@@ -1065,6 +1076,7 @@ function salirRecorrido() {
   controls.update();
   $('#bRec').classList.remove('on'); hud.classList.add('oculto'); mira.classList.add('oculto'); $('#mirando').classList.add('oculto'); HUD.joy(null);
   document.body.classList.remove('sala', 'dentro'); $('#mapa').classList.add('oculto'); ajustarMapa();
+  if (prI && prI.enSala) fijarSala(true);
   pedir();
 }
 // puntos de llegada de cada piso: 1.er piso por la puerta sur mirando a las celdas K; 2.º piso en el pasadizo frente al tablero 22
@@ -1097,8 +1109,8 @@ function salirInspeccion() {
   if (!rec || !rec.activo) return;
   const cur = camera.position.clone(), dir = new THREE.Vector3(); camera.getWorldDirection(dir);
   const ant = camAntes ? { p: camAntes.p.clone(), t: camAntes.t.clone() } : null; const pr = insp;
-  salirRecorrido(); insp = null; histInsp.length = 0;
-  if (pr) { if (pr.enSala) fijarSala(true); else if (techo !== 'no') cortarTecho('no'); }
+  salirRecorrido();
+  if (pr && !pr.enSala && techo !== 'no') cortarTecho('no');
   if (ant) { camera.position.copy(cur); controls.target.copy(cur).addScaledVector(dir, 4); controls.update(); volar(ant.p, ant.t, 850, true); }
 }
 function atrasInsp() {
@@ -1197,10 +1209,11 @@ $('#encIzq').onclick = () => vecino(-1); $('#encDer').onclick = () => vecino(1);
 $('#encCam').onclick = () => salirEncuadre(true); $('#encAlz').onclick = () => enc && abrirAlzado(FILA_DE[enc.e.key].f, enc.e);
 $('#encAtras').onclick = () => atrasInsp(); $('#encSalir').onclick = () => salirInspeccion();
 // rueda del ratón en la inspección: tablero vecino (con una pausa corta para no saltar varios)
-let tRueda = 0;
+let tRueda = 0, ruedaAcum = 0, ruedaLista = true;
 renderer.domElement.addEventListener('wheel', (ev) => {
-  if (!enc) return; ev.preventDefault(); const now = performance.now(); if (now - tRueda < 380 || Math.abs(ev.deltaY) < 4) return;
-  tRueda = now; vecino(ev.deltaY > 0 ? 1 : -1);
+  if (!enc) return; ev.preventDefault(); const now = performance.now();
+  if (now - tRueda > 220) { ruedaAcum = 0; ruedaLista = true; } tRueda = now; ruedaAcum += ev.deltaY; // la pausa cuenta desde el último evento
+  if (ruedaLista && Math.abs(ruedaAcum) >= 30) { ruedaLista = false; vecino(ruedaAcum > 0 ? 1 : -1); }
 }, { passive: false });
 // ---------- rueda en la vista general: acercamiento suave al punto bajo el cursor (como Navisworks / Revit / visor de Autodesk)
 // el paso es proporcional a la distancia a ese punto (cerca, fino; lejos, rápido), se reparte en ~0,25 s, no atraviesa lo que se
@@ -1233,7 +1246,8 @@ function pasoZoom(dt) {
   const z = zoomP; const M = cajaDelModelo();
   const lf = Math.log(z.f) * (1 - Math.exp(-Math.min(0.1, dt) / 0.085)); const f = Math.exp(lf); z.f = Math.exp(Math.log(z.f) - lf);
   const np = _vZ.copy(camera.position).sub(z.P).multiplyScalar(f).add(z.P);
-  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || np.y < alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.2))) || (f > 1 && np.distanceTo(M.c) > M.lejos);
+  const sueloZ = alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.2);
+  const tope = (f < 1 && np.distanceTo(z.P) < z.dMin) || (np.y < sueloZ && np.y < camera.position.y) || (f > 1 && np.distanceTo(M.c) > M.lejos);
   if (tope) { zoomP = null; return; }
   camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
   if (f > 1) M.caja.clampPoint(controls.target, controls.target); // al alejarse, el pivote no sale del entorno del modelo
@@ -1304,12 +1318,12 @@ $('#bSalir').onclick = () => salirRecorrido();
 $('#pisoSel').onclick = (e) => { const b = e.target.closest('button[data-p]'); if (b) irPiso(+b.dataset.p); };
 // doble clic / doble toque: en la vista general entra a la sala (o frente al tablero tocado); caminando, va al punto o al tablero
 function alDoble(ev) {
-  if (pel && pel.activa) return;
+  if ((pel && pel.activa) || encAnim) return;
   const hits = pick(ev); const h = hits.find((x) => infoDe(x.object)) || hits[0]; if (!h) return;
   const inf = infoDe(h.object); const e = inf && inf.eqKey ? EQ[inf.eqKey] : null;
   if (rec && rec.activo) {
     if (e) { irA(e); return; }
-    if (enc) { salirEncuadre(true); return; }
+    if (enc) return; // en la inspección, el doble clic fuera de un tablero no te deja caminando
     // retrocede desde el punto tocado hasta un lugar libre
     const o = ray.ray.origin, d = ray.ray.direction;
     for (let t = h.distance - 0.35; t > 0; t -= 0.2) { const p = o.clone().addScaledVector(d, t); const yP = pisoEn(p.x, -p.z, rec.pies); if (Math.abs(yP - rec.pies) < 0.9 && rec.libre(p.x, -p.z, yP)) { rec.teletransportar(p.x, -p.z); return; } }
@@ -1321,9 +1335,12 @@ function alDoble(ev) {
 }
 let ultTap = null, ultDoble = 0;
 renderer.domElement.addEventListener('dblclick', (e) => { if (performance.now() - ultDoble < 700) return; alDoble(e); });
+const bimActivo = () => !!(tablero && tablero.tab === 'v-bim') && !$('#alzado').classList.contains('on') && !$('#visor').classList.contains('on');
+const tecleando = () => /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && $('#visor').classList.contains('on')) { $('#visor').classList.remove('on'); return; }
   if (e.key === 'Escape' && $('#alzado').classList.contains('on')) { cerrarAlzado(); return; }
+  if (!bimActivo()) return;
   if (enc && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) {
     const k = e.key.toLowerCase();
     if (k === 'arrowleft' || k === 'a') { if (!e.repeat) vecino(-1); e.preventDefault(); return; }
@@ -1399,10 +1416,15 @@ function axonVis() {
   const dentro = document.body.classList.contains('dentro');
   axRot.forEach((a) => { a.h.visible = axonOn && !en4 && a.obj.visible; a.o.visible = axonOn && !en4 && a.obj.visible && !dentro && $('#vRot').checked && !(pel && pel.activa); });
 }
+let eqFecha = null; // { cpm, t19 } de la fecha de la barra 4D (null = sin fecha)
+function aplicarEquipos(forzar = false) { // el CPM solo si AXON está marcado y ya existe a esa fecha; el T19 hasta que entra el CPM
+  const cpm = axonOn && (!eqFecha || eqFecha.cpm), t19 = !cpm && (!axonOn || !eqFecha || eqFecha.t19);
+  if (!forzar && EQ.CPM.oculto === !cpm && EQ.T19.oculto === !t19) return false;
+  EQ.CPM.oculto = !cpm; EQ.T19.oculto = !t19; armarFilas(); panelSala(); visibilidad(); return true;
+}
 function fijarAxon(on) {
   axonOn = on; $('#vAx').checked = on; $('#vAx0').checked = on; document.body.classList.toggle('axon', on);
-  EQ.CPM.oculto = !on; EQ.T19.oculto = on;
-  armarFilas(); panelSala(); panelAxon(); visibilidad();
+  aplicarEquipos(true); panelAxon();
   if (mapa) { mapa.axon = on; mapa.dibujar(); }
   if (enc && enc.e.oculto) salirEncuadre(true);
   if (actual && actual.eqKey && EQ[actual.eqKey].oculto) seleccionar(null);
@@ -1434,7 +1456,7 @@ function seccionAxon(info) {
   const est = (a) => { if (en4) { const [t, c] = EST4[m4d.estadoAct(a, m4d.i)]; return `<span class="pill" style="${c ? `border-color:${c};color:${c}` : ''}">${t}</span>`; }
     return `<span class="pill" style="${a.estado === 'Completada' ? 'border-color:#2d7667;color:#2d7667' : a.estado === 'En curso' ? 'border-color:#6f8a1c;color:#6f8a1c' : ''}">${esc_(a.estado || '—')}</span>`; };
   const filas = acts.map((a) => `<tr><td><b>${esc_(a.n)}</b> · ${esc_(a.nombre)}<small style="display:block;color:var(--ink3)">línea base ${fAx(a.ini)} → ${fAx(a.fin)}</small></td><td style="white-space:nowrap">${pct0(a.ev)} <small style="color:var(--ink3)">/ ${pct0(a.pv)}</small><br>${est(a)}</td></tr>`).join('');
-  const hb = habs.length ? `<div style="margin-top:6px"><b style="color:#c0392b">Habilitantes pendientes</b>${habs.map((h) => `<div>${esc_(h.id)} · ${esc_(h.nombre)} — ${esc_(h.estado || 'sin estado')}${h.alerta ? ' · ' + esc_(h.alerta) : ''}</div>`).join('')}</div>` : '';
+  const hb = habs.length ? `<div style="margin-top:6px"><b style="color:#c46f0b">Habilitantes pendientes</b>${habs.map((h) => `<div>${esc_(h.id)} · ${esc_(h.nombre)} — ${esc_(h.estado || 'sin estado')}${h.alerta ? ' · ' + esc_(h.alerta) : ''}</div>`).join('')}</div>` : '';
   return `<div class="axon"><b>Trabajos de AXON · ${en4 ? `BIM 4D al ${fAx(m4d.fecha)}${m4d.i > m4d.corte ? ' (programado)' : ''}` : `control diario del ${fAx(AXON.fecha)}`}</b>
     <table class="axt" style="margin-top:4px">${filas}</table>${hb}
     <div style="margin-top:6px;color:var(--ink2)">${zs.map((z) => esc_(z.sup)).join(' ')}</div>
@@ -1571,6 +1593,7 @@ function actualizarMirando(now) {
   el.innerHTML = `<b>${e.info.id}${e.cod ? ' · ' + esc_(e.cod) : e.sigla ? ' · ' + esc_(e.sigla) : ''}</b><small>${esc_(e.nombre)}${o && e.obra !== 'axon' ? ' · ' + OBRA_CORTO[e.obra] : ''}</small><small>${movil ? 'Toca para ver la ficha' : 'Clic o Enter para ver la ficha y sus cables'}</small>`;
   el.classList.remove('oculto');
 }
+$('#mirando').onclick = () => { if (mirandoEq) { seleccionar(mirandoEq.info); tabDer('ficha'); } };
 // luces interiores: solo cuando la cámara está cerca de la sala (cambiar la intensidad no recompila los materiales)
 const lucesSala = CTX.luces; const cajaSala = new THREE.Box3(new THREE.Vector3(14, -1, -6), new THREE.Vector3(50, 9, 10));
 function ajustarLuces() { if (!lucesSala) return; const dentro = cajaSala.containsPoint(camera.position) || enSala; lucesSala.traverse((l) => { if (l.isPointLight) l.intensity = dentro ? 10 : 0; }); }
@@ -1604,7 +1627,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && pel && pel.activa
 // ---------- bucle (dibuja solo cuando algo cambia)
 let sucio = true; function pedir() { sucio = true; }
 controls.addEventListener('change', pedir);
-function redimensionar() { const { W, H } = tamVista(); camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); css.setSize(W, H); _vo = ''; ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); }
+function redimensionar() { if (!cont.clientWidth || !cont.clientHeight) return; const { W, H } = tamVista(); camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); css.setSize(W, H); _vo = ''; ajustarMapa(); if (enc) verCompleto(enc.e); if ($('#alzado').classList.contains('on')) dibujarAlzado(); pedir(); }
 addEventListener('resize', redimensionar);
 let _roT = 0; new ResizeObserver(() => { cancelAnimationFrame(_roT); _roT = requestAnimationFrame(() => { if (cont.clientWidth && cont.clientHeight) redimensionar(); }); }).observe(cont);
 // ViewCube (como el del tablero de la LT, Revit y Navisworks): orienta la vista con un giro suave; arrastrar sobre él orbita
@@ -1631,6 +1654,7 @@ function bucle(now) {
     const o = rec.orbita; const g = Math.min(1, (Math.abs(o.az - o.az0) + Math.abs(o.el - o.el0)) / 0.35);
     const n = enc.nearIns + (enc.near0 - enc.nearIns) * g; if (Math.abs(n - camera.near) > 0.005) { camera.near = n; camera.updateProjectionMatrix(); sucio = true; }
   }
+  if (obstSucio && rec) { obstSucio = false; obst = obstaculosDe(REG).concat(OBST_EXTRA); rec.obst = obst; obstSala = null; for (const k in REJ) delete REJ[k]; }
   if (rec && rec.activo && rec.update(dt)) sucio = true;
   if (rec && rec.activo) {
     if (enc && rec.mov.lengthSq() > 0.05) salirEncuadre(true);
@@ -1643,9 +1667,11 @@ function bucle(now) {
   } else centrarTercera();
   if (pel && pel.activa && pel.update(dt)) sucio = true;
   const mov = controls.enabled ? controls.update() : false;
+  if (controls.enabled && !anim && !subsuelo) { const s0 = alturaTerreno(camera.position.x, -camera.position.z) + 0.8; if (camera.position.y < s0) { const d = s0 - camera.position.y; camera.position.y += d; controls.target.y += d; sucio = true; } }
   if (!(sucio || mov)) return;
   if (!renderer.domElement.clientWidth || !renderer.domElement.clientHeight) return; // oculta (p. ej. en el tablero se eligió la LT)
   sucio = false; ajustarLuces();
+  renderer.shadowMap.needsUpdate = sombras || !!(rec && rec.activo && rec.tercera) || !!(pel && pel.activa); sombras = false;
   rotulosVis(); if (pel && pel.activa) rotulos.forEach((r) => (r.visible = false));
   renderer.render(scene, camera); css.render(scene, camera);
   if (pel && pel.grabando) pel.componer(pelTit, pelSub);
@@ -1673,9 +1699,8 @@ m4d = iniciar4D({ U4D, scene, $, esc_, movil, ZONAS: ZONAS4D, pedir,
   mount: { barra: $('#tiempo4d'), gantt: $('#croGantt'), ganttSel: $('#croSel'), ganttNota: $('#croNota') },
   objDe: objZona, visibleZona: (z) => !(z.eq && EQ[z.eq].oculto),
   equiposEnFecha(e) {
-    const cpm = e ? e.cpm : axonOn, t19 = e ? e.t19 && !e.cpm : !axonOn;
-    if (EQ.CPM.oculto === !cpm && EQ.T19.oculto === !t19) return;
-    EQ.CPM.oculto = !cpm; EQ.T19.oculto = !t19; armarFilas(); panelSala(); visibilidad(); if (mapa) mapa.dibujar();
+    eqFecha = e ? { cpm: !!e.cpm, t19: !!e.t19 && !e.cpm } : null;
+    if (!aplicarEquipos()) return; if (mapa) mapa.dibujar();
     if (enc && enc.e.oculto) salirEncuadre(true); if (actual && actual.eqKey && EQ[actual.eqKey].oculto) seleccionar(null);
   },
   irZona(zs) {
@@ -1702,7 +1727,7 @@ function vistaInicial() {
 $('#bVistaIni').onclick = vistaInicial;
 tablero = iniciarTablero({ U4D, m4d, ZONAS: ZONAS4D, esc_, visor: abrirVisor, tabDer,
   tabInicial: QS.get('modo') === '4d' || EMBED ? 'v-bim' : null,
-  onTab: (v) => { if (v === 'v-bim') requestAnimationFrame(() => { redimensionar(); }); } });
+  onTab: (v) => { if (v === 'v-bim') requestAnimationFrame(() => { redimensionar(); }); else if (rec) { rec.teclas.clear(); rec.mov.set(0, 0); } } });
 requestAnimationFrame(bucle);
 $('#cargando').remove();
 window.__se = { zoomDe: () => zoomP, cajaDelModelo, inspeccionar, vecino, filaVecina, salirInspeccion, atrasInsp, encAnimDe: () => encAnim && { ...encAnim, t0: performance.now() - encAnim.t }, vcDe: () => vc, histVista, vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };

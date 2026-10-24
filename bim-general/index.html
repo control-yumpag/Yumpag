@@ -105,7 +105,7 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 #vista{position:absolute;inset:0}
 #vista canvas{display:block;touch-action:none}
 #rotulos{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2;isolation:isolate}
-#rotulos>div{pointer-events:auto;cursor:pointer}
+#rotulos>div{pointer-events:auto;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}
 .rse{font:700 12px/1.15 "Archivo",sans-serif;color:#fff;background:rgba(18,32,28,.88);padding:5px 10px 5px 8px;border-radius:7px;border-left:4px solid #b1cc3d;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.3)}
 .rse small,.rsec small,.rln small{display:block;font:500 10px "IBM Plex Sans",sans-serif;opacity:.82;margin-top:1px}
 .rsec{font:700 11.5px/1.15 "Archivo",sans-serif;color:#fff;background:#b5452a;padding:5px 9px;border-radius:7px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.3)}
@@ -203,7 +203,7 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 .caja{background:var(--glass);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.66rem;color:var(--ink-2)}
 #atrib{font-size:.6rem;max-width:520px}
 #vcBox{position:absolute;z-index:5;right:360px;top:10px;width:104px;height:104px}
-.vc-cv{width:104px;height:104px;cursor:pointer}
+.vc-cv{width:104px;height:104px;cursor:pointer;touch-action:none}
 .vc-cv.drag{cursor:grabbing}
 #cargando{position:absolute;inset:0;display:grid;place-items:center;background:var(--bg);z-index:20;font-size:.8rem;color:var(--ink-2);text-align:center;padding:20px}
 #cargando div{display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -217,13 +217,14 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
 .tbv .seg{box-shadow:var(--shadow)}
 .tbv>button{background:var(--glass);box-shadow:var(--shadow);font-size:.72rem}
 @media (max-width: 1100px){ #v-res{grid-template-columns:repeat(2,minmax(0,1fr))} #v-res .wide,#v-res .half{grid-column:span 2} #v-res .third{grid-column:span 2} .etapas{grid-template-columns:1fr} }
-@media (max-width: 820px){
+@media (max-width: 820px), (max-height: 520px){
   body{padding:6px;gap:6px}
   .tb-m,.badge,.tb-l .sub{display:none}
   .solo-pc{display:none!important}
   #izq,#der{left:6px;right:6px;width:auto;top:auto;bottom:136px;max-height:54%}
   #dock{left:6px;right:6px;bottom:6px;height:124px;padding:6px}
   #dock .fila>*{flex:none}
+  #movTabs{order:-2} #tAnt,#tPlay,#tSig{order:-1} #dock .fila>#sTramo{flex:1 1 0;min-width:0;overflow-x:auto} /* «Ir a», «Fichas» y ◀ ▶ siempre a la vista */
   #movTabs button{white-space:nowrap}
   #hud{bottom:140px}
   #dock .mini,#dkAyuda,#dkPos,.solo-pc{display:none!important}
@@ -318,6 +319,10 @@ table.tb small{display:block;color:var(--ink-mut);font-size:.6rem;margin-top:1px
   <section id="v-fue" class="view"></section>
 </main>
 
+<script>/* 24-Oct-26 (auditoría): si algo falla antes de terminar de cargar, se dice en la pantalla de carga */
+(function(){function di(t){if(window.__listo)return;var e=document.getElementById('carTxt');if(e)e.textContent='No se pudo cargar el BIM general: '+t+'. Recargue la página.';}
+addEventListener('error',function(e){if(e instanceof ErrorEvent)di(e.message);else if(e.target&&e.target.tagName==='SCRIPT')di('falta '+e.target.src);},true);
+addEventListener('unhandledrejection',function(e){var r=e.reason;if(r&&/cancelada/.test(r.message||''))return;di((r&&r.message)||String(r));});})();</script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -329,7 +334,7 @@ import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_L
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const movil = matchMedia('(max-width: 820px)').matches;
+const movil = matchMedia('(max-width: 820px), (max-height: 520px)').matches;
 const carTxt = (t) => ($('#carTxt').textContent = t);
 
 // ---------- pestañas y tema
@@ -347,7 +352,7 @@ $('#bTema').onclick = () => { const r = document.documentElement; r.dataset.them
 tab(location.hash.slice(1) || 'bim');
 
 // ---------- datos del proyecto
-const D = await fetch('proyecto.json').then((r) => r.json());
+const D = await fetch('proyecto.json').then((r) => { if (!r.ok) throw new Error('proyecto.json HTTP ' + r.status); return r.json(); });
 const ESC0 = new URLSearchParams(location.search).get('esc') === 'antes' ? 'antes' : 'despues';
 
 // ---------- textos de alcance (Resumen y panel derecho)
@@ -407,7 +412,7 @@ function resumen() {
       <tr><td><b>SE Paragsha II y SE Uchucchacua</b></td><td>Extremos de la línea: energización de la L-1123 en Paragsha II (ES0) y conexión de la L-1724 en Uchucchacua (ES1).</td><td>EPO INEL2601, tablas 14 y 15</td></tr>
       <tr><td><b>Caminos y áreas auxiliares</b></td><td>${nCam} caminos de acceso (C1–C17, CP1–CP7, C1A, CP3A), playas de tendido, almacenes y depósitos de material (DMO, DMC, DME).</td><td>KMZ Caminos MDIA 2 · Mapa de componentes MDIA</td></tr>
     </tbody></table></div>`;
-  $('#v-res').querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { tab('bim'); IR[b.dataset.ir] && IR[b.dataset.ir](); }));
+  $('#v-res').querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { tab('bim'); if (window.__listo && IR[b.dataset.ir]) IR[b.dataset.ir](); }));
 }
 function fuentes() {
   const F = D.meta.fuentes;
@@ -570,7 +575,7 @@ async function cargarAvance() {
   if (AVANCE) return AVANCE;
   try {
     const d = await fetch('../datos.json', { cache: 'no-cache' }).then((r) => r.json());
-    const C = d.completo || d.visita || d, J = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
+    const C = [d.completo, d.visita].find((c) => c && c.bloques) || d, J = (x) => (typeof x === 'string' ? JSON.parse(x.replace(/\bNaN\b/g, 'null')) : x);
     const B = J(C.bloques ? C.bloques.DATA : d.DATA), CAM = C.bloques ? J(C.bloques.CAMINOS_DET) : null;
     AVANCE = { corte: d.corte_txt || d.corte, corteISO: d.corte, reporte: d.reporte, t: Object.fromEntries(B.towers.map((t) => [t.t, t])), caminos: CAM, ocGlobal: B.ocGlobal, counts: B.counts, fases: B.phaseRollup };
   } catch (e) { console.warn('datos.json', e); AVANCE = null; }
@@ -600,8 +605,8 @@ async function cargarModelo(M) {
     g.matrix.set(a, 0, -b, m.o[0] - ORIGEN.E, 0, 1, 0, S.cota, -c, 0, dd, -(m.o[1] - ORIGEN.N), 0, 0, 0, 1);
     const f0 = window.fetch; // el módulo de la SE Yumpag pide su terreno con una ruta relativa a su página
     if (m.base) window.fetch = (u, o) => f0(typeof u === 'string' && !/^(https?:|\/|\.)/.test(u) ? m.base + u : u, o);
-    try { await mod.construir(g, (t) => hud(`${S.nombre}: ${t}`, 0)); } finally { window.fetch = f0; }
-    (mod.CAPAS.terreno || []).forEach((o) => (o.visible = false));
+    let res = null; try { res = await mod.construir(g, (t) => hud(`${S.nombre}: ${t}`, 0)); } finally { window.fetch = f0; }
+    (M.k === 'paragsha2' && res && res.terreno && res.terreno.isObject3D ? [res.terreno] : mod.CAPAS.terreno || []).forEach((o) => (o.visible = false));
     if (M.k === 'yumpag') (mod.CAPAS.linea || []).forEach((o) => (o.visible = false)); // la llegada de la línea la dibuja el BIM general
     if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
     g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
@@ -624,14 +629,16 @@ $('#vMod').onchange = () => { actualizarModelos(true); visibilidad(); };
 // ---------- cámara
 let anim = null;
 let zoomP = null, tPick = 0, xyPick = null;
-function volar(pos, tgt, ms = 1100) {
-  if (camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.15 + (0.85 - camera.aspect) * 1.4));
+function volar(pos, tgt, ms = 1100, encuadre = true) {
+  if (recorrido) pararRecorrido();
+  if (encuadre && camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.15 + (0.85 - camera.aspect) * 1.4));
   zoomP = null; const p0 = camera.position.clone(), t0 = controls.target.clone(), ini = performance.now();
   const lejos = Math.max(p0.distanceTo(t0), pos.distanceTo(tgt)), salto = p0.distanceTo(pos) > lejos * 1.5;
   anim = (now) => {
     let k = Math.min(1, (now - ini) / ms); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     camera.position.lerpVectors(p0, pos, k); controls.target.lerpVectors(t0, tgt, k);
     if (salto) camera.position.y += Math.sin(Math.PI * k) * p0.distanceTo(pos) * 0.25; // arco: se eleva en los saltos largos
+    if (k < 1) { const hh = cotaXZ(camera.position.x, camera.position.z); if (Number.isFinite(hh) && camera.position.y < hh + 6) camera.position.y = hh + 6; }
     if (k >= 1) anim = null;
   };
   pedir();
@@ -659,8 +666,8 @@ $('#irA').onclick = (e) => { const b = e.target.closest('button[data-i]'); if (!
 camera.position.copy(cTodo.clone().add(VISTA0)); controls.target.copy(cTodo); controls.update();
 const vc = new ViewCube($('#vcBox'), {
   getCam: () => camera, getTarget: () => controls.target, norte: new THREE.Vector3(0, 0, -1),
-  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (Math.abs(dd.y) > 0.999) dd.set(0.001, Math.sign(dd.y), 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650); },
-  orbitar: (dx, dy) => { const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.49, Math.max(0.02, s.phi - dy * 0.012)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
+  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (dd.y < 0.08) { dd.y = 0.08; dd.normalize(); } if (dd.y > 0.999) dd.set(0.001, 1, 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650, false); }, // abajo y las aristas inferiores no meten la cámara bajo el terreno
+  orbitar: (dx, dy) => { parar(); const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.49, Math.max(0.02, s.phi - dy * 0.012)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
 });
 
 // ---------- ficha, alcance y lista
@@ -801,17 +808,17 @@ const GRUPOS = ['Subestaciones', 'Seccionamiento', 'Líneas', 'Torres de la deri
 const COLG = { Subestaciones: '#b1cc3d', Seccionamiento: '#b5452a', Líneas: COLH.l1123, 'Torres de la derivación': COLH.der, 'Vértices del trazo': '#6b8880', 'Caminos de acceso': COLH.camino, 'Componentes auxiliares (MDIA)': COLH.mdia };
 function lista(filtro = '') {
   const l = $('#lista'), f = filtro.trim().toLowerCase();
-  l.innerHTML = `<input id="buscar" type="search" placeholder="Buscar: T12, C10, Yumpag, DME…" autocomplete="off" value="${esc(filtro)}">`;
+  if (!$('#buscar')) { l.innerHTML = `<input id="buscar" type="search" placeholder="Buscar: T12, C10, Yumpag, DME…" autocomplete="off" value="${esc(filtro)}"><div id="listaRes"></div>`; $('#buscar').oninput = (e) => lista(e.target.value); }
+  const res = $('#listaRes'); res.innerHTML = ''; // el campo se crea una vez (antes se rehacía en cada tecla y se perdían letras en Android)
   for (const g of GRUPOS) {
     const items = Object.values(FICHAS).filter((x) => x.grupo === g && (!f || x.nombre.toLowerCase().includes(f) || (x.sub || '').toLowerCase().includes(f)));
     if (!items.length) continue;
-    const h = document.createElement('div'); h.className = 'g'; h.textContent = `${g} (${items.length})`; l.appendChild(h);
+    const h = document.createElement('div'); h.className = 'g'; h.textContent = `${g} (${items.length})`; res.appendChild(h);
     for (const x of items) {
       const b = document.createElement('button'); b.innerHTML = `<i style="background:${COLG[g]}"></i><b>${esc(x.nombre)}</b>${x.sub && g !== 'Subestaciones' ? `<em>${esc(String(x.sub).split(' · ')[0].slice(0, 18))}</em>` : ''}`;
-      b.onclick = () => seleccionar(x, true); l.appendChild(b);
+      b.onclick = () => seleccionar(x, true); res.appendChild(b);
     }
   }
-  const bi = $('#buscar'); bi.oninput = () => { const v = bi.value; lista(v); const n = $('#buscar'); n.focus(); n.setSelectionRange(v.length, v.length); };
 }
 lista();
 
@@ -864,26 +871,31 @@ function pasoInercia(dt) {
 function parar() { anim = null; zoomP = null; inercia = null; if (recorrido) pararRecorrido(); }
 function centrarEn(P, ms = 700) { const off = camera.position.clone().sub(controls.target); volar(P.clone().add(off), P.clone(), ms); }
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+const dedos = new Set(); let tmClic = 0, tapPrev = null, tAcercar = 0;
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  abajo = { x: e.clientX, y: e.clientY };
+  dedos.add(e.pointerId);
+  abajo = dedos.size === 1 && e.button === 0 ? { x: e.clientX, y: e.clientY, id: e.pointerId } : null;
   parar();
-  if (e.pointerType !== 'mouse') return; // táctil: un dedo mueve, dos dedos acercan y giran (OrbitControls)
+  if (e.pointerType === 'touch') return; // táctil: un dedo mueve, dos dedos acercan y giran (OrbitControls); el lápiz va como el ratón
   const girar = e.button === 2 || (e.button === 0 && (e.shiftKey || e.ctrlKey || e.altKey));
   if (girar) { repivotar(); arrastre = { modo: 'girar', x: e.clientX, y: e.clientY }; }
   else if (e.button === 0) {
-    const h = rayoTerreno(rayoPantalla(e.clientX, e.clientY)); const P = h ? h.point : controls.target.clone();
-    arrastre = { modo: 'mover', y0: P.y, P0: P.clone(), v: new THREE.Vector3(), t: performance.now(), movio: false };
+    const r0 = rayoPantalla(e.clientX, e.clientY), h = rayoTerreno(r0);
+    let P = h ? h.point.clone() : null; // fuera del relieve: el plano a la altura del centro de la vista (antes saltaba hasta 77 km)
+    if (!P && r0.direction.y < -0.003) P = r0.origin.clone().addScaledVector(r0.direction, (controls.target.y - r0.origin.y) / r0.direction.y);
+    if (P) arrastre = { modo: 'mover', y0: P.y, P0: P.clone(), v: new THREE.Vector3(), t: performance.now(), movio: false };
   }
   if (arrastre) { renderer.domElement.setPointerCapture(e.pointerId); visor.classList.add(arrastre.modo); }
 });
 renderer.domElement.addEventListener('pointermove', (e) => {
+  if (arrastre && e.pointerType !== 'touch' && e.buttons === 0) { soltar(); return; } // se perdió el «soltar» (Alt+Tab, gesto del sistema)
   if (!arrastre) { coordenadas(e); return; }
   if (arrastre.modo === 'mover') {
     const r = rayoPantalla(e.clientX, e.clientY); if (r.direction.y > -0.003) return;
     const t = (arrastre.y0 - r.origin.y) / r.direction.y, alto = Math.max(40, camera.position.y - arrastre.y0);
-    if (t <= 0 || t > alto * 35) return; // cerca del horizonte no se arrastra (saltaría lejos)
+    if (t <= 0 || t > alto * 15) return; // cerca del horizonte no se arrastra (saltaría lejos)
     _p.copy(r.origin).addScaledVector(r.direction, t);
-    const dl = new THREE.Vector3(arrastre.P0.x - _p.x, 0, arrastre.P0.z - _p.z);
+    const dl = new THREE.Vector3(arrastre.P0.x - _p.x, 0, arrastre.P0.z - _p.z); const tope = Math.max(40, alto) * 0.5; if (dl.length() > tope) dl.setLength(tope);
     camera.position.add(dl); controls.target.add(dl);
     const now = performance.now(), dts = Math.max(8, now - arrastre.t) / 1000; arrastre.v.lerp(dl.divideScalar(dts), 0.45); arrastre.t = now; arrastre.movio = true;
   } else { orbitar(e.clientX - arrastre.x, e.clientY - arrastre.y); arrastre.x = e.clientX; arrastre.y = e.clientY; }
@@ -895,8 +907,14 @@ function soltar() {
   visor.classList.remove('mover', 'girar'); arrastre = null; pedir();
 }
 renderer.domElement.addEventListener('pointerup', (e) => {
-  soltar();
-  if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5 || e.button === 2) return;
+  soltar(); dedos.delete(e.pointerId); const a = abajo; if (!dedos.size) abajo = null;
+  if (!a || a.id !== e.pointerId || Math.hypot(e.clientX - a.x, e.clientY - a.y) > 5 || e.button !== 0) return;
+  const ev = { clientX: e.clientX, clientY: e.clientY }, now = performance.now();
+  if (e.pointerType === 'touch' && tapPrev && now - tapPrev.t < 320 && Math.hypot(ev.clientX - tapPrev.x, ev.clientY - tapPrev.y) < 30) { clearTimeout(tmClic); tapPrev = null; acercarA(ev); return; } // doble toque
+  tapPrev = e.pointerType === 'touch' ? { t: now, x: ev.clientX, y: ev.clientY } : null;
+  clearTimeout(tmClic); tmClic = setTimeout(() => clic(ev), 260); // espera un posible doble clic (antes el primer clic ya volaba)
+});
+function clic(e) {
   const h = tocar(e); if (!h || h.terreno) { seleccionar(null); return; }
   const f = fichaDe(h.object); const inf = infoSE(h.object); if (!f) return;
   // un clic centra el elemento; en una línea, el punto tocado; dentro de una SE ya cercana solo se abre la ficha (para no saltar
@@ -904,8 +922,10 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   if (f.tipo === 'linea') { seleccionar(f, false); centrarEn(h.point); return; }
   const dentroSE = f.tipo === 'se' && f.foco && camera.position.distanceTo(f.foco) < (f.radio || 150) * 3.2;
   seleccionar(f, !dentroSE, inf && inf.nombre ? inf.nombre : null);
-});
-renderer.domElement.addEventListener('pointercancel', soltar);
+}
+renderer.domElement.addEventListener('pointercancel', (e) => { dedos.delete(e.pointerId); abajo = null; soltar(); });
+renderer.domElement.addEventListener('lostpointercapture', soltar);
+addEventListener('blur', soltar);
 let tCoord = 0;
 function coordenadas(e) {
   const now = performance.now(); if (now - tCoord < 70 || movil) return; tCoord = now;
@@ -940,12 +960,14 @@ function pasoZoom(dt) {
   if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
 }
 // doble clic: acerca a ese punto (como Google Earth) conservando el rumbo y la inclinación
-renderer.domElement.addEventListener('dblclick', (e) => {
+renderer.domElement.addEventListener('dblclick', (e) => { clearTimeout(tmClic); acercarA(e); });
+function acercarA(e) {
+  const now = performance.now(); if (now - tAcercar < 450) return; tAcercar = now; // el doble toque y el dblclick del navegador no se suman
   const h = tocar(e); if (!h) return; parar();
   const P = h.point.clone(), off = camera.position.clone().sub(controls.target).normalize();
   const d = Math.max(25, camera.position.distanceTo(P) * 0.42);
-  volar(P.clone().addScaledVector(off, d), P, 750);
-});
+  volar(P.clone().addScaledVector(off, d), P, 750, false);
+}
 function zoomCentro(f) { const t = controls.target.clone(); volar(t.clone().add(camera.position.clone().sub(t).multiplyScalar(f)), t, 420); }
 function norte() { // rumbo norte con la misma distancia e inclinación
   const t = controls.target.clone(), sp = new THREE.Spherical().setFromVector3(camera.position.clone().sub(t)); sp.theta = 0;
@@ -1085,7 +1107,7 @@ function dibujarPerfil(forzar = true) {
 }
 function sEnPerfil(e) { const rc = cvP.getBoundingClientRect(); return sDeX(e.clientX - rc.left, rc.width); }
 cvP.addEventListener('pointerdown', (e) => {
-  parar(); const rc = cvP.getBoundingClientRect(), x = e.clientX - rc.left, s = sEnPerfil(e);
+  perfilArr = null; parar(); const rc = cvP.getBoundingClientRect(), x = e.clientX - rc.left, s = sEnPerfil(e);
   const tk = tramoAct.ticks.filter((t) => t.nombre && Math.abs(xDeS(t.s, rc.width) - x) < 7).sort((a, b) => Math.abs(xDeS(a.s, rc.width) - x) - Math.abs(xDeS(b.s, rc.width) - x))[0];
   if (tk) { camaraEn(tramoAct, tk.s, Math.min(600, Math.max(250, camera.position.distanceTo(controls.target))), false); seleccionar(tk.ficha, false); return; }
   perfilArr = { x: e.clientX }; cvP.setPointerCapture(e.pointerId); camaraEn(tramoAct, s, null, false);
@@ -1094,7 +1116,8 @@ cvP.addEventListener('pointermove', (e) => {
   sHover = sEnPerfil(e);
   if (perfilArr && Math.abs(e.clientX - perfilArr.x) > 3) camaraEn(tramoAct, sHover, null, true); else dibujarPerfil();
 });
-cvP.addEventListener('pointerup', () => { if (perfilArr) repivotar(); perfilArr = null; });
+const finPerfil = () => { if (perfilArr) repivotar(); perfilArr = null; };
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => cvP.addEventListener(t, finPerfil));
 cvP.addEventListener('pointerleave', () => { sHover = null; dibujarPerfil(); });
 new ResizeObserver(() => dibujarPerfil()).observe(cvP);
 
@@ -1143,13 +1166,20 @@ svgM.addEventListener('click', (e) => {
 });
 
 // ---------- pantalla completa, celular, teclado
-$('#bFull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : visor.requestFullscreen());
+$('#bFull').onclick = () => { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) { const x = d.exitFullscreen || d.webkitExitFullscreen; if (x) Promise.resolve(x.call(d)).catch(() => {}); return; }
+  const rq = visor.requestFullscreen || visor.webkitRequestFullscreen; if (rq) Promise.resolve(rq.call(visor)).catch(() => {}); };
 if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
 $('#tIzq').onclick = () => { $('#izq').classList.toggle('cerrado'); $('#der').classList.add('cerrado'); };
 $('#tDer').onclick = () => { $('#der').classList.toggle('cerrado'); $('#izq').classList.add('cerrado'); };
 
 // ---------- bucle (dibuja solo cuando algo cambia)
 controls.addEventListener('change', pedir);
+let repivPend = false; controls.addEventListener('end', () => (repivPend = true));
+function ajustarOffset() { // en el celular la ficha tapa la mitad de abajo: el centro de la vista sube sobre ella
+  const w = visor.clientWidth, h = visor.clientHeight, der = $('#der'), tapa = movil && !der.classList.contains('cerrado') ? der.offsetHeight : 0;
+  if (tapa) camera.setViewOffset(w, h, 0, Math.min(tapa, h * 0.6) / 2, w, h); else camera.clearViewOffset(); pedir();
+}
+if (movil) { new MutationObserver(ajustarOffset).observe($('#der'), { attributes: true, attributeFilter: ['class'] }); new ResizeObserver(ajustarOffset).observe(visor); }
 let tAnt = performance.now(), pasoCur = 0;
 function ajustesPorDistancia() {
   const dist = camera.position.distanceTo(controls.target);
@@ -1159,7 +1189,7 @@ function ajustesPorDistancia() {
   G.trazos.children.forEach((l) => { l.material.opacity = op * l.userData.op0; l.material.visible = op > 0.02; });
   G.caminos.visible = capaOn.caminos && dist < 16000; G.mdia.visible = capaOn.mdia && dist < 16000;
   // la cámara no baja del terreno
-  const h = cotaXZ(camera.position.x, camera.position.z); if (Number.isFinite(h) && camera.position.y < h + 3) camera.position.y = h + 3;
+  const h = cotaXZ(camera.position.x, camera.position.z); if (Number.isFinite(h) && camera.position.y < h + 3) { camera.position.y = h + 3; camera.lookAt(controls.target); }
   foco.actualizar(controls.target, dist, vistaOrto);
   actualizarModelos(false);
 }
@@ -1172,6 +1202,7 @@ function bucle(now = performance.now()) {
   if (inercia) pasoInercia(dt);
   if (recorrido) pasoRecorrido(dt);
   const mov = controls.update();
+  if (repivPend && !mov) { repivPend = false; repivotar(); }
   if (!renderPend && !activo && !mov) return;
   renderPend = false;
   ajustesPorDistancia(); rotulosVis();

@@ -7,13 +7,15 @@ import { animarPersona } from './persona.js?v=1';
 const _f = new THREE.Vector3(), _t = new THREE.Vector3(), _d = new THREE.Vector3(), _c = new THREE.Vector3(), _ray = new THREE.Ray();
 
 export class Recorrido {
-  constructor(camera, dom, { pisoEn, obstaculos = [], onCambio = () => {} }) {
-    this.camera = camera; this.dom = dom; this.pisoEn = pisoEn; this.obst = obstaculos; this.onCambio = onCambio;
+  constructor(camera, dom, { pisoEn, obstaculos = [], onCambio = () => {}, puedeTeclas = null }) {
+    this.camera = camera; this.dom = dom; this.pisoEn = pisoEn; this.obst = obstaculos; this.onCambio = onCambio; this.puedeTeclas = puedeTeclas;
     this.activo = false; this.yaw = 0; this.pitch = 0; this.pies = 0; this.ojo = 1.65; this.radio = 0.26;
     this.teclas = new Set(); this.pos = new THREE.Vector3();
     this.mov = new THREE.Vector2(); // joystick (−1…1)
     this._punteros = new Map(); this._joy = null;
-    this._onKey = (e) => { if (!this.activo) return; const k = e.key.toLowerCase(); if (e.type === 'keydown') this.teclas.add(k); else this.teclas.delete(k); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault(); };
+    this._onKey = (e) => { if (!this.activo) return; const k = e.key.toLowerCase(); if (e.type === 'keyup') { this.teclas.delete(k); return; }
+      if (this.puedeTeclas && !this.puedeTeclas(e)) return; // otra pestaña, el buscador o un atajo del navegador: las teclas no caminan
+      this.teclas.add(k); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault(); };
     this._onDown = (e) => this._down(e); this._onMove = (e) => this._move(e); this._onUp = (e) => this._up(e);
     this._onBlur = () => this.teclas.clear();
     this._hud = null;
@@ -114,7 +116,7 @@ export class Recorrido {
   _down(e) {
     if (e.button !== undefined && e.button !== 0) return;
     const r = this.dom.getBoundingClientRect();
-    const esJoy = e.pointerType === 'touch' && e.clientX - r.left < r.width * 0.42 && e.clientY - r.top > r.height * 0.45;
+    const esJoy = !this.encuadre && e.pointerType === 'touch' && e.clientX - r.left < r.width * 0.42 && e.clientY - r.top > r.height * 0.45; // en la inspección, arrastrar gira (no camina)
     this._punteros.set(e.pointerId, { x: e.clientX, y: e.clientY, joy: esJoy, x0: e.clientX, y0: e.clientY });
     if (esJoy) { this._joy = e.pointerId; if (this._hud) this._hud.joy({ x: e.clientX, y: e.clientY, dx: 0, dy: 0 }); }
     try { this.dom.setPointerCapture(e.pointerId); } catch (_) {}
@@ -209,8 +211,9 @@ export class Recorrido {
 // Obstáculos a partir de los elementos registrados: cajas de los nodos de hasta 2 niveles, de tamaño razonable
 export function obstaculosDe(REG, capasOmitidas = new Set(['cables', 'tierra', 'terreno'])) {
   const out = []; const tmp = new THREE.Box3();
+  const visArriba = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; }; // un grupo oculto no es pared
   const toma = (o) => {
-    if (!o.visible || o.userData.noObst) return;
+    if (!visArriba(o) || o.userData.noObst) return;
     o.updateWorldMatrix(true, false);
     tmp.setFromObject(o);
     if (tmp.isEmpty()) return;

@@ -32,3 +32,10 @@ Parámetros de la URL: `?esc=antes`, `?vista=orto`, `?tema=dark`; pestañas `#re
   solo gráfico del proyecto —el sistema con coordenadas reales y el zoom de la derivación con sus 23 torres y su estado— más
   cinco cifras (3 SE, 2 circuitos, 23 torres, obra civil de la LT y avance de AXON, estas dos en vivo); la tarjeta «BIM
   general» con su propio mapa se quitó y «BIM general» pasó a ser el primer botón de la lista.
+- 24-Oct-26 · auditoría de código y navegación: arrastrar desde el cielo o fuera del relieve ya no salta kilómetros; el fin
+  de un pellizco no abre fichas; el clic simple espera un posible doble clic; doble toque para acercar; lápiz como
+  ratón; gestos que no se quedan pegados (Alt+Tab, pérdida del puntero); recorrido que se detiene con cualquier vuelo;
+  vuelos que no raspan los cerros; centro de giro al suelo tras un gesto táctil; en celular, lo elegido queda sobre la
+  ficha y «Ir a», «Fichas» y ◀ ▶ siempre a la vista; celular en horizontal con vista de celular; teselas con tiempo
+  límite; errores de carga a la vista; buscador que no pierde letras; el foco de la ortofoto ya no borra búferes del
+  terreno; la plataforma de Paragsha II se ve al cargar su modelo.

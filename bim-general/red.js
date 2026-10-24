@@ -482,6 +482,7 @@ export function construirRed(escena, D, cota) {
   function aplicar4D(av) { AV = av; pintarTorres(); }
   // ----- la torre paramétrica del BIM 4D de la LT reemplaza a la de aquí (misma familia y cotas): mallas, enganches y vanos
   function usarTorresTablero(TB) {
+    const viejas = new Set(); torresDer.forEach((T) => [T.ma, T.mi, ...T.mf].forEach((m) => m.geometry && viejas.add(m.geometry)));
     for (const T of torresDer) {
       if (T.t.t === 'T23') continue; // la T23 conserva sus alturas del OE-604 (las del pórtico de la SE Yumpag)
       const g = TB.torre(T.tp.ext); T.geo = g; T.ma.geometry = g.acero; T.mi.geometry = g.aisl; T.mf.forEach((m, n) => (m.geometry = g.fund[n]));
@@ -490,6 +491,7 @@ export function construirRed(escena, D, cota) {
     const [c2, g2] = conductoresDer();
     sC.geometry.dispose(); sC.geometry = segmentos(c2, MAT.conductor).geometry; sG.geometry.dispose(); sG.geometry = segmentos(g2, MAT.guarda).geometry;
     sDesp.geometry.dispose(); sDesp.geometry = segmentos(vanosDespues([]), MAT.conductor).geometry;
+    const enUso = new Set(); torresDer.forEach((T) => [T.ma, T.mi, ...T.mf].forEach((m) => enUso.add(m.geometry))); viejas.forEach((g) => { if (!enUso.has(g)) g.dispose(); });
   }
   // ----- tramos para recorrer la línea (eje en el suelo, progresiva, torres): derivación, L-1123 a Paragsha II y L-1724 a Uchucchacua
   const suelo = (v) => v.clone().setY(cota(...deXZ(v)));
