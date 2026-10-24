@@ -8385,11 +8385,15 @@ function torreAcceso(f){
 const ubicDudosa = f => !!(f.inferida || /GPS lejos/.test(f.origen_ubicacion || ''));
 function evidDe(tt){
   const L = intervDe(tt); if (!L || typeof FOTOS_CAMPO === 'undefined' || !FOTOS_CAMPO.length) return null;
-  const dia = INTERV.fecha, cams = caminosDeTorre(tt);
+  const dia = INTERV.fecha;
   /* v72.46 (18-Oct-26) y v72.47 (19-Oct-26): una foto cuya torre se heredó de las vecinas en el tiempo (f.inferida, GPS congelado) NO cuenta como
      evidencia de la ficha de torre: se muestra en la galería con su chapa «·?» hasta que el usuario la confirme. Lo mismo
      vale para la que se ubicó leyendo la torre del sello porque su coordenada caía lejos de toda torre (GPS congelado). */
-  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && !ubicDudosa(f) && (f.torre === tt || (!f.torre && f.camino && cams.has(f.camino))));
+  /* v72.59 (24-Oct-26, ficha de T16 del 23-Oct): una foto de camino cuenta solo para la torre a la que la asocia su tramo (f.tacc, la misma
+     regla de la galería), no para todas las que sirve ese camino. Antes las 3 fotos del C10 tomadas junto a T19–T20 salían en T14, T16 y T18
+     como «3 fotos de otra fase ese día», aunque estaban a más de 1 km. */
+  const tAcc = f => f.tacc !== undefined ? f.tacc : torreAcceso(f);
+  const delDia = FOTOS_CAMPO.filter(f => f.fecha === dia && !ubicDudosa(f) && (f.torre === tt || (!f.torre && f.camino && tAcc(f) === tt)));
   const acts = L.map(x => {
     const fs = EVID_FASE[x.act]; if (!fs) return { act: x.act, pct: x.pct, n: null, fotos: [] };
     const m = delDia.filter(f => fs.includes(f.fase) && (f.torre === tt || x.act === 'Caminos'));
