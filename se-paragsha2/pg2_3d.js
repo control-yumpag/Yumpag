@@ -71,6 +71,9 @@ export const BAHIAS = [
   { k: 'l1146', n: 5, X: 172, lado: -1, tipo: 'linea', titulo: 'Bahía [5] L-1146 · SE Milpo', dest: 'L-1146 → SE Milpo',
     eq: { sa: 'SA-4685', tc: 'TC-4220', int: 'IN-4310', sl: 'SL-4687', st: 'ST-4504', tt: 'TT-4526', pr: 'PR-4535 / PR-4537' } },
 ];
+export const L_ANCLAJE = 2.5;   // cadena de anclaje en el pórtico (15 U120B × 146 mm + herrajes ≈ 2,5 m)
+/** extremo de la cadena de anclaje de cada fase de la bahía [2] L-1123 en el pórtico (local X, Y, h): aquí empalma la línea (BIM general) */
+export const SALIDA_L1123 = () => { const b = BAHIAS.find((x) => x.k === 'l1123'); return [-1, 0, 1].map((i) => ({ X: b.X + i * SEP, Y: YB + b.lado * (D.g - 0.4 + L_ANCLAJE), h: HV_SAL - 0.05 })); };
 // posiciones a lo largo de la bahía (m desde el eje de la barra) — referenciales
 const D = { sa: 5.0, tc: 9.0, int: 13.0, sl: 17.5, tt: 21.5, pr: 25.0, g: 28.5 };
 const DA = { sa: 5.0, int: 11.0, tt: 17.0, pr: 21.0, g: 28.5 }; // bahía del autotransformador
@@ -354,9 +357,12 @@ function patio138(escena) {
       for (const q of pasos) { if (q === null) { prev = null; continue; } if (prev) gCond.add(bajada(prev, q, 0.35)); prev = q; }
       const anc = p3(x, Y('g') - s * 0.4, HV_SAL - 0.05);
       gCond.add(bajada(prev, anc, 0.9));
-      if (b.tipo === 'linea') { // vano de salida, cortado a 8 m (trayecto no identificado)
-        const a = anc.clone().add(new THREE.Vector3(0, 0, -s * 1.7)); gSal.add(cadena(anc.clone().add(new THREE.Vector3(0, 0, -s * 0.8)), a, M.aisladorGris));
-        gSal.add(catenaria(a, a.clone().add(new THREE.Vector3(0, -0.8, -s * 8)), 0.25, 0.013, M.fantasma, 12));
+      if (b.tipo === 'linea') { // cadena de anclaje hacia la línea y vano de salida cortado a 8 m (trayecto no identificado)
+        // 24-Oct-26: cadena de L_ANCLAJE desde la viga (antes 1,7 m); el BIM general toma su extremo (SALIDA_L1123) para empalmar la L-1123
+        const a = anc.clone().add(new THREE.Vector3(0, 0, -s * L_ANCLAJE)); const cad = cadena(anc.clone().add(new THREE.Vector3(0, 0, -s * 0.3)), a, M.aisladorGris);
+        cad.userData = { bahia: b.k, pieza: 'cadena' }; gSal.add(cad);
+        const stub = catenaria(a, a.clone().add(new THREE.Vector3(0, -0.8, -s * 8)), 0.25, 0.013, M.fantasma, 12);
+        stub.userData = { bahia: b.k, pieza: 'stub' }; gSal.add(stub);   // el BIM general oculta el de la L-1123 y dibuja el vano real
       }
     }
     if (b.n) ETQ.push({ n: b.n, key: b.k, X: X + 6.2, Y: Y('g'), h: 12.6 });

@@ -44,3 +44,6 @@ python3 -I gen/bases_build.py <OC703_1.dxf> > bases.json     # posiciones y huel
   `terreno.json` relativo al módulo (con aviso si falla); capa «Red de tierra» con casilla; sombras solo al cambiar lo
   visible; buscador que no pierde letras; celular en horizontal con vista de celular; OE-622, OE-626, OE-619 y OE-609
   en «Planos y fuentes».
+- 24-Oct-26 · llegada de la LT con criterio de ingeniería (pedido del usuario: «las conexiones están en el aire, y los aisladores…
+  tener criterio para dibujar»): cadenas de anclaje horizontales de 2,5 m en la T23 y en la viga del pórtico, en la dirección del
+  vano, con el puente al pararrayos; la cota de la T23 puede fijarla el BIM general (`AJUSTE_T23`), que reutiliza esta llegada.

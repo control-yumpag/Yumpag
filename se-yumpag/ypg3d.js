@@ -28,6 +28,9 @@ export const BAHIAS = [
 ];
 // Torre T23 de la LT (tablero de la LT, lat −10,591422 lon −76,646702 → UTM 319 841,47 / 8 828 720,68)
 export const T23 = { X: 59.09, Y: -22.26 };
+// 24-Oct-26: el BIM general fija la cota de la T23 (la del KMZ del tablero) para que la llegada empalme con su torre; en esta página queda null
+export const AJUSTE_T23 = { z: null };
+export const L_ANCLAJE = 2.5;   // cadena de anclaje (15 U120B × 146 mm + herrajes ≈ 2,5 m): en el pórtico y en la T23 (torre terminal)
 
 // ------------------------------------------------------------------ registro de elementos
 export const REG = [];
@@ -659,7 +662,7 @@ function conductores(escena) {
 // ---------- llegada de la LT: T23 (silueta referencial) y vanos a la viga V1 sur (OE-604)
 function llegadaLinea(escena) {
   const g = new THREE.Group(), gT = new THREE.Group();
-  const zT = alturaTerreno(T23.X, T23.Y);
+  const zT = AJUSTE_T23.z ?? alturaTerreno(T23.X, T23.Y);
   // orientación: crucetas perpendiculares a la bisectriz entre el vano que llega de la T22 y el que sale al pórtico
   const dIn = new THREE.Vector2(T23.X - 250.9, T23.Y - 60.6).normalize();       // de la T22 a la T23 (tablero LT)
   const dOut = new THREE.Vector2(36 - T23.X, 13.5 - T23.Y).normalize();         // de la T23 al pórtico
@@ -673,17 +676,20 @@ function llegadaLinea(escena) {
     const a = p3(T23.X, T23.Y, zT + hF[ph]); const b = p3(T23.X + s * perp.x * brazo, T23.Y + s * perp.y * brazo, zT + hF[ph]);
     gT.add(barra(a, b, 0.09, M.fantasma));
   }
-  escena.add(reg(gT, 'linea', F.t23));
+  gT.userData.t23 = true; escena.add(reg(gT, 'linea', F.t23));   // userData.t23: el BIM general oculta solo la silueta (su T23 es la del tablero)
   ROT.push({ texto: 'Torre T23 (LT 138 kV)', X: T23.X, Y: T23.Y, h: zT + hG + 1.5, capa: 'linea' });
   // vanos: L-1724 (bahía eje 3-4) a un lado y L-1123 (bahía eje 4-5) al otro; fases R, S, T
   const lado = { b2: 1, b3: -1 };
   for (const b of BAHIAS.filter((x) => x.tipo === 'linea')) for (const [ph, dx] of FASES) {
     const X = b.x0 + dx;
     const pa = p3(X, COL_Y[0] - 0.5, H_SOP + 16.0);
-    const pt = p3(T23.X + lado[b.k] * perp.x * (brazo - 0.2), T23.Y + lado[b.k] * perp.y * (brazo - 0.2), zT + hF[ph] - 1.6);
-    const dir = pt.clone().sub(pa); dir.y = 0; dir.normalize();
-    const a = amarre(g, pa, dir, 1.9);
-    g.add(cadena(pt.clone().add(new THREE.Vector3(0, 1.6, 0)), pt, M.aisladorGris));
+    // 24-Oct-26: la T23 es torre terminal: la cadena es de anclaje, horizontal, desde la punta de la cruceta hacia el pórtico
+    // (antes colgaba vertical 1,6 m como una de suspensión); en el pórtico, la cadena de anclaje mira hacia la torre
+    const tip = p3(T23.X + lado[b.k] * perp.x * brazo, T23.Y + lado[b.k] * perp.y * brazo, zT + hF[ph]);
+    const dir = tip.clone().sub(pa); dir.y = 0; dir.normalize();
+    const a = amarre(g, pa, dir, L_ANCLAJE);
+    const pt = tip.clone().addScaledVector(dir, -L_ANCLAJE);
+    g.add(cadena(tip, pt, M.aisladorGris));
     g.add(catenaria(a, pt, 1.1, 0.0105, M.lineaAAAC, 40)); // AAAC 253 mm², Ø ≈ 20,7 mm
     // bajada al pararrayos (B-B): desde el conductor, fuera de la viga
     const P = POS[b.k + ph];

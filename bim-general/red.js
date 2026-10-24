@@ -25,7 +25,10 @@ export const MAT = {
   cerco: new THREE.MeshLambertMaterial({ color: 0x5f6a70, transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
   conductor: new THREE.LineBasicMaterial({ color: 0x40464c }),
   guarda: new THREE.LineBasicMaterial({ color: 0x6b7278 }),
-  conductorFant: new THREE.LineBasicMaterial({ color: 0x8a949b, transparent: true, opacity: 0.35 }),
+  conductorFant: new THREE.LineBasicMaterial({ color: 0x8a949b, transparent: true, opacity: 0.45 }),
+  // 24-Oct-26: cadenas aún no instaladas (torre sin montaje): translúcidas como la torre proyectada, no invisibles (el conductor
+  // quedaba «en el aire» 1,5 m bajo la cruceta)
+  porcelanaFant: new THREE.MeshStandardMaterial({ color: 0xb9c3c9, metalness: 0.1, roughness: 0.5, transparent: true, opacity: 0.45, depthWrite: false }),
   // torre proyectada (aún sin montaje): acero galvanizado translúcido, como en el BIM 4D de la LT
   proyectada: new THREE.MeshStandardMaterial({ color: 0xb9c3c9, metalness: 0.45, roughness: 0.45, transparent: true, opacity: 0.5, depthWrite: false }),
   fund: { none: new THREE.MeshLambertMaterial({ color: 0x9aa3ab }), prog: new THREE.MeshLambertMaterial({ color: 0xb1cc3d }), fin: new THREE.MeshLambertMaterial({ color: 0x22a04b }) },
@@ -43,7 +46,10 @@ function cil(out, a, b, r) {
   const g = new THREE.CylinderGeometry(r, r, L, 7); g.deleteAttribute('uv'); g.translate(0, L / 2, 0);
   g.applyQuaternion(_q.setFromUnitVectors(UP, d.normalize())); g.translate(a.x, a.y, a.z); out.push(g);
 }
-/** F: {yTr, s0, sR, nodos[], brazos:[{y, l, vol, lados}], punta:{y, l, vol}|null, yTop, wP, wD, anclaje, hCad} */
+/** F: {yTr, s0, sR, nodos[], brazos:[{y, l, vol, lados}], punta:{y, l, vol}|null, yTop, wP, wD, anclaje, hCad}
+    anclaje: false = suspensión (cadena vertical bajo la punta) · true = anclaje con cadenas a lo largo de ±z local ·
+    {in, out} = anclaje con cadenas en la dirección real de cada vano (vectores horizontales unitarios en el marco local;
+    24-Oct-26: la T23 es terminal con ≈ 80° de deflexión) y un puente (jumper) que rodea la punta de la cruceta. */
 function celosia(F) {
   const semi = (y) => (y >= F.yTr ? F.sR : F.sR + ((F.s0 - F.sR) * (F.yTr - y)) / F.yTr);
   const C = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
@@ -59,12 +65,17 @@ function celosia(F) {
     for (const zz of [-1, 1]) { bar(acero, new THREE.Vector3(lado * s, y, zz * s), tip, F.wD * 1.25); bar(acero, new THREE.Vector3(lado * semi(yv), yv, zz * semi(yv)), tip, F.wD); }
     return tip;
   };
-  const fases = []; // {k, lado, atrás, adelante} en coordenadas locales (z local = sentido de la línea)
+  const fases = [], puentes = []; // {k, lado, atrás, adelante} en coordenadas locales (z local = sentido de la línea)
   F.brazos.forEach((b, k) => (b.lados || [-1, 1]).forEach((lado) => {
     const tip = cruceta(b.y, b.l, b.vol, lado);
     if (F.anclaje) {
-      const at = tip.clone().add(new THREE.Vector3(0, 0, -F.hCad)), ad = tip.clone().add(new THREE.Vector3(0, 0, F.hCad));
+      const dIn = F.anclaje.in || new THREE.Vector3(0, 0, 1), dOut = F.anclaje.out || new THREE.Vector3(0, 0, 1);
+      const at = tip.clone().addScaledVector(dIn, -F.hCad), ad = tip.clone().addScaledVector(dOut, F.hCad);
       cil(aisl, tip, at, 0.13); cil(aisl, tip, ad, 0.13); fases.push({ k, lado, atras: at, adelante: ad });
+      // puente entre las dos cadenas: baja ≈ 1,6 m bajo la punta y pasa por fuera de la cruceta
+      const fuera = new THREE.Vector3(lado, 0, 0), bajo = tip.clone().addScaledVector(fuera, 0.9).add(new THREE.Vector3(0, -1.6, 0));
+      const pts = []; for (let s = 0; s <= 8; s++) { const u = s / 8; pts.push(at.clone().multiplyScalar((1 - u) * (1 - u)).addScaledVector(bajo, 2 * u * (1 - u)).addScaledVector(ad, u * u)); }
+      puentes.push(pts);
     } else {
       const p = tip.clone().add(new THREE.Vector3(0, -F.hCad, 0)); cil(aisl, tip, p, 0.13); fases.push({ k, lado, atras: p, adelante: p });
     }
@@ -77,7 +88,7 @@ function celosia(F) {
     const h = semi(0), z = new THREE.BoxGeometry(2.4, 0.6, 2.4), pd = new THREE.BoxGeometry(0.6, 1.3, 0.6);
     z.translate(sx * h, -1.3, sz * h); pd.translate(sx * h, -0.35, sz * h); [z, pd].forEach((g) => g.deleteAttribute('uv')); return mergeGeometries([z, pd]);
   });
-  return { acero: mergeGeometries(acero), aisl: aisl.length ? mergeGeometries(aisl) : null, fund, fases, guardas, alto: F.yTop };
+  return { acero: mergeGeometries(acero), aisl: aisl.length ? mergeGeometries(aisl) : null, fund, fases, guardas, puentes, alto: F.yTop };
 }
 
 // familia TS2 (plano ME_TS2-Rev.B, la misma que dibuja el tablero de la LT; y de plano − 0,83 = y de escena) con la extensión
@@ -95,11 +106,12 @@ export function torreTS2(ext) {
   const t = celosia(F); _cacheT.set(k, t); return t;
 }
 // T23: fases a 16,30 / 21,75 / 27,20 m y cable de guarda a 32,50 m sobre su base, brazo 3,6 m (OE-604, como en el modelo de la SE Yumpag)
-export function torreT23() {
-  if (_cacheT.has('T23')) return _cacheT.get('T23');
+export function torreT23(dirs = null) {
+  const kc = 'T23' + (dirs ? ':' + dirs.in.x.toFixed(3) + ',' + dirs.in.z.toFixed(3) + ',' + dirs.out.x.toFixed(3) + ',' + dirs.out.z.toFixed(3) : '');
+  if (_cacheT.has(kc)) return _cacheT.get(kc);
   const F = { yTr: 15.5, s0: 3.0, sR: 0.8, nodos: [0, 5.2, 10.4, 15.5, 21.75, 28.5], yTop: 32.5, wP: 0.17, wD: 0.08,
-    brazos: [{ y: 16.3, l: 2.8, vol: 1.0 }, { y: 21.75, l: 2.8, vol: 1.0 }, { y: 27.2, l: 2.8, vol: 1.0 }], punta: null, anclaje: true, hCad: 2.5 };
-  const t = celosia(F); _cacheT.set('T23', t); return t;
+    brazos: [{ y: 16.3, l: 2.8, vol: 1.0 }, { y: 21.75, l: 2.8, vol: 1.0 }, { y: 27.2, l: 2.8, vol: 1.0 }], punta: null, anclaje: dirs || true, hCad: 2.5 };   // cadena de anclaje 2,5 m (15 U120B + herrajes), como en el modelo de la SE Yumpag
+  const t = celosia(F); _cacheT.set(kc, t); return t;
 }
 // estructura existente de la L-1123 (1997): sin planos, silueta referencial de simple terna (fases en triángulo y un cable de guarda)
 export function torreExistente() {
@@ -195,6 +207,8 @@ export function construirRed(escena, D, cota) {
   const FICHAS = {}; const ficha = (k, f) => ((FICHAS[k] = { key: k, ...f }), FICHAS[k]);
   const ROT = []; // {texto, pos, clase, lejos:[min,max], ficha}
   const reg = (o, f) => { o.userData.ficha = f; return o; };
+  const deXZ = (v) => [v.x + ORIGEN_E, -v.z + ORIGEN_N];   // escena → UTM
+  let AV = null, ESC = 'despues';   // avance del tablero (aplicar4D) y escenario; se declaran aquí porque los usan funciones que corren al armar
   const T = D.derivacion.torres, V = D.derivacion.vertices;
   const yLin = 'Volumen II Ingeniería del Proyecto §2', kmz = 'KMZ Caminos MDIA 2_Final';
 
@@ -210,7 +224,10 @@ export function construirRed(escena, D, cota) {
     const p = pos[i], ant = i ? pos[i - 1] : null, sig = i < T.length - 1 ? pos[i + 1] : porticoC;
     const dIn = ant ? new THREE.Vector3(p.x - ant.x, 0, p.z - ant.z).normalize() : null, dOut = new THREE.Vector3(sig.x - p.x, 0, sig.z - p.z).normalize();
     const bis = dIn ? dIn.clone().add(dOut).normalize() : dOut; const ang = Math.atan2(bis.x, bis.z);
-    const tp = leerTipo(t.tp); const geo = t.t === 'T23' ? torreT23() : torreTS2(tp.ext);
+    const tp = leerTipo(t.tp);
+    // T23 (terminal, ≈ 80° de deflexión): cadenas de anclaje hacia la T22 y hacia el pórtico, en el marco local de la torre (z = bisectriz)
+    const local = (v) => v.clone().applyAxisAngle(UP, -ang).setY(0).normalize();
+    const geo = t.t === 'T23' ? torreT23({ in: local(dIn), out: local(dOut) }) : torreTS2(tp.ext);
     const vtx = V.find((v) => dist2(v.utm, t.utm) < 6);
     const f = ficha('der_' + t.t, {
       tipo: 'torre', grupo: 'Torres de la derivación', nombre: `Torre ${t.t}`, origen: 'D',
@@ -228,7 +245,7 @@ export function construirRed(escena, D, cota) {
       enlaces: [['Abrir en el BIM 4D de la LT', `../tablero.html#torre=${t.t}`], ['Detalle de cimentación (4D)', `../tablero.html#torre=${t.t}&detalle`]],
     });
     const grupo = new THREE.Group(); grupo.position.copy(p); grupo.rotation.y = ang;
-    const ma = new THREE.Mesh(geo.acero, MAT.proyectada), mi = new THREE.Mesh(geo.aisl || new THREE.BufferGeometry(), MAT.porcelana);
+    const ma = new THREE.Mesh(geo.acero, MAT.proyectada), mi = new THREE.Mesh(geo.aisl || new THREE.BufferGeometry(), MAT.porcelanaFant);
     const mf = (geo.fund || [null, null, null, null]).map((g) => new THREE.Mesh(g || new THREE.BufferGeometry(), MAT.fund.none));
     grupo.add(ma, mi, ...mf); [ma, mi, ...mf].forEach((m) => reg(m, f));
     grupo.userData = { ficha: f }; G.derivacion.add(grupo);
@@ -240,19 +257,32 @@ export function construirRed(escena, D, cota) {
 
   // ----- derivación: conductores (lado −1 = derecha al avanzar de la T1 a la SE = L-1123; lado +1 = izquierda = L-1724)
   const T23 = torresDer[torresDer.length - 1], DX = { 0: 7, 1: 10, 2: 4 };
+  // 24-Oct-26 (pedido del usuario: «las conexiones están en el aire»): un vano se dibuja sólido solo cuando sus dos torres tienen
+  // montaje (ph.elm > 0 en el tablero); si no, proyectado (translúcido), igual que la torre. Nada se tiende antes de armar la torre.
+  const montada = (T) => { const rec = AV && AV.t[T.t.t]; return !!(rec && rec.ph && rec.ph.elm > 0); };
+  // último vano a la SE Yumpag (respaldo mientras no está cargado el modelo de la SE, que trae su propia llegada del OE-604: cadenas
+  // de anclaje en el pórtico, bajadas a los pararrayos y cable de guarda): cadena de anclaje de 2,5 m en la viga V1 sur (fila B, Y 13,0)
+  const L_ANCL = 2.5;
   function conductoresDer() {
-    const cond = [], guar = [];
+    const out = { cond: [], condF: [], guar: [], guarF: [], ult: [], ultG: [] };
     for (let i = 0; i < torresDer.length - 1; i++) {
-      const A = torresDer[i], B = torresDer[i + 1];
-      for (const fa of A.geo.fases) { const fb = B.geo.fases.find((x) => x.k === fa.k && x.lado === fa.lado); if (fb) vano(cond, A.mundo(fa.adelante), B.mundo(fb.atras), 1500); }
-      for (let g = 0; g < 2; g++) vano(guar, A.mundo(A.geo.guardas[g]), B.mundo(B.geo.guardas[g]), 1800);
+      const A = torresDer[i], B = torresDer[i + 1], ok = montada(A) && montada(B), c = ok ? out.cond : out.condF, g = ok ? out.guar : out.guarF;
+      for (const fa of A.geo.fases) { const fb = B.geo.fases.find((x) => x.k === fa.k && x.lado === fa.lado); if (fb) vano(c, A.mundo(fa.adelante), B.mundo(fb.atras), 1500); }
+      for (let k = 0; k < 2; k++) vano(g, A.mundo(A.geo.guardas[k]), B.mundo(B.geo.guardas[k]), 1800);
     }
+    // puentes (jumpers) de la torre terminal entre sus dos cadenas de anclaje
+    for (const T of torresDer) for (const pts of T.geo.puentes || []) { const c = montada(T) ? out.cond : out.condF; for (let s = 0; s + 1 < pts.length; s++) { const a = T.mundo(pts[s]), b = T.mundo(pts[s + 1]); c.push(a.x, a.y, a.z, b.x, b.y, b.z); } }
     // último vano al pórtico 138 kV de la SE Yumpag: bahía L-1724 (eje 3–4) a la izquierda, L-1123 (eje 4–5) a la derecha (OE-605)
-    for (const fa of T23.geo.fases) vano(cond, T23.mundo(fa.adelante), porticoF((fa.lado > 0 ? 22 : 36) + DX[fa.k], 13.0, 16.2), 900, 12);
-    for (const [g, x] of [[0, 22], [1, 36]]) vano(guar, T23.mundo(T23.geo.guardas[g]), porticoF(x, 13.5, 19.15), 900, 12);
-    return [cond, guar];
+    for (const fa of T23.geo.fases) {
+      const viga = porticoF((fa.lado > 0 ? 22 : 36) + DX[fa.k], 13.0, 16.2), tip = T23.mundo(fa.adelante);
+      const dir = new THREE.Vector3().subVectors(tip, viga).setY(0).normalize(), fin = viga.clone().addScaledVector(dir, L_ANCL);
+      out.ult.push(viga.x, viga.y, viga.z, fin.x, fin.y, fin.z);   // la cadena de anclaje del pórtico, como línea (el modelo de la SE la dibuja en 3D)
+      vano(out.ult, tip, fin, 600, 12);
+    }
+    for (const [g, x] of [[0, 22], [1, 36]]) vano(out.ultG, T23.mundo(T23.geo.guardas[g]), porticoF(x, 13.5, 19.15), 900, 12);
+    return out;
   }
-  const [cond, guar] = conductoresDer();
+  let CD = conductoresDer();
   const fLinea = ficha('derivacion', {
     tipo: 'linea', grupo: 'Líneas', nombre: 'LT 138 kV Derivación L-1123 a SE Yumpag', origen: 'D', sub: 'doble terna · 23 torres de celosía · 9 vértices',
     datos: [
@@ -260,13 +290,19 @@ export function construirRed(escena, D, cota) {
       ['Longitud', '8,30 km (cuadro de vértices: 8 299,30 m al pórtico)', yLin], ['Longitud por las torres del KMZ', `${fmt(largoDer / 1000, 3)} km`, 'calculada'],
       ['Conductor', 'AAAC 500 MCM (253 mm²)', yLin], ['Cables de guarda', 'dos: A°G° EHS y OPGW con fibra óptica', yLin],
       ['Aisladores', 'estándar IEC U120B 255 × 146 mm · 14 (suspensión) – 15 (anclaje)', yLin], ['Potencia', '103,975 MVA', yLin],
+      ['En el 3D', 'cadenas de suspensión de la torre del tablero (1,5 m); la T23 terminal lleva cadenas de anclaje de 2,5 m hacia la T22 y hacia el pórtico con su puente; torre, cadenas y conductores van translúcidos («proyectado») hasta que el tablero registre montaje (ph.elm) en sus dos torres', 'representación 4D (24-Oct-26)'],
       ['Servidumbre', '20 m (10 m a cada lado del eje)', yLin], ['Altitud', '4 422 m (inicio) · 4 662 m (máxima) · 4 490 m (final)', yLin],
       ['Circuitos', 'a la derecha (sentido T1 → SE) la L-1123 a Paragsha II; a la izquierda la L-1724 a Uchucchacua', 'deducido de la llegada al pórtico (OE-605: bahías L-1724 eje 3–4 y L-1123 eje 4–5) · por confirmar con los planos de la LT'],
     ],
     nota: 'Recorrido (Ingeniería del Proyecto §1): nace en el vano T107–T108, sube al V1 y a la T5, baja al V2; entre el V2 y el V5 va paralela a la línea existente y cruza la carretera Oyón – Yanahuanca (V2–V4) y el límite entre las comunidades de Pomayarus y Huachos; del V7 al V9 está dentro de la propiedad de la UM Yumpag y en el V9 gira 83° para entrar a la SE. Flechas de los vanos: referenciales.',
   });
-  const sC = segmentos(cond, MAT.conductor), sG = segmentos(guar, MAT.guarda); reg(sC, fLinea); reg(sG, fLinea); G.conductores.add(sC, sG);
-  G.derCond = [sC, sG];
+  const sC = segmentos(CD.cond, MAT.conductor), sG = segmentos(CD.guar, MAT.guarda), sCF = segmentos(CD.condF, MAT.conductorFant), sGF = segmentos(CD.guarF, MAT.conductorFant);
+  const sUlt = segmentos(CD.ult, MAT.conductorFant), sUltG = segmentos(CD.ultG, MAT.conductorFant);
+  [sC, sG, sCF, sGF, sUlt, sUltG].forEach((s) => { reg(s, fLinea); G.conductores.add(s); });
+  G.derCond = [sC, sG, sCF, sGF, sUlt, sUltG];
+  const rearmarConductores = () => { CD = conductoresDer(); [[sC, CD.cond], [sG, CD.guar], [sCF, CD.condF], [sGF, CD.guarF], [sUlt, CD.ult], [sUltG, CD.ultG]].forEach(([s, arr]) => { s.geometry.dispose(); s.geometry = segmentos(arr, s.material).geometry; }); };
+  /** el modelo 3D de la SE Yumpag dibuja la llegada (OE-604): se apaga el vano de respaldo mientras ese modelo está a la vista */
+  const ultimoVano = (v) => { sUlt.visible = v; sUltG.visible = v; };
 
   // ----- vértices del cuadro N.° 1 (marcas en el suelo)
   for (const v of V) {
@@ -357,10 +393,13 @@ export function construirRed(escena, D, cota) {
   // del modelo de la SE (pg2_3d.js: bahía en X 137, viga en Y = 48,5 + 28,5, fases cada 2,6 m, amarre a 10,45 m y 1,3 m afuera de la
   // viga). Si el modelo de la SE cambia esas medidas, cambiarlas aquí. El último tramo no está levantado: conductores discontinuos.
   const pgA = aff(D.se.paragsha2.modelo), cPg = D.se.paragsha2.cota;
-  const B2 = { X: 137, Yv: 77, Ya: 78.3, h: 10.45, sep: 2.6 };
+  // viga del pórtico de la bahía en Y 77 (YB 48,5 + D.g 28,5); anclaje en la viga Y 76,6 y extremo de la cadena de anclaje de 2,5 m en Y 79,1
+  // (pg2_3d.js: SALIDA_L1123; si cambia allí, cambiar aquí) · fases cada 2,6 m · amarre a HV_SAL − 0,05 = 10,45 m
+  const B2 = { X: 137, Yv: 77, Yanc: 76.6, Ya: 79.1, h: 10.45, sep: 2.6 };
   const ultimoEx = pex.length - 1;
   const ejeX = new THREE.Vector3(D.se.paragsha2.modelo.ux[0], 0, -D.se.paragsha2.modelo.ux[1]).normalize();
-  const portB2 = [-1, 0, 1].map((i) => aEsc(...pgA(B2.X + i * B2.sep, B2.Ya), cPg + B2.h));
+  const portB2 = [-1, 0, 1].map((i) => aEsc(...pgA(B2.X + i * B2.sep, B2.Ya), cPg + B2.h));   // extremos de las cadenas de anclaje
+  const vigaB2 = [-1, 0, 1].map((i) => aEsc(...pgA(B2.X + i * B2.sep, B2.Yanc), cPg + B2.h));  // anclaje en la viga
   const fasesUlt = [...geoEx.fases].map((f) => fase(ultimoEx, f, false)).sort((a, b) => a.dot(ejeX) - b.dot(ejeX));   // sin cruces: por posición a lo largo de la viga
   const dUlt = dist2(nodos[ultimoEx], pgA(B2.X, B2.Ya));
   const fLlegada = ficha('llegada_pg2', {
@@ -376,15 +415,21 @@ export function construirRed(escena, D, cota) {
       ['Integración', 'tablero de protección primaria L-1123 (relé principal y de respaldo) por IEC 61850 sobre PRP al SAS y al centro de control de REP (multiplexor FOX 615)', 'plano TE-405'],
       ['Etapa ES0', 'energización de la L-1123 en la SE Paragsha II 138 kV', 'EPO INEL2601, tabla 14'],
       ['Tensión de operación', '128 kV en la barra de 138 kV', 'DE COES 008-2019'],
-      ['Último tramo', `OSM termina en la estructura ${fUTM(nodos[ultimoEx])}, a ${fmt(dUlt, 0)} m del pórtico de la bahía: ese tramo no está levantado y va discontinuo`, 'OpenStreetMap · calculado'],
+      ['Último tramo', `OSM termina en la estructura ${fUTM(nodos[ultimoEx])}, a ${fmt(dUlt, 0)} m del pórtico de la bahía: se dibuja como un vano único hasta las cadenas de anclaje del pórtico (trazo estimado; la flecha se limita para despejar el terreno)`, 'OpenStreetMap · calculado'],
       ['Posición de la bahía', 'estimada sobre la imagen satelital (no hay plano de disposición de Paragsha II)', 'SE Paragsha II (modelo 3D)'],
     ],
-    nota: 'Documentado: la bahía, sus equipos y lo que cambia con el proyecto. Estimado: dónde está la bahía dentro del patio y el trazo de los últimos metros (el discontinuo solo indica a qué bahía llega la línea). Se corrigen con el plano de disposición del patio 138 kV de REP y la planta y perfil de la llegada de la L-1123.',
+    nota: 'Documentado: la bahía, sus equipos y lo que cambia con el proyecto. Estimado: dónde está la bahía dentro del patio y el trazo de los últimos metros (se dibuja un vano único desde la última estructura levantada hasta las cadenas del pórtico). Se corrigen con el plano de disposición del patio 138 kV de REP y la planta y perfil de la llegada de la L-1123.',
     foco: aEsc(...pgA(B2.X - 40, B2.Ya + 15), cPg + 8), radio: 170 });
-  const cLleg = []; fasesUlt.forEach((a, i) => vano(cLleg, a, portB2[i], 900));
-  { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(cLleg, 3));
-    const sL = new THREE.LineSegments(g, new THREE.LineDashedMaterial({ color: COL.l1123, dashSize: 4, gapSize: 3, transparent: true, opacity: 0.95 }));
-    sL.computeLineDistances(); g.computeBoundingSphere(); reg(sL, fLlegada); G.conductores.add(sL); }
+  // 24-Oct-26 (pedido del usuario: «esa conexión mal hecha en Paragsha»): vano real (catenaria) de las tres fases y del cable de guarda
+  // desde la última estructura hasta las cadenas de anclaje del pórtico, con la flecha limitada para no tocar el terreno; la cadena del
+  // pórtico la dibuja el modelo de la SE (pg2_3d.js), aquí va como segmento mientras ese modelo no está cargado
+  const cLleg = [], gLleg = [];
+  const despeje = (a, b, C) => { let min = 1e9; for (let s = 1; s < 24; s++) { const u = s / 24, p = new THREE.Vector3().lerpVectors(a, b, u); const L = Math.hypot(b.x - a.x, b.z - a.z); p.y -= 4 * (L * L / (8 * C)) * u * (1 - u); min = Math.min(min, p.y - cota(...deXZ(p))); } return min; };
+  const CLleg = (() => { let C = 1400; for (let n = 0; n < 8 && despeje(fasesUlt[0], portB2[0], C) < 7; n++) C *= 1.5; return C; })();
+  fasesUlt.forEach((a, i) => { vano(cLleg, a, portB2[i], CLleg, 36); cLleg.push(portB2[i].x, portB2[i].y, portB2[i].z, vigaB2[i].x, vigaB2[i].y, vigaB2[i].z); });
+  vano(gLleg, guardaEx(ultimoEx), aEsc(...pgA(B2.X, B2.Yv), cPg + 12.0), CLleg * 1.2, 36);   // cable de guarda a la punta del pórtico (12 m: hc del pórtico de salida)
+  const sL = segmentos(cLleg, MAT.conductor), sLG = segmentos(gLleg, MAT.guarda); [sL, sLG].forEach((s) => { reg(s, fLlegada); G.conductores.add(s); });
+  const ultimoVanoPg = (v) => { sL.visible = v; sLG.visible = v; }; G.pgLleg = [sL, sLG];   // el modelo de la SE Paragsha II no trae este vano: se deja siempre; la cadena sí la trae (segmento corto redundante, admisible)
   ROT.push({ texto: 'Bahía [2] L-1123', sub: 'CONENHUA · llega aquí (posición estimada)', pos: aEsc(...pgA(B2.X, B2.Yv), cPg + 20), clase: 'rln l1123', lejos: [0, 1500], ficha: fLlegada });
 
   // ----- subestaciones (huella, cerco y rótulo; el modelo 3D detallado se carga al acercarse: ver index.html)
@@ -457,9 +502,9 @@ export function construirRed(escena, D, cota) {
   const rango = (a, b) => { const r = []; if (a <= b) for (let i = a; i <= b; i++) r.push(hE(i)); else for (let i = a; i >= b; i--) r.push(hE(i)); return r; };
   const ultimo = pex.length - 1;
   const TR = {
-    antes: [linea2(rango(0, ultimo), COL.antes, 3.2), linea2([hE(ultimo), salidaPg], COL.antes, 3.2, { discontinua: true }), linea2(derPts, COL.der, 2.6, { discontinua: true, opacidad: 0.9 })],
+    antes: [linea2(rango(0, ultimo), COL.antes, 3.2), linea2(derPts, COL.der, 2.6, { discontinua: true, opacidad: 0.9 })],
     despues: [
-      linea2([...rango(ultimo, idx.T106), hT(0)], COL.l1123, 3.4), linea2([hE(ultimo), salidaPg], COL.l1123, 3.4, { discontinua: true }),
+      linea2([...rango(ultimo, idx.T106), hT(0)], COL.l1123, 3.4),
       linea2([...rango(0, idx.T109), hT(0)], COL.l1724, 3.4),
       linea2(desplazar(derPts, -9), COL.l1123, 3.4), linea2(desplazar(derPts, 9), COL.l1724, 3.4),
     ],
@@ -500,7 +545,6 @@ export function construirRed(escena, D, cota) {
 
   // ----- estado de obra de cada torre (último corte del tablero de la LT): cimentación por pata y montaje
   const ACTS = ['Excavación', 'Solado', 'Stub', 'Acero', 'Encofrado', 'Concreto'];
-  let AV = null, ESC = 'despues';
   const estadoPata = (rec, pata) => {
     const pr = rec && rec.patasReal; if (!pr) return null;
     const v = ACTS.map((a) => (pr[a] ? pr[a][pata] : null)).filter((x) => typeof x === 'number');
@@ -510,11 +554,11 @@ export function construirRed(escena, D, cota) {
     const antes = ESC === 'antes';
     for (const T of torresDer) {
       const rec = AV && AV.t[T.t.t], montada = rec && rec.ph && rec.ph.elm > 0;
-      T.ma.material = antes ? MAT.fantasma : montada ? MAT.acero : MAT.proyectada; T.mi.visible = !antes && !!montada;
+      T.ma.material = antes ? MAT.fantasma : montada ? MAT.acero : MAT.proyectada; T.mi.visible = !antes; T.mi.material = montada ? MAT.porcelana : MAT.porcelanaFant;
       ['A', 'B', 'C', 'D'].forEach((pt, n) => { const e = estadoPata(rec, pt); T.mf[n].material = antes ? MAT.fantasma : MAT.fund[e ? e.est : 'none']; });
     }
   }
-  function aplicar4D(av) { AV = av; pintarTorres(); }
+  function aplicar4D(av) { AV = av; pintarTorres(); rearmarConductores(); }
   // ----- la torre paramétrica del BIM 4D de la LT reemplaza a la de aquí (misma familia y cotas): mallas, enganches y vanos
   function usarTorresTablero(TB) {
     const viejas = new Set(); torresDer.forEach((T) => [T.ma, T.mi, ...T.mf].forEach((m) => m.geometry && viejas.add(m.geometry)));
@@ -523,14 +567,12 @@ export function construirRed(escena, D, cota) {
       const g = TB.torre(T.tp.ext); T.geo = g; T.ma.geometry = g.acero; T.mi.geometry = g.aisl; T.mf.forEach((m, n) => (m.geometry = g.fund[n]));
       T.fuenteGeo = `torre paramétrica del BIM 4D de la LT (${g.plano}${TB.version ? ', plantilla ' + TB.version : ''})`;
     }
-    const [c2, g2] = conductoresDer();
-    sC.geometry.dispose(); sC.geometry = segmentos(c2, MAT.conductor).geometry; sG.geometry.dispose(); sG.geometry = segmentos(g2, MAT.guarda).geometry;
+    rearmarConductores();
     sDesp.geometry.dispose(); sDesp.geometry = segmentos(vanosDespues([]), MAT.conductor).geometry;
     const enUso = new Set(); torresDer.forEach((T) => [T.ma, T.mi, ...T.mf].forEach((m) => enUso.add(m.geometry))); viejas.forEach((g) => { if (!enUso.has(g)) g.dispose(); });
   }
   // ----- tramos para recorrer la línea (eje en el suelo, progresiva, torres): derivación, L-1123 a Paragsha II y L-1724 a Uchucchacua
   const suelo = (v) => v.clone().setY(cota(...deXZ(v)));
-  const deXZ = (v) => [v.x + ORIGEN_E, -v.z + ORIGEN_N];
   function tramo(id, nombre, color, puntos, ticks, ini, fin) {
     const pts = puntos.map(suelo), s = [0];
     for (let i = 1; i < pts.length; i++) s.push(s[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
@@ -551,8 +593,8 @@ export function construirRed(escena, D, cota) {
     sAntes.visible = antes; sDesp.visible = !antes;
     for (const k of ['T107', 'T108']) { sueltasM[k][0].material = antes ? MAT.aceroExist : MAT.fantasma; sueltasM[k][1].visible = antes; }
     pintarTorres();
-    G.derCond.forEach((s) => (s.material = antes ? MAT.conductorFant : s === G.derCond[0] ? MAT.conductor : MAT.guarda));
+    sC.material = antes ? MAT.conductorFant : MAT.conductor; sG.material = antes ? MAT.conductorFant : MAT.guarda;
     huellas.yumpag.children.forEach((m) => { m.material = antes ? MAT.fantasma : m === huellas.yumpag.children[0] ? MAT.grava : MAT.cerco; });
   }
-  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, fLlegada, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, estadoPata, ACTS };
+  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, fLlegada, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, ultimoVano, montada, estadoPata, ACTS, CLleg, cotaPg: cPg };
 }

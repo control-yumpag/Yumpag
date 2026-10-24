@@ -41,8 +41,26 @@ Parámetros de la URL: `?esc=antes`, `?vista=orto`, `?tema=dark`; pestañas `#re
   terreno; la plataforma de Paragsha II se ve al cargar su modelo.
 
 ## 24-Oct-26 · llegada de la L-1123 a la SE Paragsha II
-- Conductores discontinuos de la última estructura de OSM al pórtico de la bahía [2] L-1123 (tramo no levantado), rótulo
+- Vano final de la última estructura de OSM a las cadenas de anclaje del pórtico de la bahía [2] L-1123 (al principio discontinuo; desde la tarde del 24-Oct-26, catenaria real: ver abajo), rótulo
   «Bahía [2] L-1123» y ficha «Llegada de la L-1123 a la SE Paragsha II» (bahía, vecinas, recorrido y equipos, protección actual y
   proyectada, DFR, integración, ES0, último tramo). Los equipos de la bahía en el modelo importado van resaltados en naranja.
 - El trazo de lectura y el tramo «L-1123 → Paragsha II» del recorrido terminan en el pórtico de la bahía [2].
 
+## 24-Oct-26 · aisladores, conexiones y terreno con criterio de ingeniería
+Pedido del usuario: «las conexiones están en el aire, y los aisladores, y esos colores y puntos raros… tener criterio para dibujar
+y representar… esa conexión mal hecha en Paragsha».
+- Torres de suspensión T1–T22: la torre paramétrica del tablero de la LT (TS2, cadenas en I verticales), tal cual. T23 (terminal,
+  OE-604): cadenas de **anclaje horizontales** en la dirección de cada vano y **puentes** (jumpers) entre ellas, en lugar de cadenas
+  colgadas en la bisectriz.
+- Aisladores y conductores siguen al **montaje** de cada torre: sin montaje van translúcidos (igual que el acero); un vano se dibuja
+  sólido solo cuando sus dos torres están montadas. Antes, el conductor se dibujaba sólido y la cadena se ocultaba: por eso las
+  «conexiones en el aire».
+- Llegada a la SE Yumpag: se conserva la capa «línea» del modelo de la SE (cadenas de anclaje en la viga del pórtico, puentes al
+  pararrayos y vano T23 → pórtico), ahora con la T23 a su cota real y cadenas de anclaje en la dirección del vano; mientras la T23
+  no esté montada, esa llegada se ve translúcida.
+- Llegada a la SE Paragsha II: **vano real** (catenaria de las tres fases y cable de guarda) desde la última estructura levantada
+  hasta las cadenas de anclaje del pórtico de la bahía [2], con la flecha limitada para despejar el terreno; se quitaron los trazos
+  punteados. La posición de la bahía sigue siendo estimada hasta tener el plano de disposición del patio de REP.
+- Sin «puntos azules» ni «líneas amarillas»: el tono de agua del relieve ya solo aparece en lagunas reales del DEM (nunca en las
+  plataformas aplanadas de las torres) y la selección se marca con brillo verde-lima sobre el elemento, no con una caja de líneas.
+  Las transiciones del terreno bajo las torres son suaves (pendiente ≤ 10 %), sin montículos cónicos.

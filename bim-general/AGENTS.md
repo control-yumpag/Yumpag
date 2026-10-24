@@ -26,6 +26,12 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
 - SE: los modelos de Paragsha II, Yumpag y Uchucchacua se **importan tal cual** desde `../se-paragsha2/pg2_3d.js`,
   `../se-yumpag/ypg3d.js` y `../se-uchucchacua/se3d.js` (su `construir(escena)`), y el avance de AXON desde
   `../se-uchucchacua/uchu4d.js`. Si cambias su API (`construir`, `CAPAS`, `aUTM`, `COTA0`, `U4D.total`) revisa esta página.
+  - Modelo de la SE Yumpag: antes de `construir()` se le pasa la cota real de la T23 (`mod.AJUSTE_T23.z = y de la T23 − cota de la
+    plataforma`), su silueta propia de la T23 (`userData.t23`) se oculta porque aquí la T23 es la torre de `red.js`, y su capa `linea`
+    (cadenas de anclaje en el pórtico, puentes, vano T23 → pórtico) se **conserva**; si la T23 no está montada, se clona translúcida
+    (`proyectarLlegadaYumpag`). Con el modelo cargado se oculta el vano de reserva de `red.js` (`RED.ultimoVano(false)`).
+  - Modelo de la SE Paragsha II: se ocultan sus muñones de salida (`userData.bahia === 'l1123' && pieza === 'stub'`) porque el vano
+    real lo trae `red.js`; sus cadenas de anclaje se conservan.
 - Detalle: los botones llevan a `../tablero.html#torre=Txx` (BIM 4D con la torre centrada) y `#torre=Txx&detalle`
   (su detalle de cimentación), y a las páginas de cada SE con `#bim`.
 
@@ -35,8 +41,8 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
 | `index.html` | Pestañas Resumen y alcance / BIM general / Fuentes; vista Digital u Ortofoto, escenario Antes o Después, «Ir a», capas, fichas con la fuente de cada dato y el estado de obra (actividades, patas, camino, montaje, fotos), botones al BIM 4D, lista con buscador, carga de los modelos de las SE al acercarse, **navegación tipo Google Earth** y **barra de recorrido** (tramos, perfil, ◀ ▶, Recorrer, mapa de ubicación), celular |
 | `gen/portada_svg.py` | Arma el gráfico integral del panel izquierdo de la portada (`../index.html`) desde `proyecto.json`: el sistema con coordenadas reales y el zoom de la derivación con sus 23 torres, en dos variantes (`pc`: zoom al noreste del mapa · `movil`: zoom debajo). Se pega entre `<svg class="int pc"…>` y `<svg class="int movil"…>` |
 | `geo.js` | UTM WGS-84 18 S ⇄ geográficas (Krüger, < 1 mm), teselas Web Mercator, cola de descargas |
-| `terreno.js` | DEM Terrarium en parches (F 640 m · R 160 m · D, P, U 20 m), corrección vertical, ajustes en torres y plataformas, material digital/ortofoto, ortofoto por parche y foco z17–z18 que sigue a la cámara |
-| `red.js` | Torres (familia TS2 del tablero; T23 con el OE-604), conductores, L-1123 existente, seccionamiento, trazos de lectura, SE, caminos, MDIA, fichas, escenarios |
+| `terreno.js` | DEM Terrarium en parches (F 640 m · R 160 m · D, P, U 20 m), corrección vertical, ajustes en torres y plataformas (radio adaptativo, celda plana bajo cada torre), agua solo en lagunas reales del DEM (`aAgua`), material digital/ortofoto, ortofoto por parche y foco z17–z18 que sigue a la cámara |
+| `red.js` | Torres (familia TS2 del tablero; T23 con el OE-604 y cadenas de anclaje en la dirección de cada vano), aisladores y conductores con regla 4D (fantasma hasta el montaje), L-1123 existente, seccionamiento, último vano real a la bahía [2] de Paragsha II, trazos de lectura, SE, caminos, MDIA, fichas, escenarios |
 | `proyecto.json` | Datos del proyecto en UTM 18 S (lo arma `gen/datos_build.py`) |
 | `navsala.js` | ViewCube (copia de `se-paragsha2/`) |
 | `gen/datos_build.py`, `gen/l1123_osm.json` | Generador de `proyecto.json` y trazo OSM de la L-1123 |
@@ -61,11 +67,31 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
   Uchucchacua 4 447). Sin red, el terreno queda plano a 4 440 m y la página sigue funcionando.
 - **Circuitos**: a la derecha (de la T1 hacia la SE) la L-1123 a Paragsha II, a la izquierda la L-1724 a Uchucchacua — deducido
   de la llegada al pórtico (OE-605) y del seccionamiento; **por confirmar** con los planos de la LT.
-- **Llegada a la SE Paragsha II** (24-Oct-26, pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?»):
-  la L-1123 llega a la **bahía [2]** de la barra 138 kV (OE-250 hojas 1/2 y 2/2). De la última estructura de OSM al pórtico de esa
-  bahía (medidas del modelo de la SE en `red.js`, bloque «llegada») los conductores van **discontinuos**: el tramo no está
-  levantado y la posición de la bahía es estimada. Los equipos de la bahía (fichas `l1123…` del modelo) se resaltan en naranja y
-  abren la ficha «Llegada de la L-1123 a la SE Paragsha II», con enlace a `../se-paragsha2/#bim&sel=l1123`.
+- **Llegada a la SE Paragsha II** (24-Oct-26, pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?» y
+  «esa conexión mal hecha en Paragsha»): la L-1123 llega a la **bahía [2]** de la barra 138 kV (OE-250 hojas 1/2 y 2/2). De la
+  última estructura de OSM a las **cadenas de anclaje del pórtico** de esa bahía (medidas de `pg2_3d.js`: `SALIDA_L1123`, viga Y 77,
+  fases cada 2,6 m, 10,45 m; copiadas en `B2` de `red.js`) se dibuja **un vano real** (catenaria de las 3 fases + cable de guarda a la
+  punta del pórtico), con la flecha limitada hasta despejar el terreno ≥ 7 m. Nada de trazos punteados. La posición de la bahía y el
+  trazo de esos últimos metros son **estimados** (falta el plano de disposición del patio 138 kV de REP). Los equipos de la bahía
+  (fichas `l1123…` del modelo) se resaltan y abren la ficha «Llegada de la L-1123 a la SE Paragsha II» (`../se-paragsha2/#bim&sel=l1123`).
+- **Cómo se representan aisladores y conductores (24-Oct-26, pedido del usuario: «las conexiones están en el aire, y los
+  aisladores… tener criterio para dibujar»)**, con criterio de ingeniería de líneas 138 kV:
+  - Torres de **suspensión** (TS2, T1–T22): cadenas en **I verticales** colgadas de la cruceta (geometría parametrizada del tablero
+    `buildTorreParam()`, `torreDelTablero()` en `red.js`); el conductor cuelga del extremo inferior.
+  - Torres **terminales o de ángulo** (T23, OE-604; T106/T109 del seccionamiento): cadenas de **anclaje horizontales** (2,5 m) a lo
+    largo de cada dirección de vano (`celosia(F)` con `F.anclaje = {in, out}` en coordenadas locales de la torre) y **puentes** (jumper
+    en Bezier colgando 1,6 m bajo la cruceta) que unen ambas cadenas. Nunca cadenas en la bisectriz.
+  - Llegada a pórtico (SE Yumpag y Paragsha II): cadenas de anclaje horizontales en la viga, en la dirección del vano, y el modelo
+    de la SE dibuja el puente hasta el pararrayos/trampa de onda.
+  - **Regla 4D**: aisladores y conductores siguen al montaje de la torre (`AV.t[Txx].ph.elm`). Torre sin montaje → acero, porcelana y
+    conductores **translúcidos** (`MAT.proyectada`, `porcelanaFant`, `conductorFant`); un vano se dibuja sólido solo cuando sus **dos**
+    torres están montadas. Nada queda «en el aire»: si la torre no existe, la cadena existe igual, pero fantasma.
+  - **Selección**: el elemento elegido se resalta con brillo (emissive `#b1cc3d`) en sus propios materiales, **no** con una caja
+    (`Box3Helper`: dibujaba líneas amarillas verticales que el usuario tomó por «puntos y colores raros»).
+- **Terreno bajo las torres (24-Oct-26)**: el tono de **agua** del sombreador solo aparece donde el DEM crudo es plano (±0,02 m a
+  ±20 m) **y fuera de toda zona de ajuste** (atributo `aAgua` por vértice en `terreno.js`): las plataformas aplanadas de las torres
+  ya no se pintan de azul. El radio de transición del ajuste puntual es adaptativo (`r1 = min(160, max(r1, 10·|Δh|))`, pendiente
+  ≤ 10 %), para que no salgan montículos cónicos bajo las torres, y la celda de la malla que contiene cada torre queda plana a su cota.
 - **Seccionamiento**: antes T106–T107–T108–T109; después el eje del KMZ T106–T1–T109. Las T107 y T108 quedan como fantasma
   (su destino no figura en los documentos revisados).
 - Origen del dato en cada ficha: `D` documento · `R` referencial/aproximado. **Nunca inventes un dato**: cada fila de `datos`

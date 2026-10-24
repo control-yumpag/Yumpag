@@ -50,6 +50,11 @@ séptico, cerco prefabricado con concertina y portón; terreno por curvas y talu
 - Números del cuadro de equipos (globos 1–15 del OE-605) en `ETQ`; deben coincidir con el plano.
 - Para salas y SSAA manda el **OE-622 (Nov-23)** sobre el OC-703 (Ago-23). La T23 sale de la LT (tablero BIM 4D) y del
   OE-604 (Oct-25), no del OE-605 (2023).
+- **Llegada de la LT (24-Oct-26)**: la T23 es terminal, así que en la T23 y en la viga del pórtico van **cadenas de anclaje
+  horizontales** de `L_ANCLAJE` = 2,5 m en la dirección del vano (no cadenas colgadas), y el puente baja al pararrayos. El grupo
+  de la T23 lleva `userData.t23 = true` y `AJUSTE_T23.z` permite fijar su cota desde fuera: el BIM general (`../bim-general/`)
+  oculta esa silueta, pone la cota real de la T23 y **conserva** la capa `linea` (cadenas, puentes y vano) de este modelo. Si
+  cambias la geometría del pórtico de salida o de la T23, revisa `red.js` del BIM general (bloque «llegada a la SE Yumpag»).
 - Realismo con geometría, no con texturas de IA. Texturas solo procedurales (canvas). Nada del proyecto se sube a
   servicios de IA de terceros.
 

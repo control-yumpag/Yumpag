@@ -35,4 +35,5 @@ Las capturas satelitales no se guardan en el repositorio; `mosaico.py` las esper
   protección principal y de respaldo con 87L, 21/21N, 67/67N, 50/51, 50N/51N, 27/59, 79, 25, 68 y 50BF; DFR Qualitrol IDM+ en el
   tablero ETL-640; integración al SAS de REP según el TE-405. El interruptor IN-4076 dice qué relés lo disparan hoy y con el proyecto.
 - Enlace directo `#bim&sel=<clave>` (lo usa el BIM general para abrir la bahía).
-
+- 24-Oct-26 · salida de la L-1123 con cadenas de anclaje de 2,5 m en la viga (dirección del vano) y puntos de amarre exportados
+  (`SALIDA_L1123`), para que el BIM general dibuje el último vano real hasta el pórtico de la bahía [2].

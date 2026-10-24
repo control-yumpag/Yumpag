@@ -330,7 +330,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { ViewCube } from './navsala.js';
 import { aGeo, ESTAD } from './geo.js';
 import { ORIGEN, aEsc, deEsc, definirParches, cargarDEM, cotaDEM, AJUSTES, fijarOffset, OFFSET_DEM, cotaDetalle, cotaSegura, mallaParche, cotaEn, cargarOrto, Foco, U } from './terreno.js';
-import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js?v=2';
+import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js?v=3';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -589,6 +589,8 @@ function pintarAvance() {
     if (r) { r.userData.el.innerHTML = esc(T.t.t) + (a && escenario === 'despues' ? `<i>${fmt(a.pct, 0)} %</i>` : ''); r.userData.w = 0; }
   });
   $('#tbCorte').innerHTML = AVANCE ? `Obra al <b>${esc(fCorta(AVANCE.corteISO))}</b>${AVANCE.ocGlobal != null ? ` · civil <b>${fmt(AVANCE.ocGlobal, 1)} %</b>` : ''}` : 'Obra <b>—</b>';
+  if (typeof MODELOS !== 'undefined' && MODELOS.yumpag.mod) proyectarLlegadaYumpag(MODELOS.yumpag.mod);   // la llegada de la SE sigue el montaje de la T23
+  if (actual) resaltar(actual);
   dibujarPerfil(); pedir();
 }
 $('#vAva').onchange = async (e) => { if (e.target.checked) await cargarAvance(); pintarAvance(); if (actual) seleccionar(actual); };
@@ -603,11 +605,17 @@ async function cargarModelo(M) {
     const g = new THREE.Group(); g.matrixAutoUpdate = false;
     const [a, c] = m.ux, [b, dd] = m.uy;
     g.matrix.set(a, 0, -b, m.o[0] - ORIGEN.E, 0, 1, 0, S.cota, -c, 0, dd, -(m.o[1] - ORIGEN.N), 0, 0, 0, 1);
+    if (M.k === 'yumpag' && mod.AJUSTE_T23) mod.AJUSTE_T23.z = RED.torresDer[22].p.y - S.cota;   // la llegada empalma con la T23 del tablero (cota del KMZ)
     const f0 = window.fetch; // el módulo de la SE Yumpag pide su terreno con una ruta relativa a su página
     if (m.base) window.fetch = (u, o) => f0(typeof u === 'string' && !/^(https?:|\/|\.)/.test(u) ? m.base + u : u, o);
     let res = null; try { res = await mod.construir(g, (t) => hud(`${S.nombre}: ${t}`, 0)); } finally { window.fetch = f0; }
     (M.k === 'paragsha2' && res && res.terreno && res.terreno.isObject3D ? [res.terreno] : mod.CAPAS.terreno || []).forEach((o) => (o.visible = false));
-    if (M.k === 'yumpag') (mod.CAPAS.linea || []).forEach((o) => (o.visible = false)); // la llegada de la línea la dibuja el BIM general
+    // 24-Oct-26: la SE Yumpag trae su propia llegada del OE-604 (cadenas de anclaje en el pórtico y en la T23, vanos, bajadas a los
+    // pararrayos, cable de guarda): se conserva y solo se oculta su silueta de la T23 (aquí la T23 es la del tablero). Mientras la T23
+    // no tenga montaje en el tablero, esa llegada va translúcida («proyectado»), como la torre
+    if (M.k === 'yumpag') { (mod.CAPAS.linea || []).forEach((o) => { if (o.userData.t23) o.visible = false; }); proyectarLlegadaYumpag(mod); RED.ultimoVano(false); }
+    // Paragsha II: el muñón de 8 m de la bahía [2] se reemplaza por el vano real que dibuja red.js (la cadena del pórtico queda)
+    if (M.k === 'paragsha2') (mod.CAPAS.salidas || []).forEach((g) => g.traverse((o) => { if (o.userData.bahia === 'l1123' && o.userData.pieza === 'stub') o.visible = false; }));
     if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
     if (M.k === 'paragsha2') resaltarBahiaL1123(g); // la bahía [2] L-1123 es parte del proyecto: abre la ficha de la llegada y va resaltada
     g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
@@ -628,6 +636,16 @@ function resaltarBahiaL1123(g) {
     });
   });
 }
+const FANT_SE = new Map();
+function proyectarLlegadaYumpag(mod) {
+  const t23 = RED.torresDer[22], montada = RED.montada(t23);
+  (mod.CAPAS.linea || []).forEach((g) => { if (g.userData.t23) return; g.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    if (!o.userData.matBase) o.userData.matBase = o.material;
+    if (montada) { o.material = o.userData.matBase; return; }
+    const b = o.userData.matBase; if (!FANT_SE.has(b)) { const c = b.clone(); c.transparent = true; c.opacity = 0.42; c.depthWrite = false; FANT_SE.set(b, c); } o.material = FANT_SE.get(b);
+  }); });
+}
 let tMod = 0;
 function actualizarModelos(forzar) {
   const now = performance.now(); if (!forzar && now - tMod < 400) return; tMod = now;
@@ -636,7 +654,7 @@ function actualizarModelos(forzar) {
     const c = RED.fSE[M.k].foco, dT = Math.hypot(controls.target.x - c.x, controls.target.z - c.z), dC = camera.position.distanceTo(c);
     if ($('#vMod').checked && !M.estado && dT < 1400 && dist < 2600) cargarModelo(M);
     M.cerca = $('#vMod').checked && dC < 5000;
-    if (M.grupo) { const v = capaOn.subestaciones && M.cerca && !(M.k === 'yumpag' && escenario === 'antes'); if (M.grupo.visible !== v) { M.grupo.visible = v; pedir(); } RED.huellas[M.k].visible = !v; }
+    if (M.grupo) { const v = capaOn.subestaciones && M.cerca && !(M.k === 'yumpag' && escenario === 'antes'); if (M.grupo.visible !== v) { M.grupo.visible = v; pedir(); if (M.k === 'yumpag') RED.ultimoVano(!v); } RED.huellas[M.k].visible = !v; }
   }
 }
 $('#vMod').onchange = () => { actualizarModelos(true); visibilidad(); };
@@ -686,7 +704,15 @@ const vc = new ViewCube($('#vcBox'), {
 });
 
 // ---------- ficha, alcance y lista
-const selBox = new THREE.Box3Helper(new THREE.Box3(), new THREE.Color(0xf0a500)); selBox.visible = false; scene.add(selBox);
+// 24-Oct-26 (pedido del usuario: «esos colores raros»): la selección ya no es una caja amarilla (de cerca eran palos verticales
+// alrededor de la torre) sino un brillo lima sobre las piezas del elemento; las instancias y las líneas no se resaltan
+const RESALTE = new Map(), resaltadas = [];
+const conBrillo = (m) => { if (!m || !m.emissive) return m; if (!RESALTE.has(m)) { const c = m.clone(); c.emissive = new THREE.Color(0xb1cc3d); c.emissiveIntensity = m.transparent ? 0.3 : 0.25; RESALTE.set(m, c); } return RESALTE.get(m); };
+function resaltar(f) {
+  resaltadas.forEach(([m, mat]) => { if (m.material === RESALTE.get(mat)) m.material = mat; }); resaltadas.length = 0;   // si otro código ya cambió el material (estado 4D), se respeta
+  if (!f) return;
+  for (const o of objsDe(f)) { if (o.isInstancedMesh || o.isLineSegments) continue; o.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material && !Array.isArray(m.material) && m.material.emissive) { resaltadas.push([m, m.material]); m.material = conBrillo(m.material); } }); }
+}
 let actual = null;
 const ORI = { D: ['Dato de documento', 'var(--D)'], R: ['Referencial / aproximado', 'var(--R)'] };
 function objsDe(f) { const out = []; scene.traverse((o) => { if (o.userData.ficha === f && (o.isMesh || o.isGroup || o.isInstancedMesh)) out.push(o); }); return out; }
@@ -770,7 +796,7 @@ async function fotosTorre(t) {
 }
 function seleccionar(f, volarA = false, extra = null) {
   actual = f;
-  if (!f) { $('#ficha').classList.add('oculto'); $('#alcance').classList.remove('oculto'); selBox.visible = false; alcance(); pedir(); return; }
+  if (!f) { $('#ficha').classList.add('oculto'); $('#alcance').classList.remove('oculto'); resaltar(null); alcance(); pedir(); return; }
   const datos = [...(f.datos || [])];
   if (f.key === 'derivacion' && AVANCE && AVANCE.ocGlobal != null && $('#vAva').checked) {
     const c = AVANCE.counts || {}, fu = `tablero de la LT, corte ${fCorta(AVANCE.corteISO)} (reporte N.° ${AVANCE.reporte})`;
@@ -795,9 +821,7 @@ function seleccionar(f, volarA = false, extra = null) {
   $('#fCerrar').onclick = () => seleccionar(null);
   $('#fIr').onclick = () => irA(f);
   $('#ficha').querySelectorAll('button[data-t]').forEach((b) => (b.onclick = () => { const x = FICHAS['der_' + b.dataset.t]; if (x) seleccionar(x, true); }));
-  const objs = objsDe(f).filter((o) => !o.isInstancedMesh && !o.isLineSegments);
-  const b = new THREE.Box3(); objs.forEach((o) => o.visible !== false && b.expandByObject(o));
-  if (!b.isEmpty() && b.getSize(new THREE.Vector3()).length() < 3000) { selBox.box.copy(b); selBox.visible = true; } else selBox.visible = false;
+  resaltar(f);
   if (volarA) irA(f);
   if (kT) fotosTorre(kT);
   if (movil) { $('#der').classList.remove('cerrado'); $('#izq').classList.add('cerrado'); }

@@ -59,6 +59,7 @@ export const AJUSTES = [];   // {tipo:'punto', E, N, cota, r0, r1} | {tipo:'poli
 export let OFFSET_DEM = 0;   // corrección vertical del DEM (mediana de cota KMZ − DEM en las torres)
 export function fijarOffset(v) { OFFSET_DEM = v; }
 const suave = (t) => t * t * (3 - 2 * t);
+const R1_MAX = 160;   // m: radio máximo de la transición alrededor de una torre
 function distPol(E, N, pol) {
   let dentro = false, d = 1e12;
   for (let i = 0, j = pol.length - 1; i < pol.length; j = i++) {
@@ -72,13 +73,29 @@ function distPol(E, N, pol) {
 function ajustar(E, N, h) {
   for (const a of AJUSTES) {
     let d;
-    if (a.tipo === 'punto') { const dx = E - a.E, dy = N - a.N; if (Math.abs(dx) > a.r1 + a.r0 || Math.abs(dy) > a.r1 + a.r0) continue; d = Math.hypot(dx, dy) - a.r0; }
-    else { const c = a.caja; if (E < c[0] - a.r1 || E > c[2] + a.r1 || N < c[1] - a.r1 || N > c[3] + a.r1) continue; d = distPol(E, N, a.pol); }
-    if (d >= a.r1) continue;
-    const w = d <= 0 ? 0 : suave(d / a.r1);
+    // 24-Oct-26: el radio de transición crece con el desnivel que hay que salvar (pendiente ≤ 10 %), para que una torre cuya cota
+    // del KMZ difiere varios metros del DEM no quede sobre un cono ni en un hoyo
+    const r1 = a.tipo === 'punto' ? Math.min(R1_MAX, Math.max(a.r1, 10 * Math.abs(h - a.cota))) : a.r1;
+    if (a.tipo === 'punto') { const dx = E - a.E, dy = N - a.N; if (Math.abs(dx) > r1 + a.r0 || Math.abs(dy) > r1 + a.r0) continue; d = Math.hypot(dx, dy) - a.r0; }
+    else { const c = a.caja; if (E < c[0] - r1 || E > c[2] + r1 || N < c[1] - r1 || N > c[3] + r1) continue; d = distPol(E, N, a.pol); }
+    if (d >= r1) continue;
+    const w = d <= 0 ? 0 : suave(d / r1);
     h = a.cota + (h - a.cota) * w;
   }
   return h;
+}
+/** 24-Oct-26 (los «puntos azules» alrededor de las torres): el shader pintaba de agua toda cara exactamente plana, y las plataformas
+    que se aplanan en cada torre (y las celdas planas del DEM cuantizado) salían como lagunas moteadas. Ahora un vértice solo puede ser
+    agua si el DEM crudo es plano en un entorno de ±20 m (una laguna del DEM es una meseta exacta) y está fuera de toda zona ajustada. */
+export function aguaEn(E, N, lon, lat, z = 13) {
+  for (const a of AJUSTES) {
+    if (a.tipo === 'punto') { if (Math.abs(E - a.E) <= R1_MAX + a.r0 && Math.abs(N - a.N) <= R1_MAX + a.r0) return 0; }
+    else { const c = a.caja; if (E >= c[0] - a.r1 && E <= c[2] + a.r1 && N >= c[1] - a.r1 && N <= c[3] + a.r1) return 0; }
+  }
+  if (lon === undefined) [lon, lat] = aGeo(E, N);
+  const h0 = cotaDEM(lon, lat, z); if (!Number.isFinite(h0)) return 0;
+  for (const [dE, dN] of [[20, 0], [-20, 0], [0, 20], [0, -20]]) { const [lo, la] = aGeo(E + dE, N + dN); const h = cotaDEM(lo, la, z); if (!Number.isFinite(h) || Math.abs(h - h0) > 0.02) return 0; }
+  return 1;
 }
 /** cota de proyecto del terreno en un parche de detalle (DEM z13 + corrección + ajustes) */
 export const cotaDetalle = (E, N, lon, lat) => { if (lon === undefined) [lon, lat] = aGeo(E, N); return ajustar(E, N, cotaSegura(lon, lat, 13) + OFFSET_DEM); };
@@ -92,10 +109,10 @@ export function materialTerreno({ recorte = false } = {}) {
   m.userData.u = { uTiene: { value: 0 }, uRecorte: { value: recorte ? 1 : 0 } };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U, m.userData.u);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vMundo;')
-      .replace('#include <project_vertex>', '#include <project_vertex>\nvMundo = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vMundo; varying float vAgua; attribute float aAgua;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvMundo = (modelMatrix * vec4(transformed, 1.0)).xyz; vAgua = aAgua;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vMundo;
+varying vec3 vMundo; varying float vAgua;
 uniform float uOrto, uCurvas, uPaso, uTiene, uRecorte, uAgua;
 uniform vec3 uExcl[4];
 vec3 s2l(vec3 c){ return pow(c, vec3(2.2)); }
@@ -115,7 +132,7 @@ vec3 hipso(float h){
 if (uRecorte > .5 && (vMapUv.x < 0. || vMapUv.x > 1. || vMapUv.y < 0. || vMapUv.y > 1.)) discard;
 float ortoK = uOrto * uTiene;
 vec3 nGeo = normalize(cross(dFdx(vMundo), dFdy(vMundo)));
-float plano = smoothstep(.9999990, .9999998, abs(nGeo.y));
+float plano = smoothstep(.9999990, .9999998, abs(nGeo.y)) * step(.5, vAgua);
 for (int i = 0; i < 4; i++) if (uExcl[i].z > 0. && distance(vMundo.xz, uExcl[i].xy) < uExcl[i].z) plano = 0.;
 vec3 dig = hipso(vMundo.y);
 dig = mix(dig, s2l(vec3(.36,.55,.70)), plano * uAgua * step(3000., vMundo.y));
@@ -139,22 +156,30 @@ if (uCurvas > .5) {
 const PROF_FALDON = 40; // m: faldón vertical que tapa las juntas entre parches de distinta resolución
 export function mallaParche(P, cotaFn, huecos = []) {
   const nx = Math.round((P.e1 - P.e0) / P.paso) + 1, ny = Math.round((P.n1 - P.n0) / P.paso) + 1, NV = nx * ny;
-  const h = new Float32Array(NV), mx = [], my = [];
+  const h = new Float32Array(NV), ag = new Float32Array(NV), mx = [], my = [];
   for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
     const k = j * nx + i, E = P.e0 + i * P.paso, N = P.n1 - j * P.paso, [lon, lat] = aGeo(E, N), m = merc01(lon, lat);
-    mx[k] = m[0]; my[k] = m[1]; h[k] = cotaFn(E, N, lon, lat);
+    mx[k] = m[0]; my[k] = m[1]; h[k] = cotaFn(E, N, lon, lat); ag[k] = aguaEn(E, N, lon, lat, P.zDem || 13);
+  }
+  // 24-Oct-26: la celda de la malla que contiene cada torre queda plana a la cota de la torre (plataforma de montaje de ≈ 20 × 20 m):
+  // con vértices cada 20 m la plataforma de 4 m de radio del ajuste caía entre vértices y las cimentaciones quedaban flotando o enterradas
+  if (P.paso <= 40) for (const a of AJUSTES) {
+    if (a.tipo !== 'punto') continue;
+    const fi = (a.E - P.e0) / P.paso, fj = (P.n1 - a.N) / P.paso; if (fi < 0 || fj < 0 || fi >= nx - 1 || fj >= ny - 1) continue;
+    const i0 = Math.floor(fi), j0 = Math.floor(fj);
+    for (let dj = 0; dj <= 1; dj++) for (let di = 0; di <= 1; di++) h[(j0 + dj) * nx + i0 + di] = a.cota;
   }
   const celda = (i, j) => {
     if (i < 0 || j < 0 || i >= nx - 1 || j >= ny - 1) return false;
     const E0 = P.e0 + i * P.paso, E1 = E0 + P.paso, N1 = P.n1 - j * P.paso, N0 = N1 - P.paso;
     return !huecos.some((c) => E0 >= c.e0 - 0.01 && E1 <= c.e1 + 0.01 && N0 >= c.n0 - 0.01 && N1 <= c.n1 + 0.01);
   };
-  const pos = [], idx = [], MX = [], MY = [], esFaldon = [];
-  for (let k = 0; k < NV; k++) { const i = k % nx, j = (k / nx) | 0; pos.push(P.e0 + i * P.paso - ORIGEN.E, h[k], -(P.n1 - j * P.paso - ORIGEN.N)); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(0); }
+  const pos = [], idx = [], MX = [], MY = [], esFaldon = [], AG = [];
+  for (let k = 0; k < NV; k++) { const i = k % nx, j = (k / nx) | 0; pos.push(P.e0 + i * P.paso - ORIGEN.E, h[k], -(P.n1 - j * P.paso - ORIGEN.N)); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(0); AG.push(ag[k]); }
   const faldon = (ka, kb) => {
     const b = pos.length / 3;
-    for (const k of [ka, kb]) { pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(1); }
-    for (const k of [ka, kb]) { pos.push(pos[k * 3], pos[k * 3 + 1] - PROF_FALDON, pos[k * 3 + 2]); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(1); }
+    for (const k of [ka, kb]) { pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(1); AG.push(0); }
+    for (const k of [ka, kb]) { pos.push(pos[k * 3], pos[k * 3 + 1] - PROF_FALDON, pos[k * 3 + 2]); MX.push(mx[k]); MY.push(my[k]); esFaldon.push(1); AG.push(0); }
     idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3, b, b + 1, b + 2, b + 1, b + 3, b + 2); // dos caras
   };
   for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
@@ -169,6 +194,7 @@ export function mallaParche(P, cotaFn, huecos = []) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array((pos.length / 3) * 2), 2));
+  g.setAttribute('aAgua', new THREE.Float32BufferAttribute(AG, 1));
   g.setIndex(idx); g.computeVertexNormals();
   const nrm = g.attributes.normal; esFaldon.forEach((f, k) => { if (f) nrm.setXYZ(k, 0, 1, 0); });
   g.computeBoundingSphere(); g.computeBoundingBox();
@@ -219,7 +245,7 @@ export function cargarOrto(P, renderer, alListo) {
 // ---------- foco: ortofoto de alta resolución (z17, ≈ 1,2 m/px) alrededor del punto que se mira
 // la malla del foco usa los mismos búferes de posición y normal que su parche: se quitan antes de liberarla (si no, la GPU
 // los borra y el parche se vuelve a subir: ~3,5 MB por cambio de foco)
-const soltarGeo = (g) => { g.deleteAttribute('position'); g.deleteAttribute('normal'); g.dispose(); };
+const soltarGeo = (g) => { g.deleteAttribute('position'); g.deleteAttribute('normal'); g.deleteAttribute('aAgua'); g.dispose(); };
 export class Foco {
   constructor(escena, renderer, parches, pedir) { Object.assign(this, { escena, renderer, parches, pedir, malla: null, clave: '', tm: 0 }); }
   actualizar(objetivo, dist, activo) {
@@ -253,7 +279,7 @@ export class Foco {
     }
     const uv = new Float32Array(nv * 2); uvPara(P, r, uv, dentro);
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', P.geo.attributes.position); geo.setAttribute('normal', P.geo.attributes.normal);
+    geo.setAttribute('position', P.geo.attributes.position); geo.setAttribute('normal', P.geo.attributes.normal); geo.setAttribute('aAgua', P.geo.attributes.aAgua);
     geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx); geo.boundingSphere = P.geo.boundingSphere; geo.boundingBox = P.geo.boundingBox;
     const mat = materialTerreno({ recorte: true }); mat.map = tex; mat.userData.u.uTiene.value = 1; mat.depthFunc = THREE.LessEqualDepth;
     const malla = new THREE.Mesh(geo, mat); malla.renderOrder = 1; malla.raycast = () => {};

@@ -46,6 +46,11 @@ que salen de ellas (`gen/satelite_param.json`, coordenadas en `pg2_3d.js`). Nada
 - Capas: `patio138 · portico · barras · salidas · atr · patio220 · egh · edif · cerco · terreno`.
 - Los patios 220 kV son **volúmenes referenciales** (bahías por instancias, `instancias()`), no un levantamiento.
 
+- **Salida de la L-1123 (24-Oct-26)**: `SALIDA_L1123()` exporta los puntos de amarre (extremo de las cadenas de anclaje de
+  `L_ANCLAJE` = 2,5 m, fases cada 2,6 m, a `HV_SAL − 0,05`); las cadenas y los muñones de salida llevan `userData = { bahia: 'l1123',
+  pieza: 'cadena' | 'stub' }`. El BIM general oculta los `stub` y dibuja el último vano real hasta las cadenas; si cambias la viga
+  (Y 77), la separación de fases o la altura, actualiza `B2` en `../bim-general/red.js`.
+
 ## Pendientes (preguntar al usuario, no resolver inventando)
 - ~~Hoja 2/2 del OE-250~~ (encontrada el 24-Oct-26, ver Fuentes). Cualquier plano de disposición o sección del
   patio 138 kV (REP); planos del patio 220 kV y del autotransformador T37-211; fotos de la SE; topografía del entorno.
