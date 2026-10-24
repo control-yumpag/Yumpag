@@ -39,3 +39,10 @@ Parámetros de la URL: `?esc=antes`, `?vista=orto`, `?tema=dark`; pestañas `#re
   ficha y «Ir a», «Fichas» y ◀ ▶ siempre a la vista; celular en horizontal con vista de celular; teselas con tiempo
   límite; errores de carga a la vista; buscador que no pierde letras; el foco de la ortofoto ya no borra búferes del
   terreno; la plataforma de Paragsha II se ve al cargar su modelo.
+
+## 24-Oct-26 · llegada de la L-1123 a la SE Paragsha II
+- Conductores discontinuos de la última estructura de OSM al pórtico de la bahía [2] L-1123 (tramo no levantado), rótulo
+  «Bahía [2] L-1123» y ficha «Llegada de la L-1123 a la SE Paragsha II» (bahía, vecinas, recorrido y equipos, protección actual y
+  proyectada, DFR, integración, ES0, último tramo). Los equipos de la bahía en el modelo importado van resaltados en naranja.
+- El trazo de lectura y el tramo «L-1123 → Paragsha II» del recorrido terminan en el pórtico de la bahía [2].
+

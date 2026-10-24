@@ -29,3 +29,10 @@ Las capturas satelitales no se guardan en el repositorio; `mosaico.py` las esper
   arrastre y pellizco que no se quedan pegados y que no tapa la ficha en celular; sombras solo al cambiar lo visible
   (1,86 M triángulos); buscador que no pierde letras; celular en horizontal con vista de celular; pantalla completa en
   Safari.
+
+## 24-Oct-26 · bahía [2] L-1123 con el proyecto
+- Ficha de la bahía [2] L-1123 con lo proyectado (OE-250 hoja 2/2, Rev. 1, 20-Jun-23): reemplazo de R11 y R12 por relés de
+  protección principal y de respaldo con 87L, 21/21N, 67/67N, 50/51, 50N/51N, 27/59, 79, 25, 68 y 50BF; DFR Qualitrol IDM+ en el
+  tablero ETL-640; integración al SAS de REP según el TE-405. El interruptor IN-4076 dice qué relés lo disparan hoy y con el proyecto.
+- Enlace directo `#bim&sel=<clave>` (lo usa el BIM general para abrir la bahía).
+

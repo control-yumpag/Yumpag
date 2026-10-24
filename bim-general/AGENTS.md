@@ -61,6 +61,11 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
   Uchucchacua 4 447). Sin red, el terreno queda plano a 4 440 m y la página sigue funcionando.
 - **Circuitos**: a la derecha (de la T1 hacia la SE) la L-1123 a Paragsha II, a la izquierda la L-1724 a Uchucchacua — deducido
   de la llegada al pórtico (OE-605) y del seccionamiento; **por confirmar** con los planos de la LT.
+- **Llegada a la SE Paragsha II** (24-Oct-26, pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?»):
+  la L-1123 llega a la **bahía [2]** de la barra 138 kV (OE-250 hojas 1/2 y 2/2). De la última estructura de OSM al pórtico de esa
+  bahía (medidas del modelo de la SE en `red.js`, bloque «llegada») los conductores van **discontinuos**: el tramo no está
+  levantado y la posición de la bahía es estimada. Los equipos de la bahía (fichas `l1123…` del modelo) se resaltan en naranja y
+  abren la ficha «Llegada de la L-1123 a la SE Paragsha II», con enlace a `../se-paragsha2/#bim&sel=l1123`.
 - **Seccionamiento**: antes T106–T107–T108–T109; después el eje del KMZ T106–T1–T109. Las T107 y T108 quedan como fantasma
   (su destino no figura en los documentos revisados).
 - Origen del dato en cada ficha: `D` documento · `R` referencial/aproximado. **Nunca inventes un dato**: cada fila de `datos`

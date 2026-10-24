@@ -330,7 +330,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { ViewCube } from './navsala.js';
 import { aGeo, ESTAD } from './geo.js';
 import { ORIGEN, aEsc, deEsc, definirParches, cargarDEM, cotaDEM, AJUSTES, fijarOffset, OFFSET_DEM, cotaDetalle, cotaSegura, mallaParche, cotaEn, cargarOrto, Foco, U } from './terreno.js';
-import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js';
+import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js?v=2';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -609,9 +609,24 @@ async function cargarModelo(M) {
     (M.k === 'paragsha2' && res && res.terreno && res.terreno.isObject3D ? [res.terreno] : mod.CAPAS.terreno || []).forEach((o) => (o.visible = false));
     if (M.k === 'yumpag') (mod.CAPAS.linea || []).forEach((o) => (o.visible = false)); // la llegada de la línea la dibuja el BIM general
     if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
+    if (M.k === 'paragsha2') resaltarBahiaL1123(g); // la bahía [2] L-1123 es parte del proyecto: abre la ficha de la llegada y va resaltada
     g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
     M.grupo = g; M.mod = mod; M.estado = 'listo'; hud(`${S.nombre}: modelo 3D cargado (el mismo de su página)`, 3000); actualizarModelos(true);
   } catch (e) { console.warn(e); M.estado = 'error'; hud(`No se pudo cargar el modelo 3D de la ${S.nombre}`, 4000); }
+}
+// 24-Oct-26 (pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?»): los equipos y el pórtico de la bahía [2]
+// L-1123 del modelo de Paragsha II (fichas «l1123…» de pg2_3d.js) llevan un brillo naranja de la L-1123 y abren la ficha de la llegada
+function resaltarBahiaL1123(g) {
+  const copia = new Map();
+  g.traverse((o) => {
+    const inf = o.userData.info; if (!inf || !/^l1123/.test(inf.key || '') || !RED.fLlegada) return;
+    o.userData.ficha = RED.fLlegada;
+    o.traverse((m) => {
+      if (!m.isMesh) return; const lista = Array.isArray(m.material) ? m.material : [m.material];
+      const nue = lista.map((mt) => { if (!mt || !mt.emissive) return mt; if (!copia.has(mt)) { const c = mt.clone(); c.emissive = new THREE.Color(0xe07b1f); c.emissiveIntensity = 0.5; copia.set(mt, c); } return copia.get(mt); });
+      m.material = Array.isArray(m.material) ? nue : nue[0];
+    });
+  });
 }
 let tMod = 0;
 function actualizarModelos(forzar) {

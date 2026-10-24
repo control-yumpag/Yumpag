@@ -262,7 +262,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { ViewCube } from './navsala.js';
-import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, p3, aUTM, COTA0, NORTE, BAHIAS, alturaTerreno } from './pg2_3d.js?v=2';
+import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, p3, aUTM, COTA0, NORTE, BAHIAS, alturaTerreno } from './pg2_3d.js?v=3';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -275,13 +275,13 @@ function tab(k) {
   if (!VISTA_TAB[k]) k = 'bim';
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === VISTA_TAB[k]));
   document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.v === k));
-  if (location.hash.slice(1) !== k) history.replaceState(null, '', '#' + k);
+  if (location.hash.slice(1).split('&')[0] !== k) history.replaceState(null, '', '#' + k);   // 24-Oct-26: conserva «&sel=…» si la pestaña no cambia
   if (k === 'bim') requestAnimationFrame(() => tamVista && tamVista());
 }
 $('#nav').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) tab(b.dataset.v); };
 $('#bTema').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('se_pg2_tema', r.dataset.theme); } catch (_) {} };
 let tamVista = null;
-tab(location.hash.slice(1) || 'bim');
+tab(location.hash.slice(1).split('&')[0] || 'bim');
 
 // ---------- Resumen y Planos (todo sale de las fichas y de las fuentes, sin cifras de avance)
 const COLORI = { U: 'var(--D)', S: 'var(--F)', R: 'var(--R)' };
@@ -749,6 +749,8 @@ visibilidad(); aplicarColor();
 $('#cargando').classList.add('oculto');
 requestAnimationFrame(bucle);
 window.__nav = { camera, controls }; // pruebas automáticas de navegación
+// 24-Oct-26 · enlace directo a un elemento: #bim&sel=l1123 abre su ficha y vuela a él (lo usa el BIM general para la bahía de la L-1123)
+{ const m = /[#&]sel=([\w-]+)/.exec(location.hash); if (m && F[m[1]]) setTimeout(() => seleccionar(F[m[1]], true), 400); }
 window.__listo = true;
 </script>
 </body>

@@ -285,13 +285,13 @@ export function construirRed(escena, D, cota) {
   const fEx = ficha('l1123', {
     tipo: 'linea', grupo: 'Líneas', nombre: 'L-1123 existente · LT 138 kV Paragsha II – Uchucchacua', origen: 'R', sub: 'CONENHUA · simple terna · desde 1997',
     datos: [
-      ['Extremos', 'SE Paragsha II (este) – SE Uchucchacua (oeste)', 'EPO INEL2601 §3'], ['Bahía en Paragsha II', 'CONENHUA, 1997', 'usuario · SE Paragsha II'],
+      ['Extremos', 'SE Paragsha II (este) – SE Uchucchacua (oeste)', 'EPO INEL2601 §3'], ['Bahía en Paragsha II', '[2] L-1123 de CONENHUA (1997) en la barra 138 kV · ver «Llegada a la SE Paragsha II»', 'unifilar OE-250 hojas 1/2 y 2/2'],
       ['Tramo Paragsha II – seccionamiento', '35,7 km · 104 MVA', 'EPO INEL2601, figura 2'], ['Tramo seccionamiento – Uchucchacua', '12,10 km · 104 MVA (pasa a ser la L-1724)', 'EPO INEL2601, figura 2'],
       ['Longitud del trazo', `${fmt(L.largo_osm / 1000, 2)} km · ${nodos.length} estructuras`, 'OpenStreetMap (way 639201004), medido'],
       ['Progresiva de la T1', `${fmt(L.progresiva_T1_desde_oeste / 1000, 2)} km desde Uchucchacua · ${fmt((L.largo_osm - L.progresiva_T1_desde_oeste) / 1000, 2)} km desde Paragsha II`, 'trazo OSM, medido'],
       ['Estructuras', 'posición OSM (± 30 m); tipo y altura sin planos: silueta referencial', 'OpenStreetMap'],
     ],
-    nota: 'El último tramo dentro de la SE Paragsha II no está levantado (OSM termina ~200 m antes del recinto): se dibuja discontinuo hasta la salida estimada de la bahía L-1123.',
+    nota: 'El último tramo no está levantado (OSM termina ~200 m antes del recinto): de la última estructura al pórtico de la bahía [2] L-1123 los conductores van discontinuos (ficha «Llegada a la SE Paragsha II»).',
   });
   // torres existentes (instancias), salvo la de dentro de la SE Uchucchacua (nodo 0) y las T107 y T108 (quedan fuera del eje)
   const dirEx = (i) => {
@@ -352,6 +352,41 @@ export function construirRed(escena, D, cota) {
   const sCom = segmentos(cComun, MAT.conductor), sGCom = segmentos(gComun, MAT.guarda), sAntes = segmentos(cAntes, MAT.conductor), sDesp = segmentos(cDesp, MAT.conductor);
   [sCom, sGCom, sAntes, sDesp].forEach((s) => reg(s, fEx)); G.conductores.add(sCom, sGCom, sAntes, sDesp);
 
+  // ----- llegada a la SE Paragsha II (24-Oct-26, pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?»)
+  // La L-1123 llega a la bahía [2] de la barra 138 kV (unifilar OE-250 hoja 1/2 «actual» y hoja 2/2 «proyectado»). El pórtico es el
+  // del modelo de la SE (pg2_3d.js: bahía en X 137, viga en Y = 48,5 + 28,5, fases cada 2,6 m, amarre a 10,45 m y 1,3 m afuera de la
+  // viga). Si el modelo de la SE cambia esas medidas, cambiarlas aquí. El último tramo no está levantado: conductores discontinuos.
+  const pgA = aff(D.se.paragsha2.modelo), cPg = D.se.paragsha2.cota;
+  const B2 = { X: 137, Yv: 77, Ya: 78.3, h: 10.45, sep: 2.6 };
+  const ultimoEx = pex.length - 1;
+  const ejeX = new THREE.Vector3(D.se.paragsha2.modelo.ux[0], 0, -D.se.paragsha2.modelo.ux[1]).normalize();
+  const portB2 = [-1, 0, 1].map((i) => aEsc(...pgA(B2.X + i * B2.sep, B2.Ya), cPg + B2.h));
+  const fasesUlt = [...geoEx.fases].map((f) => fase(ultimoEx, f, false)).sort((a, b) => a.dot(ejeX) - b.dot(ejeX));   // sin cruces: por posición a lo largo de la viga
+  const dUlt = dist2(nodos[ultimoEx], pgA(B2.X, B2.Ya));
+  const fLlegada = ficha('llegada_pg2', {
+    tipo: 'linea', grupo: 'Líneas', nombre: 'Llegada de la L-1123 a la SE Paragsha II', origen: 'D', sub: 'bahía [2] L-1123 · barra 138 kV · CONENHUA (1997)',
+    url: '../se-paragsha2/#bim&sel=l1123', enlaceTxt: 'Ver la bahía [2] en el BIM de la SE Paragsha II',
+    datos: [
+      ['Bahía', '[2] L-1123 «Uchucchacua» de CONENHUA en la barra 138 kV (simple barra) de la SE Paragsha II · en servicio desde 1997', 'unifilar OE-250 hojas 1/2 y 2/2'],
+      ['Vecinas en la barra', 'del mismo lado: bahía del autotransformador T37-211 (220/138 kV) y [1] L-1120 Amarilis · al frente: [3] L-1709 Óxidos Cerro, [4] L-1704 Paragsha 1 y [5] L-1146 Milpo', 'unifilar OE-250 (orden del unifilar)'],
+      ['Recorrido en la bahía', 'barra 138 kV → SA-4171 → TC-4073 → IN-4076 → SL-4173 (puesta a tierra ST-428) → trampa de onda (fases R y S) → TT-416 y PR-417 → pórtico de salida → línea', 'unifilar OE-250'],
+      ['Equipos de patio', 'SA-4171 y SL-4173: 138 kV · 1 250 A · 31,5 kA · IN-4076: 3 150 A · 40 kA · TC-4073: 600/1 · 400/1 · 150/1 (medición) · 400/1 A · TT-416: 138/√3 / 0,1/√3 / 0,1/√3 kV', 'unifilar OE-250'],
+      ['Protección actual', 'R11 Siemens 7SA522 · R12 SEPAM 2000 · R13 SEPAM 1000 (27) · R14 Alstom MCTI (50BF)', 'unifilar OE-250 hoja 1/2'],
+      ['Con el proyecto', 'la L-1123 pasa a ser Paragsha II – Yumpag; la bahía [2] y sus equipos de patio siguen como existentes. Se reemplazan R11 y R12 por relés de protección principal y de respaldo con 87L, 21/21N, 67/67N, 50/51, 50N/51N, 27/59, 79, 25, 68 y 50BF, que disparan el IN-4076; el registrador de fallas DFR Qualitrol IDM+ queda en el tablero ETL-640 de la sala de comunicaciones', 'unifilar OE-250 hoja 2/2 «proyectado», Rev. 1, 20-Jun-23, notas 1 y 2'],
+      ['Integración', 'tablero de protección primaria L-1123 (relé principal y de respaldo) por IEC 61850 sobre PRP al SAS y al centro de control de REP (multiplexor FOX 615)', 'plano TE-405'],
+      ['Etapa ES0', 'energización de la L-1123 en la SE Paragsha II 138 kV', 'EPO INEL2601, tabla 14'],
+      ['Tensión de operación', '128 kV en la barra de 138 kV', 'DE COES 008-2019'],
+      ['Último tramo', `OSM termina en la estructura ${fUTM(nodos[ultimoEx])}, a ${fmt(dUlt, 0)} m del pórtico de la bahía: ese tramo no está levantado y va discontinuo`, 'OpenStreetMap · calculado'],
+      ['Posición de la bahía', 'estimada sobre la imagen satelital (no hay plano de disposición de Paragsha II)', 'SE Paragsha II (modelo 3D)'],
+    ],
+    nota: 'Documentado: la bahía, sus equipos y lo que cambia con el proyecto. Estimado: dónde está la bahía dentro del patio y el trazo de los últimos metros (el discontinuo solo indica a qué bahía llega la línea). Se corrigen con el plano de disposición del patio 138 kV de REP y la planta y perfil de la llegada de la L-1123.',
+    foco: aEsc(...pgA(B2.X - 40, B2.Ya + 15), cPg + 8), radio: 170 });
+  const cLleg = []; fasesUlt.forEach((a, i) => vano(cLleg, a, portB2[i], 900));
+  { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(cLleg, 3));
+    const sL = new THREE.LineSegments(g, new THREE.LineDashedMaterial({ color: COL.l1123, dashSize: 4, gapSize: 3, transparent: true, opacity: 0.95 }));
+    sL.computeLineDistances(); g.computeBoundingSphere(); reg(sL, fLlegada); G.conductores.add(sL); }
+  ROT.push({ texto: 'Bahía [2] L-1123', sub: 'CONENHUA · llega aquí (posición estimada)', pos: aEsc(...pgA(B2.X, B2.Yv), cPg + 20), clase: 'rln l1123', lejos: [0, 1500], ficha: fLlegada });
+
   // ----- subestaciones (huella, cerco y rótulo; el modelo 3D detallado se carga al acercarse: ver index.html)
   const SE = D.se;
   const fSE = {
@@ -360,7 +395,7 @@ export function construirRed(escena, D, cota) {
       datos: [
         ['Papel en el proyecto', 'extremo este de la L-1123; con el proyecto la L-1123 queda Paragsha II – Yumpag', 'EPO INEL2601 §3 y figura 2'],
         ['Etapa ES0', 'energización de la L-1123 en la SE Paragsha II 138 kV', 'EPO INEL2601, tabla 14'],
-        ['Bahía L-1123', 'CONENHUA, 1997 · barra 138 kV de 6 bahías (unifilar OE-250)', 'SE Paragsha II (modelo 3D)'],
+        ['Bahía L-1123', '[2] de la barra 138 kV (simple barra, 6 bahías) · CONENHUA, 1997 · con el proyecto se reemplazan sus relés R11 y R12 (87L)', 'unifilar OE-250 hojas 1/2 y 2/2'],
         ['Autotransformador', '220/127/10 kV · 120/120/40 MVA · YN0yn0d11', 'EPO INEL2601, figura 2'],
         ['Cota', `${fmt(SE.paragsha2.cota, 0)} m s.n.m.`, SE.paragsha2.cotaFuente], ['Centro del recinto', fUTM(SE.paragsha2.centro), SE.paragsha2.fuente],
       ], nota: 'El modelo 3D de la SE es estimado (no hay planos de disposición): al acercarse se carga el mismo modelo que en su página.' }),
@@ -418,7 +453,7 @@ export function construirRed(escena, D, cota) {
     return p.clone().add(new THREE.Vector3(t.z, 0, -t.x).multiplyScalar(d));
   });
   const derPts = [...pos.map((_, i) => hT(i)), sobre(porticoC, 4)];
-  const salidaPg = aEsc(...SE.paragsha2.salidaL1123, SE.paragsha2.cota + 14);
+  const salidaPg = aEsc(...pgA(B2.X, B2.Ya), cPg + 14);   // pórtico de la bahía [2] (antes: salida estimada en el borde del patio)
   const rango = (a, b) => { const r = []; if (a <= b) for (let i = a; i <= b; i++) r.push(hE(i)); else for (let i = a; i >= b; i--) r.push(hE(i)); return r; };
   const ultimo = pex.length - 1;
   const TR = {
@@ -519,5 +554,5 @@ export function construirRed(escena, D, cota) {
     G.derCond.forEach((s) => (s.material = antes ? MAT.conductorFant : s === G.derCond[0] ? MAT.conductor : MAT.guarda));
     huellas.yumpag.children.forEach((m) => { m.material = antes ? MAT.fantasma : m === huellas.yumpag.children[0] ? MAT.grava : MAT.cerco; });
   }
-  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, estadoPata, ACTS };
+  return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, fLlegada, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, estadoPata, ACTS };
 }

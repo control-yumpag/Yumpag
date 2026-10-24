@@ -17,6 +17,8 @@ portada (`index.html` raíz) la publica el generador v72 (`publicar.py`).
 | Fuente | Uso |
 |---|---|
 | CN-YPG-22-03/ED-CNH-SE-OE-250 hoja 1/2 «Diagrama unifilar de protección y medición – actual» (CONENHUA, 13-Ene-23; Drive › Downloads) | bahías 138 kV, equipos, códigos, datos de placa y relés; `unifilar.svg` |
+| CN-YPG-22-03/ED-CNH-SE-OE-250 hoja 2/2 «… – proyectado», Rev. 1, 20-Jun-23 (Drive: «2-Diagrama-Unif-Protecc-y-Med-Proyectado-SE-Paragsha-II-Rev1») | con el proyecto: se reemplazan R11 y R12 de la bahía [2] L-1123 (relés con 87L…); DFR Qualitrol IDM+ en el tablero ETL-640; los equipos de patio siguen como existentes |
+| CN-MPY-23-03/ED-CNH-SE-TE-405 (03-Ene-25, Drive) | integración de los nuevos relés de la bahía L-1123 al SAS de REP (IEC 61850 sobre PRP, FOX 615) |
 | EPO INEL2601-01-EE-A-IF-EL-001 (Abr-26) y Volumen II Ingeniería del Proyecto (Feb-26), Drive | autotransformador 220/127/10 kV 120/120/40 MVA YN0yn0d11 (REP), barras 220A/220B, L-1123 35,7 km, 128 kV de operación |
 | Google Maps satélite (Airbus / Maxar), 9 capturas a z19 del 23-Oct-26 | planta: muros, patios, vías, pórticos, filas de equipos, salas |
 | KMZ «Trazo de Ruta Paragsha_Francoise LT220kV» (Drive) | pórtico L-2271 en el patio 220 kV: control de la georreferencia (cae sobre la fila de pórticos NO) |
@@ -45,9 +47,13 @@ que salen de ellas (`gen/satelite_param.json`, coordenadas en `pg2_3d.js`). Nada
 - Los patios 220 kV son **volúmenes referenciales** (bahías por instancias, `instancias()`), no un levantamiento.
 
 ## Pendientes (preguntar al usuario, no resolver inventando)
-- Hoja 2/2 del OE-250 (unifilar proyectado con la derivación a Yumpag) y cualquier plano de disposición o sección del
+- ~~Hoja 2/2 del OE-250~~ (encontrada el 24-Oct-26, ver Fuentes). Cualquier plano de disposición o sección del
   patio 138 kV (REP); planos del patio 220 kV y del autotransformador T37-211; fotos de la SE; topografía del entorno.
 - Trayecto de las líneas 138 kV fuera del patio (no se pudo seguir en la imagen): los vanos se cortan en el pórtico.
+
+- **Enlace directo** (24-Oct-26): `index.html#bim&sel=<clave de F>` abre la ficha de ese elemento y vuela a él (el BIM general
+  usa `#bim&sel=l1123`). En el BIM general los objetos con ficha `l1123…` se resaltan y abren la ficha de la llegada: no cambies
+  esas claves ni las medidas de la bahía [2] (X 137, `YB`, `D.g`, `HV_SAL`) sin revisar `bim-general/red.js`.
 
 ## Cómo probar
 ```bash

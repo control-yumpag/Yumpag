@@ -40,6 +40,8 @@ export const SISTEMAS = { at138: '138 kV', at220: '220 kV', trafo: 'Transformaci
 // ------------------------------------------------------------------ fuentes
 export const PLANOS = {
   OE250: 'CN-YPG-22-03/ED-CNH-SE-OE-250 hoja 1/2 · S.E. Paragsha II / Obras electromecánicas · Diagrama unifilar de protección y medición – actual · Rev. 0 · 13-Ene-23 (CONENHUA / Buenaventura)',
+  OE250P: 'CN-YPG-22-03/ED-CNH-SE-OE-250 hoja 2/2 · S.E. Paragsha II / Obras electromecánicas · Diagrama unifilar de protección y medición – proyectado · Rev. 1 · 20-Jun-23 (CONENHUA / Buenaventura; estudio definitivo de la derivación a la SE Yumpag)',
+  TE405: 'CN-MPY-23-03/ED-CNH-SE-TE-405 · SE Paragsha II bahía L-1123 · Arquitectura del sistema de integración de telecomunicaciones de nuevos suministros · estudio definitivo, 03-Ene-25',
   EPO: 'INEL2601-01-EE-A-IF-EL-001 · Estudio de Pre-Operatividad de la Derivación LT 138 kV Paragsha II – Uchucchacua (L-1123) a SE Yumpag (INEL para CONENHUA, 14-Abr-26)',
   ING: 'Volumen II Ingeniería del Proyecto · EPO Derivación LT 138 kV Paragsha II – Uchucchacua (L-1123) a SE Yumpag (Consorcio Energético de Huancavelica, Feb-26)',
   SAT: 'Imagen satelital Google Maps (Airbus / Maxar), consultada el 23-Oct-26 · mosaico georreferenciado de 9 capturas a 0,23 m/px; muros alineados a 43,75° del este',
@@ -83,9 +85,13 @@ export const F = {
       ['Seccionador de barra', 'SA-4171 · 138 kV · 1 250 A · 31,5 kA', U], ['Transformador de corriente', 'TC-4073 · 600/1 A · 400/1 A · 150/1 A (medición) · 400/1 A', U],
       ['Interruptor', 'IN-4076 · 3 150 A · 40 kA', U], ['Seccionador de línea', 'SL-4173 · 138 kV · 1 250 A · 31,5 kA, con puesta a tierra ST-428', U],
       ['Trampa de onda', 'fases R y S', U], ['Transformador de tensión', 'TT-416 · 138/√3 / 0,1/√3 / 0,1/√3 kV · 0,5 30 VA · 3P 30 VA', U], ['Pararrayos', 'PR-417', U],
-      ['Protección', 'R11 Siemens 7SA522 (21P/21N, 67N(85), 79/25) · R12 SEPAM 2000 (67N, 59) · R13 SEPAM 1000 (27) · R14 Alstom MCTI (50BF)', U],
+      ['Protección actual', 'R11 Siemens 7SA522 (21P/21N, 67N(85), 79/25) · R12 SEPAM 2000 (67N, 59) · R13 SEPAM 1000 (27) · R14 Alstom MCTI (50BF)', U],
+      ['Con el proyecto', 'la L-1123 pasa a ser Paragsha II – Yumpag (seccionamiento en el vano T107–T108); en el unifilar proyectado la bahía [2] y sus equipos de patio siguen como existentes', 'OE-250 hoja 2/2 · EPO INEL fig. 2'],
+      ['Protección proyectada', 'se reemplazan R11 y R12 por relés de protección principal y de respaldo con 87L, 21/21N, 67/67N, 50/51, 50N/51N, 27/59, 79, 25, 68 y 50BF; disparan el IN-4076 junto con R01 (R13 y R14 ya no figuran)', 'OE-250 hoja 2/2, nota 1'],
+      ['Registrador de fallas', 'DFR Qualitrol IDM+ en el «Tablero de ETL-640 Paragsha II – Uchucchacua» de la sala de comunicaciones', 'OE-250 hoja 2/2, nota 2'],
+      ['Integración', 'tablero de protección primaria L-1123 (relé principal y de respaldo) por IEC 61850 sobre PRP A/B con RedBox, switches, firewalls RX1501 para la reposición de señales de la bahía, SEL-3355 (2), HMI, medidores ION (2) y mímico de mando; al SAS y al centro de control de REP por el multiplexor FOX 615', 'TE-405'],
       ['Tensión de operación', '128 kV en la barra de 138 kV', 'DE COES 008-2019'], ['Ubicación en el patio', 'estimada: X 131,5–142,5 · lado NO de la barra', 'satélite']],
-    planos: P('OE250', 'EPO', 'ING', 'COES', 'SAT'), nota: NOTA_UB }),
+    planos: P('OE250', 'OE250P', 'TE405', 'EPO', 'ING', 'COES', 'SAT'), nota: NOTA_UB }),
   atr: fi({ key: 'atr', nombre: 'Bahía del autotransformador ISA Perú 120 MVA (138 kV)', origen: 'U', sistema: 'at138',
     datos: [['Seccionador de barra', 'SA-4201 · 138 kV · 1 250 A · 31,5 kA', U], ['Interruptor', 'IN-4092 · 138 kV · 2 000 A · 31,5 kA', U],
       ['Transformador de tensión', 'TT-424 · 138/√3 / 0,11/√3 / 0,11/√3 kV · 15 VA Cl 0,2 · 15 VA Cl 3', U], ['Pararrayos', 'PR-425 · 120 kV · 10 kA', U],
@@ -156,7 +162,7 @@ export const F = {
 // fichas por equipo de la bahía L-1123 (las demás bahías usan la ficha de su bahía y el código del equipo)
 const EQ_L1123 = {
   sa: ['Seccionador de barra SA-4171', [['Datos', '138 kV · 1 250 A · 31,5 kA', U]]], tc: ['Transformador de corriente TC-4073', [['Relaciones', '600/1 A · 400/1 A · 150/1 A (medición) · 400/1 A', U]]],
-  int: ['Interruptor IN-4076', [['Datos', '3 150 A · 40 kA', U], ['Relés que lo disparan', 'R01 · R11 · R12 · R13 · R14', U]]], sl: ['Seccionador de línea SL-4173 con puesta a tierra ST-428', [['Datos', '138 kV · 1 250 A · 31,5 kA', U]]],
+  int: ['Interruptor IN-4076', [['Datos', '3 150 A · 40 kA', U], ['Relés que lo disparan', 'R01 · R11 · R12 · R13 · R14', U], ['Con el proyecto', 'R01 y los nuevos R11 y R12 (87L…)', 'OE-250 hoja 2/2']]], sl: ['Seccionador de línea SL-4173 con puesta a tierra ST-428', [['Datos', '138 kV · 1 250 A · 31,5 kA', U]]],
   tt: ['Transformador de tensión TT-416', [['Relación', '138/√3 / 0,1/√3 / 0,1/√3 kV', U], ['Devanados', '0,5 · 30 VA y 3P · 30 VA', U]]], pr: ['Pararrayos PR-417', [['Dato', 'sin valores en el unifilar', U]]],
   tr: ['Trampa de onda (fases R y S)', [['Dato', 'sin valores en el unifilar', U]]],
 };
