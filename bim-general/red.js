@@ -25,7 +25,11 @@ export const MAT = {
   cerco: new THREE.MeshLambertMaterial({ color: 0x5f6a70, transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
   conductor: new THREE.LineBasicMaterial({ color: 0x40464c }),
   guarda: new THREE.LineBasicMaterial({ color: 0x6b7278 }),
-  conductorFant: new THREE.LineBasicMaterial({ color: 0x8a949b, transparent: true, opacity: 0.45 }),
+  // 24-Oct-26 (pedido del usuario: «no logro ver el conductor, no está homogénea la representación en color»): el conductor
+  // proyectado es el MISMO grafito del conductor tendido, solo translúcido (como la torre sin montaje); el gris claro al 45 %
+  // desaparecía sobre el terreno ocre
+  conductorFant: new THREE.LineBasicMaterial({ color: 0x40464c, transparent: true, opacity: 0.6 }),
+  guardaFant: new THREE.LineBasicMaterial({ color: 0x6b7278, transparent: true, opacity: 0.6 }),
   // 24-Oct-26: cadenas aún no instaladas (torre sin montaje): translúcidas como la torre proyectada, no invisibles (el conductor
   // quedaba «en el aire» 1,5 m bajo la cruceta)
   porcelanaFant: new THREE.MeshStandardMaterial({ color: 0xb9c3c9, metalness: 0.1, roughness: 0.5, transparent: true, opacity: 0.45, depthWrite: false }),
@@ -296,8 +300,8 @@ export function construirRed(escena, D, cota) {
     ],
     nota: 'Recorrido (Ingeniería del Proyecto §1): nace en el vano T107–T108, sube al V1 y a la T5, baja al V2; entre el V2 y el V5 va paralela a la línea existente y cruza la carretera Oyón – Yanahuanca (V2–V4) y el límite entre las comunidades de Pomayarus y Huachos; del V7 al V9 está dentro de la propiedad de la UM Yumpag y en el V9 gira 83° para entrar a la SE. Flechas de los vanos: referenciales.',
   });
-  const sC = segmentos(CD.cond, MAT.conductor), sG = segmentos(CD.guar, MAT.guarda), sCF = segmentos(CD.condF, MAT.conductorFant), sGF = segmentos(CD.guarF, MAT.conductorFant);
-  const sUlt = segmentos(CD.ult, MAT.conductorFant), sUltG = segmentos(CD.ultG, MAT.conductorFant);
+  const sC = segmentos(CD.cond, MAT.conductor), sG = segmentos(CD.guar, MAT.guarda), sCF = segmentos(CD.condF, MAT.conductorFant), sGF = segmentos(CD.guarF, MAT.guardaFant);
+  const sUlt = segmentos(CD.ult, MAT.conductorFant), sUltG = segmentos(CD.ultG, MAT.guardaFant);
   [sC, sG, sCF, sGF, sUlt, sUltG].forEach((s) => { reg(s, fLinea); G.conductores.add(s); });
   G.derCond = [sC, sG, sCF, sGF, sUlt, sUltG];
   const rearmarConductores = () => { CD = conductoresDer(); [[sC, CD.cond], [sG, CD.guar], [sCF, CD.condF], [sGF, CD.guarF], [sUlt, CD.ult], [sUltG, CD.ultG]].forEach(([s, arr]) => { s.geometry.dispose(); s.geometry = segmentos(arr, s.material).geometry; }); };
@@ -558,7 +562,9 @@ export function construirRed(escena, D, cota) {
       ['A', 'B', 'C', 'D'].forEach((pt, n) => { const e = estadoPata(rec, pt); T.mf[n].material = antes ? MAT.fantasma : MAT.fund[e ? e.est : 'none']; });
     }
   }
-  function aplicar4D(av) { AV = av; pintarTorres(); rearmarConductores(); }
+  // los vanos del seccionamiento a la T1 (T106 → T1 y T109 → T1) siguen la misma regla 4D: translúcidos hasta que la T1 tenga montaje
+  const pintarDesp = () => { sDesp.material = montada(torresDer[0]) ? MAT.conductor : MAT.conductorFant; };
+  function aplicar4D(av) { AV = av; pintarTorres(); rearmarConductores(); pintarDesp(); }
   // ----- la torre paramétrica del BIM 4D de la LT reemplaza a la de aquí (misma familia y cotas): mallas, enganches y vanos
   function usarTorresTablero(TB) {
     const viejas = new Set(); torresDer.forEach((T) => [T.ma, T.mi, ...T.mf].forEach((m) => m.geometry && viejas.add(m.geometry)));
@@ -593,7 +599,7 @@ export function construirRed(escena, D, cota) {
     sAntes.visible = antes; sDesp.visible = !antes;
     for (const k of ['T107', 'T108']) { sueltasM[k][0].material = antes ? MAT.aceroExist : MAT.fantasma; sueltasM[k][1].visible = antes; }
     pintarTorres();
-    sC.material = antes ? MAT.conductorFant : MAT.conductor; sG.material = antes ? MAT.conductorFant : MAT.guarda;
+    sC.material = antes ? MAT.conductorFant : MAT.conductor; sG.material = antes ? MAT.guardaFant : MAT.guarda; pintarDesp();
     huellas.yumpag.children.forEach((m) => { m.material = antes ? MAT.fantasma : m === huellas.yumpag.children[0] ? MAT.grava : MAT.cerco; });
   }
   return { G, FICHAS, ROT, torresDer, pex, idx, escenario, fSE, huellas, fSecc, fLinea, fEx, fLlegada, largoDer, prog, porticoC, salidaPg, tramos, aplicar4D, usarTorresTablero, ultimoVano, montada, estadoPata, ACTS, CLleg, cotaPg: cPg };
