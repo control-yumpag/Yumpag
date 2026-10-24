@@ -17,4 +17,8 @@ Seis cosas distintas conviven aquí:
    derivación en doble terna a Yumpag, sobre el relieve (vista digital y ortofoto). Importa los modelos de `se-paragsha2/`
    y `se-yumpag/`. Tiene su propio `AGENTS.md`.
 
+**Navegación entre tableros** (24-Oct-26): `nav-tableros.js` (raíz) monta el botón «⌂ Tableros ▾» en la cabecera de la portada,
+de la LT (marcador `data-nav-tableros` de la plantilla), del BIM general y de las tres SE (reemplaza su enlace «Portada»). Toda
+carpeta o tablero nuevo debe cargarlo (`<script src="../nav-tableros.js" defer></script>`) y figurar en su lista `T`.
+
 No empujes a `main` mientras una corrida de «Fotos automáticas» esté en curso (chocan los push).

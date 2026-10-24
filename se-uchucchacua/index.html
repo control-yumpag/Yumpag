@@ -1732,5 +1732,6 @@ requestAnimationFrame(bucle);
 $('#cargando').remove();
 window.__se = { zoomDe: () => zoomP, cajaDelModelo, inspeccionar, vecino, filaVecina, salirInspeccion, atrasInsp, encAnimDe: () => encAnim && { ...encAnim, t0: performance.now() - encAnim.t }, vcDe: () => vc, histVista, vista4D, objZona, ZONAS4D, m4dDe: () => m4d, caminarA, fijarVista, vistasPasillo, rejilla, LAY, EQ, EQUIPOS, filasDe: () => FILAS, abrirAlzado, verCompleto, salirEncuadre, encDe: () => enc, irA, irPiso, entrarSala, alDoble, mapaDe: () => mapa, pelDe: () => pel, raycastPx: (px, py) => { const r = renderer.domElement.getBoundingClientRect(); ptr.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(REG.filter((x) => x.obj.visible).map((x) => x.obj), true); }, Box3: THREE.Box3, obstDe: () => obst, recDe: () => rec, pisoEn, scene, camera, controls, REG, renderer, seleccionar, VISTAS, pedir };
 </script>
+<script src="../nav-tableros.js" defer></script><!-- 24-Oct-26: botón «⌂ Tableros ▾» común (reemplaza el enlace «Portada») -->
 </body>
 </html>
