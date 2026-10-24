@@ -619,7 +619,7 @@ async function cargarModelo(M) {
     if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
     if (M.k === 'paragsha2') resaltarBahiaL1123(g); // la bahía [2] L-1123 es parte del proyecto: abre la ficha de la llegada y va resaltada
     g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
-    M.grupo = g; M.mod = mod; M.estado = 'listo'; hud(`${S.nombre}: modelo 3D cargado (el mismo de su página)`, 3000); actualizarModelos(true);
+    M.grupo = g; M.mod = mod; M.estado = 'listo'; hud(`${S.nombre}: modelo 3D cargado (el mismo de su página)`, 3000); actualizarModelos(true); pedir();   // el modelo aparece aunque la cámara esté quieta
   } catch (e) { console.warn(e); M.estado = 'error'; hud(`No se pudo cargar el modelo 3D de la ${S.nombre}`, 4000); }
 }
 // 24-Oct-26 (pedido del usuario: «detalla esta conexión, ¿a qué bahía se conecta de Paragsha?»): los equipos y el pórtico de la bahía [2]
