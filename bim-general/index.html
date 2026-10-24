@@ -618,7 +618,7 @@ async function cargarModelo(M) {
     if (M.k === 'paragsha2') (mod.CAPAS.salidas || []).forEach((g) => g.traverse((o) => { if (o.userData.bahia === 'l1123' && o.userData.pieza === 'stub') o.visible = false; }));
     if (M.k === 'uchucchacua') (mod.CAPAS.sala || []).forEach((o) => (o.userData.bimGeneral = true)); // el interior de la sala sigue en su tablero
     if (M.k === 'paragsha2') resaltarBahiaL1123(g); // la bahía [2] L-1123 es parte del proyecto: abre la ficha de la llegada y va resaltada
-    g.userData.ficha = RED.fSE[M.k]; g.updateMatrixWorld(true); scene.add(g);
+    g.userData.ficha = RED.fSE[M.k]; g.userData.modeloSE = M.k; g.updateMatrixWorld(true); scene.add(g);
     M.grupo = g; M.mod = mod; M.estado = 'listo'; hud(`${S.nombre}: modelo 3D cargado (el mismo de su página)`, 3000); actualizarModelos(true); pedir();   // el modelo aparece aunque la cámara esté quieta
   } catch (e) { console.warn(e); M.estado = 'error'; hud(`No se pudo cargar el modelo 3D de la ${S.nombre}`, 4000); }
 }
@@ -690,7 +690,7 @@ const IR = {
   planta: () => volar(cTodo.clone().add(new THREE.Vector3(0, 62000, 1)), cTodo, 1400),
   paragsha2: () => encuadrar(RED.fSE.paragsha2.foco, 330, new THREE.Vector3(-0.6, 0.55, 0.6)),
   yumpag: () => encuadrar(RED.fSE.yumpag.foco, 150, new THREE.Vector3(0.7, 0.55, 0.45)),
-  uchucchacua: () => encuadrar(RED.fSE.uchucchacua.foco, 220, new THREE.Vector3(0.5, 0.6, 0.6)),
+  uchucchacua: () => encuadrar(RED.fSE.uchucchacua.foco, 150, new THREE.Vector3(0.5, 0.45, 0.6)),
   secc: () => encuadrar(RED.fSecc.foco, 230, new THREE.Vector3(0.35, 0.45, 0.82)),
   der: () => { const a = RED.torresDer[0].p, b = RED.torresDer[22].p, c = a.clone().lerp(b, 0.5); encuadrar(c, a.distanceTo(b) * 0.42, new THREE.Vector3(0.55, 0.62, 0.55)); },
   cruce: () => { const a = RED.torresDer[6].p, b = RED.torresDer[12].p, c = a.clone().lerp(b, 0.5); encuadrar(c, a.distanceTo(b) * 0.4, new THREE.Vector3(0.1, 0.45, 0.9)); },
@@ -711,7 +711,9 @@ const conBrillo = (m) => { if (!m || !m.emissive) return m; if (!RESALTE.has(m))
 function resaltar(f) {
   resaltadas.forEach(([m, mat]) => { if (m.material === RESALTE.get(mat)) m.material = mat; }); resaltadas.length = 0;   // si otro código ya cambió el material (estado 4D), se respeta
   if (!f) return;
-  for (const o of objsDe(f)) { if (o.isInstancedMesh || o.isLineSegments) continue; o.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material && !Array.isArray(m.material) && m.material.emissive) { resaltadas.push([m, m.material]); m.material = conBrillo(m.material); } }); }
+  // 24-Oct-26 (pedido del usuario: «¿por qué está de un color verde?»): el modelo completo de una SE no se baña de lima al
+  // elegirla —quedaba toda verde—; la SE se señala con el vuelo de la cámara, el rótulo y la ficha
+  for (const o of objsDe(f)) { if (o.isInstancedMesh || o.isLineSegments || o.userData.modeloSE) continue; o.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material && !Array.isArray(m.material) && m.material.emissive) { resaltadas.push([m, m.material]); m.material = conBrillo(m.material); } }); }
 }
 let actual = null;
 const ORI = { D: ['Dato de documento', 'var(--D)'], R: ['Referencial / aproximado', 'var(--R)'] };
@@ -831,6 +833,8 @@ window.__sel = (k) => seleccionar(FICHAS[k], true);
 function irA(f) {
   if (f.key === 'derivacion') return IR.der();
   if (f.key === 'l1123') return IR.todo();
+  // una SE se encuadra en 3/4 desde su lado más expresivo (los mismos encuadres de «Ir a»), no desde arriba
+  if (f.tipo === 'se') { const k = Object.keys(RED.fSE).find((k) => RED.fSE[k] === f); if (k && IR[k]) return IR[k](); }
   if (f.foco) return encuadrar(f.foco, f.radio || 120);
   const objs = objsDe(f); const b = new THREE.Box3(); objs.forEach((o) => b.expandByObject(o)); if (b.isEmpty()) return;
   const c = b.getCenter(new THREE.Vector3()); encuadrar(c, Math.max(30, b.getSize(new THREE.Vector3()).length() * 0.6));
