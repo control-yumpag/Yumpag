@@ -66,3 +66,5 @@ y representar… esa conexión mal hecha en Paragsha».
   Las transiciones del terreno bajo las torres son suaves (pendiente ≤ 10 %), sin montículos cónicos.
 - Conductores proyectados del mismo grafito que los tendidos, translúcidos al 60 % (antes gris claro al 45 %, invisible sobre el
   terreno); los vanos del seccionamiento a la T1 siguen la misma regla 4D.
+- Elegir una SE ya no tiñe de verde todo su modelo (el brillo de selección se limita a torres y piezas sueltas) y la cámara
+  llega en 3/4, no desde arriba.

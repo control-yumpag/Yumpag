@@ -91,6 +91,8 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
     representación en color»). Los vanos del seccionamiento a la T1 (T106 → T1, T109 → T1) siguen la misma regla (`pintarDesp`).
   - **Selección**: el elemento elegido se resalta con brillo (emissive `#b1cc3d`) en sus propios materiales, **no** con una caja
     (`Box3Helper`: dibujaba líneas amarillas verticales que el usuario tomó por «puntos y colores raros»).
+    Los modelos de las SE (`userData.modeloSE`) **no** se resaltan al elegir la SE (toda la SE quedaba verde; pedido del usuario,
+    24-Oct-26: «¿por qué está de un color verde?»): la SE se señala con el vuelo en 3/4 (`IR[k]`), el rótulo y la ficha.
 - **Terreno bajo las torres (24-Oct-26)**: el tono de **agua** del sombreador solo aparece donde el DEM crudo es plano (±0,02 m a
   ±20 m) **y fuera de toda zona de ajuste** (atributo `aAgua` por vértice en `terreno.js`): las plataformas aplanadas de las torres
   ya no se pintan de azul. El radio de transición del ajuste puntual es adaptativo (`r1 = min(160, max(r1, 10·|Δh|))`, pendiente
