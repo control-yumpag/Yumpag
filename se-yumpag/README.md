@@ -36,3 +36,11 @@ python3 -I gen/bases_build.py <OC703_1.dxf> > bases.json     # posiciones y huel
 - 23-Oct-26 · versión inicial: patio 138 kV, pórtico P-19 m, transformador, llegada de la LT por la T23, salas ER1/ER2
   con interior, pórtico y salidas 10 kV, SSAA, obra civil con subsuelo, malla de tierra, edificaciones, cerco y
   terreno; unifilar enlazado y plano CAD superpuesto.
+- 24-Oct-26 · auditoría de código y navegación: la cámara no queda bajo el suelo (pellizco, desplazamiento); el cubo y el
+  doble clic ya no alejan la cámara en celular vertical; un clic en la grava o la vía no abre ficha (y con el subsuelo a
+  la vista no tapan las zapatas); la rueda sigue acercando en vistas bajas; doble toque en pantalla táctil; el fin de un
+  pellizco y el clic derecho no abren ficha; el unifilar se enlaza por bahía (código del equipo), carga una sola vez, se
+  arrastra y pellizca sin quedarse pegado y no tapa la ficha en celular; plano CAD con carga única y error controlado;
+  `terreno.json` relativo al módulo (con aviso si falla); capa «Red de tierra» con casilla; sombras solo al cambiar lo
+  visible; buscador que no pierde letras; celular en horizontal con vista de celular; OE-622, OE-626, OE-619 y OE-609
+  en «Planos y fuentes».

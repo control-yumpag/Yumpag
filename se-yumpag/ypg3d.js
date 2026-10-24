@@ -45,7 +45,7 @@ export function reg(obj, capa, info) {
 export const NOMBRES_CAPA = {
   patio138: 'Patio 138 kV · equipos', portico: 'Pórtico 138 kV', barras: 'Barras y conductores', linea: 'Llegada de la LT (T23)',
   trafo: 'Transformador de potencia', mt10: 'Salas eléctricas y 10 kV', ssaa: 'Servicios auxiliares', obraCivil: 'Obra civil (bases, canaletas, vía)',
-  edif: 'Edificaciones', cerco: 'Cerco perimétrico', terreno: 'Terreno y explanación',
+  tierra: 'Red de tierra', edif: 'Edificaciones', cerco: 'Cerco perimétrico', terreno: 'Terreno y explanación',
 };
 export const ORIGEN = { D: 'Dibujado desde planos', F: 'Plano de fabricante aprobado', R: 'Referencial' };
 export const SISTEMAS = { at: '138 kV', mt: '10 kV', ssaa: 'Servicios auxiliares', ctrl: 'Control y protección', est: 'Estructuras', civ: 'Obra civil', lin: 'Línea de transmisión', ter: 'Terreno' };
@@ -462,7 +462,7 @@ export function alturaTerreno(X, Y) {
   return (h[k] * (1 - fi_) * (1 - fj) + h[k + 1] * fi_ * (1 - fj) + h[k + nx] * (1 - fi_) * fj + h[k + nx + 1] * fi_ * fj) / 100;
 }
 async function terrenoYPatio(escena) {
-  const d = await fetch('terreno.json').then((r) => r.json());
+  const rt = await fetch(new URL('terreno.json', import.meta.url)); if (!rt.ok) throw new Error('terreno.json HTTP ' + rt.status); const d = await rt.json();
   TER = { x0: d.x0, y0: d.y0, dx: d.dx, nx: d.nx, ny: d.ny, h: Int16Array.from(d.h_cm) };
   const { x0, y0, dx, nx, ny } = TER;
   const pos = new Float32Array(nx * ny * 3), uv = new Float32Array(nx * ny * 2), col = new Float32Array(nx * ny * 3);

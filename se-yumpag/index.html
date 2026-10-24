@@ -146,7 +146,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 .caja{background:var(--glass);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.66rem;color:var(--ink-2)}
 #coord{font:.66rem "IBM Plex Mono",monospace;min-width:330px}
 #vcBox{position:absolute;z-index:5;right:350px;top:10px;width:104px;height:104px}
-.vc-cv{width:104px;height:104px;cursor:pointer}
+.vc-cv{width:104px;height:104px;cursor:pointer;touch-action:none}
 .vc-cv.drag{cursor:grabbing}
 #cargando{position:absolute;inset:0;display:grid;place-items:center;background:var(--bg);z-index:20;font-size:.8rem;color:var(--ink-2)}
 #cargando div{display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -166,7 +166,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 .tbv{position:absolute;z-index:5;top:10px;left:272px;display:flex;gap:5px;flex-wrap:wrap}
 .tbv button{background:var(--glass);box-shadow:var(--shadow);font-size:.7rem}
 @media (max-width: 1100px){ #v-res{grid-template-columns:repeat(3,minmax(0,1fr))} #v-res .wide,#v-res .half{grid-column:span 3} }
-@media (max-width: 820px){
+@media (max-width: 820px), (max-height: 500px){
   body{padding:6px;gap:6px}
   .tb-m,.badge,.tb-l .sub{display:none}
   .solo-pc{display:none!important}
@@ -268,11 +268,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { ViewCube } from './navsala.js';
-import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, p3, aUTM, COTA0, NORTE, actualizarHuecos, alturaTerreno } from './ypg3d.js?v=2';
+import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLANOS, CTX, M, COD, p3, aUTM, COTA0, NORTE, actualizarHuecos, alturaTerreno } from './ypg3d.js?v=3';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const movil = matchMedia('(max-width: 820px)').matches;
+const movil = matchMedia('(max-width: 820px), (max-height: 500px)').matches;
 const fmt = (v, d = 2) => v.toLocaleString('es-PE', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 // ---------- pestañas y tema
@@ -324,7 +324,7 @@ function resumen() {
   $('#v-res').querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { tab('bim'); const f = F[b.dataset.ir]; if (f && window.__sel) window.__sel(f, true); }));
 }
 function planos() {
-  const usados = ['OE-605', 'OE-606', 'OE-604', 'OE-611', 'OE-612', 'OE-602', 'ME_P', 'ME_TC', 'ME_TT', 'ME_PA', 'ME_AS', 'OC-703', 'OC-705', 'OC-706', 'OC-302', 'OC-710', 'OC-713', 'OC-714', 'OC-715', 'OC-716', 'OEM', 'A11', 'LT'];
+  const usados = ['OE-605', 'OE-606', 'OE-604', 'OE-611', 'OE-612', 'OE-602', 'OE-622', 'OE-626', 'OE-619', 'OE-609', 'ME_P', 'ME_TC', 'ME_TT', 'ME_PA', 'ME_AS', 'OC-703', 'OC-705', 'OC-706', 'OC-302', 'OC-710', 'OC-713', 'OC-714', 'OC-715', 'OC-716', 'OEM', 'A11', 'LT'];
   $('#v-pla').innerHTML = `<div class="card"><h3><span class="dot"></span>Planos usados para el modelo</h3><div class="desc">Carpeta de Drive CLAUDE › YUMPAG › Planos OC y Planos OE (subida el 23-Oct-26). Los DWG se convierten con LibreDWG y se leen con ezdxf; las medidas que no salen de un plano se marcan referenciales en la ficha.</div>
     <table class="tb"><thead><tr><th>Código</th><th>Plano</th><th>Se usó para</th></tr></thead><tbody>
     ${usados.map((k) => `<tr><td class="mono">${k}</td><td>${esc(PLANOS[k])}</td><td>${esc(USO[k] || '')}</td></tr>`).join('')}
@@ -337,7 +337,9 @@ function planos() {
 const USO = {
   'OE-605': 'ubicación de cada equipo, fases R-S-T, globos 1–15, salas, SSAA, caseta y almacén', 'OE-606': 'alturas de pórtico, barras (12,3 m), tendidos (16 m), equipos y recorridos de bajadas',
   'OE-604': 'llegada desde la torre T23 (amarres a 16 m y 16,30 m, 50,69 m)', 'OE-611': 'disposición del pórtico 138 kV y salidas', 'OE-612': 'alturas, pesos y soportes de TC, TT, pararrayos y aisladores; conductor de barras',
-  'OE-602': 'unifilar enlazado y códigos de equipos (IN-4280…, SB-4290…, TP-390)', ME_P: 'geometría del pórtico P-19 m (columnas, V1, V2, castilletes)', ME_TC: 'soporte de TC 0,55 × 3,20 m',
+  'OE-602': 'unifilar enlazado y códigos de equipos (IN-4280…, SB-4290…, TP-390)',
+  'OE-622': 'posición de las salas ER1 y ER2, losa y equipos de SS.AA. y ductos PVC enterrados (manda sobre el OC-703)', 'OE-626': 'salida en 10 kV: vanos Mina 1-2-3, pararrayos, seccionadores, cable N2XSOH y amarre a 7,20 m',
+  'OE-619': 'montaje del transformador de SS.AA.: cerco, envolvente y base', 'OE-609': 'red de tierra profunda: conductor, cuadrícula 8 × 8 m, 15 pozos y conexiones', ME_P: 'geometría del pórtico P-19 m (columnas, V1, V2, castilletes)', ME_TC: 'soporte de TC 0,55 × 3,20 m',
   ME_TT: 'soporte de TT 2,50 m', ME_PA: 'soporte de pararrayos 3,20 m', ME_AS: 'soporte de aislador 3,20 m', 'OC-703': 'bases, canaletas, buzones, vía, cerco, edificaciones y coordenadas UTM',
   'OC-705': 'bases de pararrayos, TT, TC y aislador', 'OC-706': 'bases del pórtico 10 kV', 'OC-302': 'superficie del terreno y taludes', 'OC-710': 'cerco perimétrico', 'OC-713': 'almacén general',
   'OC-714': 'portón principal', 'OC-715': 'cisterna', 'OC-716': 'sistema séptico', OEM: 'salas eléctricas ER1 y ER2', A11: 'características de equipos', LT: 'posición de la torre T23',
@@ -386,7 +388,12 @@ tamVista = () => {
 new ResizeObserver(() => tamVista()).observe(visor); tamVista();
 
 const carTxt = (t) => ($('#carTxt').textContent = t);
-const { terreno } = await construir(scene, carTxt);
+let terreno;
+try { ({ terreno } = await construir(scene, carTxt)); }
+catch (e) { carTxt('No se pudo cargar el modelo 3D (' + (e && e.message ? e.message : e) + '). Recargue la página.'); const b = $('#cargando .barra'); if (b) b.remove(); throw e; }
+// sombras: la escena y el sol no se mueven, el mapa de sombras se rehace solo cuando cambia lo que se ve
+renderer.shadowMap.autoUpdate = false; const sombra = () => { renderer.shadowMap.needsUpdate = true; pedir(); }; sombra();
+const aviso = (t, ms = 4200) => { const h = $('#hud'); h.textContent = t; h.classList.remove('oculto'); clearTimeout(h._t); h._t = setTimeout(() => h.classList.add('oculto'), ms); };
 actualizarHuecos(scene);
 
 // ---------- colores por modo
@@ -423,7 +430,8 @@ const numeros = ETQ.map((e) => {
   const d = document.createElement('div'); const info = F[e.key];
   d.className = 'num' + (info && info.origen === 'R' ? ' R' : ''); d.textContent = e.n; d.title = info ? `${e.n} · ${info.nombre}` : String(e.n);
   d.addEventListener('pointerdown', (ev) => ev.stopPropagation());
-  d.addEventListener('click', (ev) => { ev.stopPropagation(); if (info) seleccionar(info, true); });
+  d.addEventListener('click', (ev) => { ev.stopPropagation(); if (!info) return; const p = p3(e.X, e.Y, 0), q = new THREE.Vector3(); let mejor = null, dm = Infinity;
+    (info.objs || []).forEach((o) => { if (o.visible === false) return; const dq = o.getWorldPosition(q).distanceToSquared(p); if (dq < dm) { dm = dq; mejor = o; } }); seleccionar(info, true, mejor); });
   const o = new CSS2DObject(d); o.position.copy(p3(e.X, e.Y, e.h)); o.userData.e = e; scene.add(o); return o;
 });
 const capaOn = {}; Object.keys(NOMBRES_CAPA).forEach((k) => (capaOn[k] = true));
@@ -440,7 +448,7 @@ function visibilidad() {
   REG.forEach(({ obj, capa }) => (obj.visible = capaOn[capa]));
   CTX.subsuelo.forEach((o) => (o.visible = subsuelo));
   CTX.tapas.forEach((o) => (o.visible = !destapar));
-  rotulosVis(); pedir();
+  rotulosVis(); sombra();
 }
 const cc = $('#capas');
 Object.entries(NOMBRES_CAPA).forEach(([k, n]) => {
@@ -451,7 +459,7 @@ Object.entries(NOMBRES_CAPA).forEach(([k, n]) => {
 });
 function marcarCapa(k, v) { capaOn[k] = v; const i = cc.querySelector(`[data-capa=${k}] input`); if (i) i.checked = v; }
 ['vRot', 'vNum'].forEach((id) => ($('#' + id).onchange = visibilidad));
-$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) [].concat(m.material).forEach((x) => (x.needsUpdate = true)); }); pedir(); };
+$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) [].concat(m.material).forEach((x) => (x.needsUpdate = true)); }); sombra(); };
 let subsuelo = false, destapar = false;
 const transp = [];
 REG.forEach(({ obj, capa, info }) => { if (capa === 'terreno' || (info && info.key === 'grava') || (info && info.key === 'via')) obj.traverse((m) => m.isMesh && transp.push(m)); });
@@ -464,7 +472,7 @@ function fijarSubsuelo(on) {
 $('#vSub').onchange = (e) => fijarSubsuelo(e.target.checked);
 $('#vTapa').onchange = (e) => { destapar = e.target.checked; visibilidad(); };
 const matMuroT = M.shelter.clone(); matMuroT.transparent = true; matMuroT.opacity = 0.16; matMuroT.depthWrite = false;
-function fijarSala(on) { $('#vSala').checked = on; (CTX.muros || []).forEach((g) => g.traverse((m) => { if (m.isMesh) { if (!m.userData.matR) m.userData.matR = m.userData.mat0 || m.material; m.userData.mat0 = on ? matMuroT : m.userData.matR; if (modo === 'real') m.material = m.userData.mat0; m.castShadow = !on; } })); pedir(); }
+function fijarSala(on) { $('#vSala').checked = on; sombra(); (CTX.muros || []).forEach((g) => g.traverse((m) => { if (m.isMesh) { if (!m.userData.matR) m.userData.matR = m.userData.mat0 || m.material; m.userData.mat0 = on ? matMuroT : m.userData.matR; if (modo === 'real') m.material = m.userData.mat0; m.castShadow = !on; } })); pedir(); }
 $('#vSala').onchange = (e) => fijarSala(e.target.checked);
 
 // ---------- corte
@@ -479,7 +487,7 @@ function aplicarCorte() {
     if (corte === 'h') plano.set(new THREE.Vector3(0, -1, 0), t);
     planes = [plano];
   }
-  renderer.clippingPlanes = planes; rotulosVis(); pedir();
+  renderer.clippingPlanes = planes; rotulosVis(); sombra();
 }
 function fijarCorte(eje, valor) {
   corte = eje; $('#corteEje').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.c === eje));
@@ -491,21 +499,24 @@ $('#corteEje').onclick = (e) => { const b = e.target.closest('button'); if (b) f
 $('#corte').oninput = aplicarCorte;
 
 // ---------- plano CAD sobre el patio
-let cad = null, cadK = 'equipos';
+let cad = null, cadK = 'equipos', cadP = null;
 async function verCad() {
   const on = $('#vCad').checked; $('#cadSel').classList.toggle('oculto', !on);
-  if (on && !cad) {
-    carTxt('Cargando el plano CAD…');
-    const d = await fetch('cad.json').then((r) => r.json()); cad = {};
-    const col = { equipos: 0x16324d, civil: 0x8a3b12, curvas: 0x6b5a2e };
-    const mk = (k, v) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); cad[k] = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: col[k], transparent: true, opacity: 0.9 })); cad[k].renderOrder = 2; scene.add(cad[k]); };
-    for (const k of ['equipos', 'civil']) { const s = d[k], v = []; for (let i = 0; i + 3 < s.length; i += 4) v.push(s[i], 0.06, -s[i + 1], s[i + 2], 0.06, -s[i + 3]); mk(k, v); }
-    const t = await fetch('terreno.json').then((r) => r.json()); const v = [];
-    for (const c of t.curvas) for (let i = 0; i + 1 < c.p.length; i++) { const [a, b] = [c.p[i], c.p[i + 1]]; v.push(a[0], c.z - COTA0 + 0.08, -a[1], b[0], c.z - COTA0 + 0.08, -b[1]); }
-    mk('curvas', v);
-  }
-  if (cad) Object.entries(cad).forEach(([k, l]) => (l.visible = on && k === cadK));
+  if (on && !cad) { cadP = cadP || cargarCad().catch((e) => { cadP = null; throw e; }); try { await cadP; } catch (e) { aviso('No se pudo cargar el plano CAD: ' + e.message); $('#vCad').checked = false; $('#cadSel').classList.add('oculto'); return; } }
+  if (cad) Object.entries(cad).forEach(([k, l]) => (l.visible = $('#vCad').checked && k === cadK));
   pedir();
+}
+async function cargarCad() {
+  {
+    const j = async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(u + ' HTTP ' + r.status); return r.json(); };
+    const d = await j('cad.json'); const nuevo = {};
+    const col = { equipos: 0x16324d, civil: 0x8a3b12, curvas: 0x6b5a2e };
+    const mk = (k, v) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); nuevo[k] = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: col[k], transparent: true, opacity: 0.9 })); nuevo[k].renderOrder = 2; nuevo[k].visible = false; scene.add(nuevo[k]); };
+    for (const k of ['equipos', 'civil']) { const s = d[k], v = []; for (let i = 0; i + 3 < s.length; i += 4) v.push(s[i], 0.06, -s[i + 1], s[i + 2], 0.06, -s[i + 3]); mk(k, v); }
+    const t = await j('terreno.json'); const v = [];
+    for (const c of t.curvas) for (let i = 0; i + 1 < c.p.length; i++) { const [a, b] = [c.p[i], c.p[i + 1]]; v.push(a[0], c.z - COTA0 + 0.08, -a[1], b[0], c.z - COTA0 + 0.08, -b[1]); }
+    mk('curvas', v); cad = nuevo;
+  }
 }
 $('#vCad').onchange = verCad;
 $('#cadSel').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; cadK = b.dataset.k; $('#cadSel').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); verCad(); };
@@ -513,8 +524,8 @@ $('#cadSel').onclick = (e) => { const b = e.target.closest('button'); if (!b) re
 // ---------- cámara y vistas
 let anim = null;
 let zoomP = null, cajaM = null, tPick = 0, xyPick = null; // rueda suave (ver «navegación» más abajo)
-function volar(pos, tgt, ms = 950) {
-  if (camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.2 + (0.85 - camera.aspect)));
+function volar(pos, tgt, ms = 950, encuadre = true) {
+  if (encuadre && camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.2 + (0.85 - camera.aspect)));
   zoomP = null; const p0 = camera.position.clone(), t0 = controls.target.clone(), ini = performance.now();
   anim = (now) => {
     let k = Math.min(1, (now - ini) / ms); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
@@ -548,8 +559,8 @@ $('#vistas').onclick = (e) => {
 camera.position.copy(p3(-22, -30, 46)); controls.target.copy(p3(31, 25, 3)); controls.update();
 const vc = new ViewCube($('#vcBox'), {
   getCam: () => camera, getTarget: () => controls.target, norte: NORTE,
-  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (Math.abs(dd.y) > 0.999) dd.set(0.001, Math.sign(dd.y), 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650); },
-  orbitar: (dx, dy) => { const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.495, Math.max(0.02, s.phi - dy * 0.012)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
+  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (dd.y < -0.99) dd.set(0, 1, 0); if (Math.abs(dd.y) > 0.999) dd.set(0.001, Math.sign(dd.y), 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650, false); }, // la cara ABAJO lleva a la planta
+  orbitar: (dx, dy) => { const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.495, Math.max(0.02, s.phi - dy * 0.012)); anim = null; camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
 });
 
 // ---------- selección, ficha y lista
@@ -570,14 +581,14 @@ function seleccionar(info, volarA = false, obj = null) {
     <p class="nom">${esc(SISTEMAS[info.sistema] || '')}${cod ? ' · <b>' + esc(cod) + '</b>' : ''}${info.objs ? ` · ${info.objs.length} en el modelo` : ''}</p>
     ${filas ? `<table>${filas}</table>` : ''}
     ${info.nota ? `<div class="nota">${esc(info.nota)}</div>` : ''}
-    <div class="acc"><button id="fIr">🎯 Ir al elemento</button>${padre ? `<button id="fPadre">↑ ${esc(padre.nombre)}</button>` : ''}${UNI_K[info.key] ? '<button id="fUni">⚡ Ver en el unifilar</button>' : ''}</div>
+    <div class="acc"><button id="fIr">🎯 Ir al elemento</button>${padre ? `<button id="fPadre">↑ ${esc(padre.nombre)}</button>` : ''}${zonaDe(info, raiz) ? '<button id="fUni">⚡ Ver en el unifilar</button>' : ''}</div>
     ${info.planos && info.planos.length ? `<h4>Planos</h4><div class="pl">${info.planos.map(esc).join('<br>')}</div>` : ''}`;
   $('#ficha').classList.remove('oculto');
   $('#fCerrar').onclick = () => seleccionar(null);
   $('#fIr').onclick = () => irA(info, raiz);
   if (padre) $('#fPadre').onclick = () => seleccionar(padre, false);
-  if ($('#fUni')) $('#fUni').onclick = () => abrirUni(UNI_K[info.key]);
-  marcarUni(info.key);
+  if ($('#fUni')) $('#fUni').onclick = () => abrirUni(zonaDe(info, raiz));
+  marcarUni(null, zonaDe(info, raiz));
   if (volarA) irA(info, raiz);
   if (movil) { $('#der').classList.remove('cerrado'); $('#izq').classList.add('cerrado'); }
   $('#der').scrollTop = 0; pedir();
@@ -603,35 +614,51 @@ const GRUPOS_L = [
 const RES_L = [['3 bahías', '138 kV · simple barra'], ['10/12,5 MVA', 'TP-390 · 138/10 kV'], ['P-19 m', 'pórtico de 8 columnas'], ['3 salidas', '10 kV · Mina 1, 2, 3']];
 function lista(filtro = '') {
   const l = $('#lista'); const f = filtro.trim().toLowerCase();
+  if (!l.querySelector('#buscar')) {
   l.innerHTML = '<h2 style="margin-top:1px;font-size:.6rem;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-mut)">SE Yumpag</h2><div class="resumen">' + RES_L.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('') +
-    `</div><input id="buscar" type="search" placeholder="Buscar: interruptor, TT, canaleta, 6…" autocomplete="off" value="${esc(filtro)}">`;
+    `</div><input id="buscar" type="search" placeholder="Buscar: interruptor, TT, canaleta, 6…" autocomplete="off" value="${esc(filtro)}"><div id="listaRes"></div>`;
+  $('#buscar').oninput = (e) => lista(e.target.value); }
+  const res = $('#listaRes'); res.innerHTML = '';
   for (const [t, ks] of GRUPOS_L) {
     const items = ks.map((k) => F[k]).filter((info) => info && info.objs && (!f || info.nombre.toLowerCase().includes(f) || String(info.item || '') === f || (info.datos || []).some((d) => String(d[1]).toLowerCase().includes(f))));
     if (!items.length) continue;
-    const g = document.createElement('div'); g.className = 'g'; g.textContent = t; l.appendChild(g);
+    const g = document.createElement('div'); g.className = 'g'; g.textContent = t; res.appendChild(g);
     for (const info of items) {
       const b = document.createElement('button');
       b.innerHTML = `<i style="background:${COLORI[info.origen]}"></i><b>${esc(info.nombre)}</b>${info.item ? `<em>${info.item}</em>` : ''}`;
-      b.onclick = () => seleccionar(info, true); l.appendChild(b);
+      b.onclick = () => seleccionar(info, true); res.appendChild(b);
     }
   }
-  const bi = $('#buscar'); bi.oninput = () => { const v = bi.value; lista(v); const n = $('#buscar'); n.focus(); n.setSelectionRange(v.length, v.length); };
 }
 lista();
 
 // ---------- picking y coordenadas
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let abajo = null;
-renderer.domElement.addEventListener('pointerdown', (e) => (abajo = { x: e.clientX, y: e.clientY }));
-renderer.domElement.addEventListener('pointerup', (e) => {
-  if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5) return;
-  const h = tocar(e); if (!h) return;
-  if (h.object === terreno) { seleccionar(null); return; } // clic en el suelo: cierra la ficha (el terreno sigue en la lista)
-  seleccionar(infoDe(h.object), false, h.object);
+const SUELO = new Set(['grava', 'via']), dedos = new Set(); let multi = false, tapT = 0, tapXY = null, tapPend = 0, tCentro = 0;
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  dedos.add(e.pointerId); multi = dedos.size > 1;
+  abajo = e.button === 0 && !multi ? { x: e.clientX, y: e.clientY } : null;
 });
+renderer.domElement.addEventListener('pointercancel', (e) => { dedos.delete(e.pointerId); abajo = null; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  dedos.delete(e.pointerId); const a = abajo; abajo = null;
+  if (!a || multi || Math.hypot(e.clientX - a.x, e.clientY - a.y) > 5) return;
+  if (e.pointerType === 'touch') {
+    const now = performance.now(), ev = { clientX: e.clientX, clientY: e.clientY };
+    if (tapXY && now - tapT < 320 && Math.hypot(e.clientX - tapXY[0], e.clientY - tapXY[1]) < 30) { clearTimeout(tapPend); tapXY = null; centrarGiro(ev); return; }
+    tapT = now; tapXY = [e.clientX, e.clientY]; clearTimeout(tapPend); tapPend = setTimeout(() => { tapXY = null; elegir(ev); }, 300); return;
+  }
+  elegir(e);
+});
+function elegir(e) {
+  const h = tocar(e); if (!h) return;
+  if (h.object === terreno || SUELO.has((infoDe(h.object) || {}).key)) { seleccionar(null); return; } // clic en el suelo: cierra la ficha (el terreno sigue en la lista)
+  seleccionar(infoDe(h.object), false, h.object);
+}
 function tocar(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera);
-  const objs = []; REG.forEach(({ obj, capa }) => { if (obj.visible && capa !== 'terreno') objs.push(obj); });
+  const objs = []; REG.forEach(({ obj, capa, info }) => { if (obj.visible && capa !== 'terreno' && !(subsuelo && info && SUELO.has(info.key))) objs.push(obj); }); // con el subsuelo a la vista, la grava y la vía no tapan las zapatas
   const hs = ray.intersectObjects(objs, true).filter((h) => !renderer.clippingPlanes.some((p) => p.distanceToPoint(h.point) < 0));
   const vis = hs.filter((h) => { let o = h.object; while (o) { if (o.visible === false) return false; o = o.parent; } return true; });
   if (vis.length) return vis[0];
@@ -639,7 +666,7 @@ function tocar(e) {
 }
 let tCoord = 0;
 renderer.domElement.addEventListener('pointermove', (e) => {
-  const now = performance.now(); if (now - tCoord < 80 || movil) return; tCoord = now;
+  const now = performance.now(); if (now - tCoord < 80 || movil || e.buttons || anim || zoomP) return; tCoord = now; // no se lanza el rayo mientras se arrastra
   const h = tocar(e); if (!h) return; const p = h.point; const X = p.x, Y = -p.z; const [E, N] = aUTM(X, Y);
   const info = infoDe(h.object);
   $('#coord').textContent = `E ${fmt(E)} · N ${fmt(N)} · ${fmt(COTA0 + p.y)} m s.n.m. · X ${fmt(X, 1)} Y ${fmt(Y, 1)}${info ? ' · ' + info.nombre : ''}`;
@@ -681,42 +708,63 @@ function pasoZoom(dt) {
   const z = zoomP; const C = cajaModelo();
   const lf = Math.log(z.f) * (1 - Math.exp(-Math.min(0.1, dt) / 0.085)); const f = Math.exp(lf); z.f = Math.exp(Math.log(z.f) - lf);
   const np = _vZ.copy(camera.position).sub(z.P).multiplyScalar(f).add(z.P);
-  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || np.y < alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.0))) || (f > 1 && np.distanceTo(C.c) > C.lejos);
+  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || (np.y < alturaTerreno(np.x, -np.z) + (subsuelo ? -6 : 1.0) && np.y < camera.position.y))) || (f > 1 && np.distanceTo(C.c) > C.lejos);
   if (tope) { zoomP = null; return; }
   camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
   if (f > 1) C.caja.clampPoint(controls.target, controls.target); // al alejarse, el pivote no sale del entorno del modelo
   if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
 }
 // doble clic sobre el modelo: el giro pasa a ser alrededor de ese punto (vuelo corto, sin saltos)
-renderer.domElement.addEventListener('dblclick', (e) => {
+renderer.domElement.addEventListener('dblclick', (e) => centrarGiro(e));
+function centrarGiro(e) {
+  const now = performance.now(); if (now - tCentro < 450) return; tCentro = now; // el doble toque y el dblclick del navegador no se suman
   const h = tocar(e); if (!h) return; zoomP = null;
   const P = h.point.clone(); const off = camera.position.clone().sub(controls.target).normalize();
   const d = Math.max(6, Math.min(camera.position.distanceTo(P) * 0.8, camera.position.distanceTo(controls.target)));
-  volar(P.clone().addScaledVector(off, d), P, 650);
-});
+  volar(P.clone().addScaledVector(off, d), P, 650, false);
+}
 
 // ---------- unifilar OE-602
 const UNI_K = { pr: 'b2', tt: 'b2', sl: 'b2', tc: 'b2', int: 'b1', sb: 'b1', as: 'b1', trafo: 'trafo', barras: 'barra', conductores: 'barra', sala: 'mt', trafoSA: 'ssaa', grupo: 'ssaa', tabTransf: 'ssaa', linea: 'b3', salida10: 'mina1', portico10: 'mina1' };
 const UNI_EQ = { b1: 'int', b2: 'linea', b3: 'linea', barra: 'barras', ttbarra: 'tt', trafo: 'trafo', mt: 'sala', mina1: 'salida10', mina2: 'salida10', mina3: 'salida10', ssaa: 'trafoSA' };
-let uniSvg = null, vb0 = null, vb = null;
+// 24-Oct-26 (auditoría): el equipo se enlaza con su bahía por su código del unifilar (IN-4280 → b3), no por su tipo
+const zonaDe = (info, raiz) => { const c = String((raiz && raiz.userData.cod) || '').split(' · ')[0];
+  if (c) for (const [z, m] of Object.entries(COD)) if (m && typeof m === 'object' && Object.values(m).includes(c)) return z === 'barra' ? 'ttbarra' : z;
+  return info ? UNI_K[info.key] : null; };
+function objsZona(z) { const m = z === 'ttbarra' ? COD.barra : COD[z]; if (!m || typeof m !== 'object') return []; const cods = Object.values(m), out = [];
+  scene.traverse((o) => { const c = o.userData && o.userData.cod; if (c && cods.includes(String(c).split(' · ')[0])) out.push(o); }); return out; }
+function clicZonaUni(z) {
+  const zona = z.dataset.eq, os = objsZona(zona), info = F[UNI_EQ[zona]];
+  if (os.length) { const b = new THREE.Box3(); os.forEach((o) => b.expandByObject(o)); if (info) seleccionar(info, false); selBox.box.copy(b); selBox.visible = true;
+    const c = b.getCenter(new THREE.Vector3()), r = Math.max(4, b.getSize(new THREE.Vector3()).length() * 0.75), dir = camera.position.clone().sub(controls.target).normalize(); if (dir.y < 0.25) { dir.y = 0.35; dir.normalize(); }
+    volar(c.clone().addScaledVector(dir, Math.max(r * 1.7, 8)), c); }
+  else if (info && info.objs) seleccionar(info, true);
+  marcarUni(null, zona);
+}
+let uniSvg = null, vb0 = null, vb = null, uniP = null;
 async function abrirUni(zona) {
-  $('#uni').classList.remove('oculto'); $('#bUni').classList.add('on');
-  if (!uniSvg) {
-    const t = await fetch('unifilar.svg').then((r) => r.text());
+  $('#uni').classList.remove('oculto'); $('#bUni').classList.add('on'); if (movil) $('#der').classList.add('cerrado');
+  if (!uniSvg) { uniP = uniP || cargarUni().catch((e) => { uniP = null; throw e; }); try { await uniP; } catch (e) { aviso('No se pudo cargar el unifilar: ' + e.message); cerrarUni(); return; } }
+  irZonaUni(zona);
+}
+async function cargarUni() {
+  {
+    const r = await fetch('unifilar.svg'); if (!r.ok) throw new Error('HTTP ' + r.status); const t = await r.text();
     $('#uniSvg').innerHTML = t; uniSvg = $('#uniSvg svg');
     vb0 = uniSvg.getAttribute('viewBox').split(' ').map(Number); vb = vb0.slice();
     uniSvg.querySelectorAll('.z').forEach((z) => z.addEventListener('click', (ev) => {
-      ev.stopPropagation(); const info = F[UNI_EQ[z.dataset.eq]];
-      if (info && info.objs) seleccionar(info, true); marcarUni(null, z.dataset.eq);
-      const h = $('#hud'); h.textContent = z.querySelector('title')?.textContent || ''; h.classList.remove('oculto'); clearTimeout(h._t); h._t = setTimeout(() => h.classList.add('oculto'), 4200);
+      ev.stopPropagation(); if (movil) cerrarUni(); clicZonaUni(z);
+      aviso(z.querySelector('title')?.textContent || '');
     }));
     panZoom();
   }
+}
+function irZonaUni(zona) {
   if (zona) { marcarUni(null, zona); const z = uniSvg.querySelector(`.z[data-eq="${zona}"]`); if (z) { const b = z.getBBox(); fijarVB([b.x - b.width * 0.5, b.y - b.height * 0.5, b.width * 2, b.height * 2]); } }
 }
 function cerrarUni() { $('#uni').classList.add('oculto'); $('#bUni').classList.remove('on'); }
 $('#bUni').onclick = () => ($('#uni').classList.contains('oculto') ? abrirUni() : cerrarUni());
-$('#uniCerrar').onclick = cerrarUni; $('#uniFit').onclick = () => fijarVB(vb0.slice());
+$('#uniCerrar').onclick = cerrarUni; $('#uniFit').onclick = () => vb0 && fijarVB(vb0.slice());
 function marcarUni(key, zona) { if (!uniSvg) return; const z = zona || UNI_K[key]; uniSvg.querySelectorAll('.z').forEach((e) => e.classList.toggle('on', e.dataset.eq === z)); }
 function fijarVB(v) { vb = v; uniSvg.setAttribute('viewBox', v.join(' ')); }
 function panZoom() {
@@ -727,13 +775,31 @@ function panZoom() {
     const w = Math.min(vb0[2] * 1.5, Math.max(20, vb[2] * k)), h = w * (vb[3] / vb[2]);
     fijarVB([vb[0] + (vb[2] - w) * fx, vb[1] + (vb[3] - h) * fy, w, h]);
   }, { passive: false });
-  el.addEventListener('pointerdown', (e) => { if (e.target.closest('.z')) return; p0 = { x: e.clientX, y: e.clientY, vb: vb.slice() }; el.classList.add('drag'); el.setPointerCapture(e.pointerId); });
-  el.addEventListener('pointermove', (e) => { if (!p0) return; const r = el.getBoundingClientRect(); const s = Math.max(p0.vb[2] / r.width, p0.vb[3] / r.height); fijarVB([p0.vb[0] - (e.clientX - p0.x) * s, p0.vb[1] - (e.clientY - p0.y) * s, p0.vb[2], p0.vb[3]]); });
-  el.addEventListener('pointerup', () => { p0 = null; el.classList.remove('drag'); });
+  const pts = new Map(); let pinch = null;
+  el.addEventListener('pointerdown', (e) => {
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { const [p, q] = [...pts.values()]; pinch = { d: Math.max(10, Math.hypot(p.x - q.x, p.y - q.y)), cx: (p.x + q.x) / 2, cy: (p.y + q.y) / 2, vb: vb.slice() }; p0 = null; return; }
+    p0 = { x: e.clientX, y: e.clientY, vb: vb.slice(), id: e.pointerId, mov: false };
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const r = el.getBoundingClientRect();
+    if (pinch && pts.size === 2) {
+      const [p, q] = [...pts.values()], k = pinch.d / Math.max(10, Math.hypot(p.x - q.x, p.y - q.y));
+      const w = Math.min(vb0[2] * 1.5, Math.max(20, pinch.vb[2] * k)), h = w * (pinch.vb[3] / pinch.vb[2]), fx = (pinch.cx - r.left) / r.width, fy = (pinch.cy - r.top) / r.height;
+      fijarVB([pinch.vb[0] + (pinch.vb[2] - w) * fx, pinch.vb[1] + (pinch.vb[3] - h) * fy, w, h]); return;
+    }
+    if (!p0 || e.pointerId !== p0.id) return;
+    if (!p0.mov) { if (Math.hypot(e.clientX - p0.x, e.clientY - p0.y) < 4) return; p0.mov = true; el.classList.add('drag'); try { el.setPointerCapture(e.pointerId); } catch (_) {} }
+    const s = Math.max(p0.vb[2] / r.width, p0.vb[3] / r.height); fijarVB([p0.vb[0] - (e.clientX - p0.x) * s, p0.vb[1] - (e.clientY - p0.y) * s, p0.vb[2], p0.vb[3]]);
+  });
+  const fin = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!p0 || e.pointerId === p0.id) { p0 = null; el.classList.remove('drag'); } };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => el.addEventListener(t, fin));
 }
 
 // ---------- pantalla completa, celular, teclado
-$('#bFull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : visor.requestFullscreen());
+$('#bFull').onclick = () => { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) { const x = d.exitFullscreen || d.webkitExitFullscreen; if (x) Promise.resolve(x.call(d)).catch(() => {}); return; }
+  const rq = visor.requestFullscreen || visor.webkitRequestFullscreen; if (rq) Promise.resolve(rq.call(visor)).catch(() => {}); };
 if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
 $('#tIzq').onclick = () => { $('#izq').classList.toggle('cerrado'); $('#der').classList.add('cerrado'); };
 $('#tDer').onclick = () => { $('#der').classList.toggle('cerrado'); $('#izq').classList.add('cerrado'); };
@@ -741,6 +807,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') { seleccionar(null)
 
 // ---------- bucle
 controls.addEventListener('change', pedir);
+controls.addEventListener('start', () => { anim = null; zoomP = null; });
 let tAnt = performance.now();
 function bucle(now = performance.now()) {
   requestAnimationFrame(bucle);
@@ -748,6 +815,7 @@ function bucle(now = performance.now()) {
   if (anim) anim(now);
   const zoom = !!zoomP; if (zoomP) pasoZoom(dt);
   const mov = controls.update();
+  if (!anim) { const piso = alturaTerreno(camera.position.x, -camera.position.z) + (subsuelo ? -6 : 0.8), dz = piso - camera.position.y; if (dz > 0) { camera.position.y += dz; controls.target.y += dz; renderPend = true; } }
   if (!renderPend && !anim && !mov && !zoom) return;
   renderPend = false;
   rotulosVis();

@@ -23,3 +23,9 @@ Las capturas satelitales no se guardan en el repositorio; `mosaico.py` las esper
 - 23-Oct-26 · versión inicial: patio 138 kV con las 6 bahías del OE-250 (L-1123 a detalle), barra y TV-4429,
   autotransformador T37-211, patios 220 kV de REP/ATN y de EGH como volúmenes referenciales, salas, muros y terreno;
   unifilar enlazado.
+- 24-Oct-26 · auditoría de código y navegación: la cámara no queda bajo el suelo; el cubo y el doble clic ya no alejan
+  la cámara en celular vertical; la rueda sigue acercando en vistas bajas; doble toque en pantalla táctil; el fin de un
+  pellizco y el clic derecho no abren ficha; el globo del plano elige el equipo más cercano; unifilar con carga única,
+  arrastre y pellizco que no se quedan pegados y que no tapa la ficha en celular; sombras solo al cambiar lo visible
+  (1,86 M triángulos); buscador que no pierde letras; celular en horizontal con vista de celular; pantalla completa en
+  Safari.

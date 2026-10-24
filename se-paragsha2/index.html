@@ -146,7 +146,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 .caja{background:var(--glass);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.66rem;color:var(--ink-2)}
 #coord{font:.66rem "IBM Plex Mono",monospace;min-width:330px}
 #vcBox{position:absolute;z-index:5;right:350px;top:10px;width:104px;height:104px}
-.vc-cv{width:104px;height:104px;cursor:pointer}
+.vc-cv{width:104px;height:104px;cursor:pointer;touch-action:none}
 .vc-cv.drag{cursor:grabbing}
 #cargando{position:absolute;inset:0;display:grid;place-items:center;background:var(--bg);z-index:20;font-size:.8rem;color:var(--ink-2)}
 #cargando div{display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -166,7 +166,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 .tbv{position:absolute;z-index:5;top:10px;left:272px;display:flex;gap:5px;flex-wrap:wrap}
 .tbv button{background:var(--glass);box-shadow:var(--shadow);font-size:.7rem}
 @media (max-width: 1100px){ #v-res{grid-template-columns:repeat(3,minmax(0,1fr))} #v-res .wide,#v-res .half{grid-column:span 3} }
-@media (max-width: 820px){
+@media (max-width: 820px), (max-height: 500px){
   body{padding:6px;gap:6px}
   .tb-m,.badge,.tb-l .sub{display:none}
   .solo-pc{display:none!important}
@@ -266,7 +266,7 @@ import { construir, REG, CAPAS, ROT, ETQ, F, NOMBRES_CAPA, ORIGEN, SISTEMAS, PLA
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const movil = matchMedia('(max-width: 820px)').matches;
+const movil = matchMedia('(max-width: 820px), (max-height: 500px)').matches;
 const fmt = (v, d = 2) => v.toLocaleString('es-PE', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 // ---------- pestañas y tema
@@ -369,7 +369,12 @@ tamVista = () => {
 new ResizeObserver(() => tamVista()).observe(visor); tamVista();
 
 const carTxt = (t) => ($('#carTxt').textContent = t);
-const { terreno } = await construir(scene, carTxt);
+let terreno;
+try { ({ terreno } = await construir(scene, carTxt)); }
+catch (e) { carTxt('No se pudo cargar el modelo 3D (' + (e && e.message ? e.message : e) + '). Recargue la página.'); const b = $('#cargando .barra'); if (b) b.remove(); throw e; }
+// sombras: la escena y el sol no se mueven, el mapa de sombras se rehace solo cuando cambia lo que se ve
+renderer.shadowMap.autoUpdate = false; const sombra = () => { renderer.shadowMap.needsUpdate = true; pedir(); }; sombra();
+const aviso = (t, ms = 4200) => { const h = $('#hud'); h.textContent = t; h.classList.remove('oculto'); clearTimeout(h._t); h._t = setTimeout(() => h.classList.add('oculto'), ms); };
 
 // ---------- colores por modo
 const COL_SIS = { at138: 0xd62839, at220: 0x7b2cbf, trafo: 0xf2b705, ctrl: 0x2a9d8f, est: 0x8d99a6, civ: 0xc3c8cd, lin: 0x1f5fd6, ter: 0xa79b80 };
@@ -405,7 +410,8 @@ const numeros = ETQ.map((e) => {
   const d = document.createElement('div'); const info = F[e.key];
   d.className = 'num' + (info && info.origen === 'R' ? ' R' : ''); d.textContent = e.n; d.title = info ? `${e.n} · ${info.nombre}` : String(e.n);
   d.addEventListener('pointerdown', (ev) => ev.stopPropagation());
-  d.addEventListener('click', (ev) => { ev.stopPropagation(); if (info) seleccionar(info, true); });
+  d.addEventListener('click', (ev) => { ev.stopPropagation(); if (!info) return; const p = p3(e.X, e.Y, 0), q = new THREE.Vector3(); let mejor = null, dm = Infinity;
+    (info.objs || []).forEach((o) => { if (o.visible === false) return; const dq = o.getWorldPosition(q).distanceToSquared(p); if (dq < dm) { dm = dq; mejor = o; } }); seleccionar(info, true, mejor); });
   const o = new CSS2DObject(d); o.position.copy(p3(e.X, e.Y, e.h)); o.userData.e = e; scene.add(o); return o;
 });
 const capaOn = {}; Object.keys(NOMBRES_CAPA).forEach((k) => (capaOn[k] = true));
@@ -420,7 +426,7 @@ function rotulosVis() {
 // ---------- capas, subsuelo, tapas
 function visibilidad() {
   REG.forEach(({ obj, capa }) => (obj.visible = capaOn[capa]));
-  rotulosVis(); pedir();
+  rotulosVis(); sombra();
 }
 const cc = $('#capas');
 Object.entries(NOMBRES_CAPA).forEach(([k, n]) => {
@@ -431,7 +437,7 @@ Object.entries(NOMBRES_CAPA).forEach(([k, n]) => {
 });
 function marcarCapa(k, v) { capaOn[k] = v; const i = cc.querySelector(`[data-capa=${k}] input`); if (i) i.checked = v; }
 ['vRot', 'vNum'].forEach((id) => ($('#' + id).onchange = visibilidad));
-$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) [].concat(m.material).forEach((x) => (x.needsUpdate = true)); }); pedir(); };
+$('#vSom').onchange = (e) => { renderer.shadowMap.enabled = e.target.checked; scene.traverse((m) => { if (m.material) [].concat(m.material).forEach((x) => (x.needsUpdate = true)); }); sombra(); };
 // ---------- corte
 let corte = 'no'; const plano = new THREE.Plane();
 const RANG = { x: [0, 300], y: [0, 235], h: [-1, 25] };
@@ -444,7 +450,7 @@ function aplicarCorte() {
     if (corte === 'h') plano.set(new THREE.Vector3(0, -1, 0), t);
     planes = [plano];
   }
-  renderer.clippingPlanes = planes; rotulosVis(); pedir();
+  renderer.clippingPlanes = planes; rotulosVis(); sombra();
 }
 function fijarCorte(eje, valor) {
   corte = eje; $('#corteEje').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.c === eje));
@@ -458,8 +464,8 @@ $('#corte').oninput = aplicarCorte;
 // ---------- cámara y vistas
 let anim = null;
 let zoomP = null, cajaM = null, tPick = 0, xyPick = null; // rueda suave (ver «navegación» más abajo)
-function volar(pos, tgt, ms = 950) {
-  if (camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.2 + (0.85 - camera.aspect)));
+function volar(pos, tgt, ms = 950, encuadre = true) {
+  if (encuadre && camera.aspect < 0.85) pos = tgt.clone().add(pos.clone().sub(tgt).multiplyScalar(1.2 + (0.85 - camera.aspect)));
   zoomP = null; const p0 = camera.position.clone(), t0 = controls.target.clone(), ini = performance.now();
   anim = (now) => {
     let k = Math.min(1, (now - ini) / ms); k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
@@ -490,8 +496,8 @@ $('#vistas').onclick = (e) => {
 camera.position.copy(p3(30, -95, 150)); controls.target.copy(p3(150, 112, 0)); controls.update();
 const vc = new ViewCube($('#vcBox'), {
   getCam: () => camera, getTarget: () => controls.target, norte: NORTE,
-  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (Math.abs(dd.y) > 0.999) dd.set(0.001, Math.sign(dd.y), 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650); },
-  orbitar: (dx, dy) => { const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.495, Math.max(0.02, s.phi - dy * 0.012)); camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
+  ir: (dir) => { const d = camera.position.distanceTo(controls.target); const dd = dir.clone(); if (dd.y < -0.99) dd.set(0, 1, 0); if (Math.abs(dd.y) > 0.999) dd.set(0.001, Math.sign(dd.y), 0.001).normalize(); volar(controls.target.clone().addScaledVector(dd, d), controls.target.clone(), 650, false); }, // la cara ABAJO lleva a la planta
+  orbitar: (dx, dy) => { const off = camera.position.clone().sub(controls.target); const s = new THREE.Spherical().setFromVector3(off); s.theta -= dx * 0.012; s.phi = Math.min(Math.PI * 0.495, Math.max(0.02, s.phi - dy * 0.012)); anim = null; camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(s)); pedir(); },
 });
 
 // ---------- selección, ficha y lista
@@ -543,35 +549,51 @@ const GRUPOS_L = [
 const RES_L = [['6 bahías', '138 kV · simple barra'], ['120 MVA', 'ATR 220/127/10 kV'], ['L-1123', 'CONENHUA · desde 1997'], ['3 patios', '220 kV REP · 220 kV EGH · 138 kV']];
 function lista(filtro = '') {
   const l = $('#lista'); const f = filtro.trim().toLowerCase();
+  if (!l.querySelector('#buscar')) {
   l.innerHTML = '<h2 style="margin-top:1px;font-size:.6rem;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-mut)">SE Paragsha II</h2><div class="resumen">' + RES_L.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('') +
-    `</div><input id="buscar" type="search" placeholder="Buscar: IN-4076, L-1146, trampa, 2…" autocomplete="off" value="${esc(filtro)}">`;
+    `</div><input id="buscar" type="search" placeholder="Buscar: IN-4076, L-1146, trampa, 2…" autocomplete="off" value="${esc(filtro)}"><div id="listaRes"></div>`;
+  $('#buscar').oninput = (e) => lista(e.target.value); }
+  const res = $('#listaRes'); res.innerHTML = '';
   for (const [t, ks] of GRUPOS_L) {
     const items = ks.map((k) => F[k]).filter((info) => info && info.objs && (!f || info.nombre.toLowerCase().includes(f) || String(info.item || '') === f || (info.datos || []).some((d) => String(d[1]).toLowerCase().includes(f))));
     if (!items.length) continue;
-    const g = document.createElement('div'); g.className = 'g'; g.textContent = t; l.appendChild(g);
+    const g = document.createElement('div'); g.className = 'g'; g.textContent = t; res.appendChild(g);
     for (const info of items) {
       const b = document.createElement('button');
       b.innerHTML = `<i style="background:${COLORI[info.origen]}"></i><b>${esc(info.nombre)}</b>${info.item ? `<em>${info.item}</em>` : ''}`;
-      b.onclick = () => seleccionar(info, true); l.appendChild(b);
+      b.onclick = () => seleccionar(info, true); res.appendChild(b);
     }
   }
-  const bi = $('#buscar'); bi.oninput = () => { const v = bi.value; lista(v); const n = $('#buscar'); n.focus(); n.setSelectionRange(v.length, v.length); };
 }
 lista();
 
 // ---------- picking y coordenadas
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let abajo = null;
-renderer.domElement.addEventListener('pointerdown', (e) => (abajo = { x: e.clientX, y: e.clientY }));
-renderer.domElement.addEventListener('pointerup', (e) => {
-  if (!abajo || Math.hypot(e.clientX - abajo.x, e.clientY - abajo.y) > 5) return;
-  const h = tocar(e); if (!h) return;
-  if (h.object === terreno) { seleccionar(null); return; } // clic en el suelo: cierra la ficha (el terreno sigue en la lista)
-  seleccionar(infoDe(h.object), false, h.object);
+const SUELO = new Set(['grava', 'via']), dedos = new Set(); let multi = false, tapT = 0, tapXY = null, tapPend = 0, tCentro = 0;
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  dedos.add(e.pointerId); multi = dedos.size > 1;
+  abajo = e.button === 0 && !multi ? { x: e.clientX, y: e.clientY } : null;
 });
+renderer.domElement.addEventListener('pointercancel', (e) => { dedos.delete(e.pointerId); abajo = null; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  dedos.delete(e.pointerId); const a = abajo; abajo = null;
+  if (!a || multi || Math.hypot(e.clientX - a.x, e.clientY - a.y) > 5) return;
+  if (e.pointerType === 'touch') {
+    const now = performance.now(), ev = { clientX: e.clientX, clientY: e.clientY };
+    if (tapXY && now - tapT < 320 && Math.hypot(e.clientX - tapXY[0], e.clientY - tapXY[1]) < 30) { clearTimeout(tapPend); tapXY = null; centrarGiro(ev); return; }
+    tapT = now; tapXY = [e.clientX, e.clientY]; clearTimeout(tapPend); tapPend = setTimeout(() => { tapXY = null; elegir(ev); }, 300); return;
+  }
+  elegir(e);
+});
+function elegir(e) {
+  const h = tocar(e); if (!h) return;
+  if (h.object === terreno || SUELO.has((infoDe(h.object) || {}).key)) { seleccionar(null); return; } // clic en el suelo: cierra la ficha (el terreno sigue en la lista)
+  seleccionar(infoDe(h.object), false, h.object);
+}
 function tocar(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera);
-  const objs = []; REG.forEach(({ obj, capa }) => { if (obj.visible && capa !== 'terreno') objs.push(obj); });
+  const objs = []; REG.forEach(({ obj, capa, info }) => { if (obj.visible && capa !== 'terreno' && !(subsuelo && info && SUELO.has(info.key))) objs.push(obj); }); // con el subsuelo a la vista, la grava y la vía no tapan las zapatas
   const hs = ray.intersectObjects(objs, true).filter((h) => !renderer.clippingPlanes.some((p) => p.distanceToPoint(h.point) < 0));
   const vis = hs.filter((h) => { let o = h.object; while (o) { if (o.visible === false) return false; o = o.parent; } return true; });
   if (vis.length) return vis[0];
@@ -579,7 +601,7 @@ function tocar(e) {
 }
 let tCoord = 0;
 renderer.domElement.addEventListener('pointermove', (e) => {
-  const now = performance.now(); if (now - tCoord < 80 || movil) return; tCoord = now;
+  const now = performance.now(); if (now - tCoord < 80 || movil || e.buttons || anim || zoomP) return; tCoord = now; // no se lanza el rayo mientras se arrastra
   const h = tocar(e); if (!h) return; const p = h.point; const X = p.x, Y = -p.z; const [E, N] = aUTM(X, Y);
   const info = infoDe(h.object);
   $('#coord').textContent = `E ${fmt(E)} · N ${fmt(N)} · ${fmt(COTA0 + p.y)} m s.n.m. · X ${fmt(X, 1)} Y ${fmt(Y, 1)}${info ? ' · ' + info.nombre : ''}`;
@@ -621,43 +643,52 @@ function pasoZoom(dt) {
   const z = zoomP; const C = cajaModelo();
   const lf = Math.log(z.f) * (1 - Math.exp(-Math.min(0.1, dt) / 0.085)); const f = Math.exp(lf); z.f = Math.exp(Math.log(z.f) - lf);
   const np = _vZ.copy(camera.position).sub(z.P).multiplyScalar(f).add(z.P);
-  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || np.y < alturaTerreno(np.x, -np.z) + 1.0)) || (f > 1 && np.distanceTo(C.c) > C.lejos);
+  const tope = (f < 1 && (np.distanceTo(z.P) < z.dMin || (np.y < alturaTerreno(np.x, -np.z) + 1.0 && np.y < camera.position.y))) || (f > 1 && np.distanceTo(C.c) > C.lejos);
   if (tope) { zoomP = null; return; }
   camera.position.copy(np); controls.target.sub(z.P).multiplyScalar(f).add(z.P);
   if (f > 1) C.caja.clampPoint(controls.target, controls.target); // al alejarse, el pivote no sale del entorno del modelo
   if (Math.abs(Math.log(z.f)) < 0.002) zoomP = null;
 }
 // doble clic sobre el modelo: el giro pasa a ser alrededor de ese punto (vuelo corto, sin saltos)
-renderer.domElement.addEventListener('dblclick', (e) => {
+renderer.domElement.addEventListener('dblclick', (e) => centrarGiro(e));
+function centrarGiro(e) {
+  const now = performance.now(); if (now - tCentro < 450) return; tCentro = now; // el doble toque y el dblclick del navegador no se suman
   const h = tocar(e); if (!h) return; zoomP = null;
   const P = h.point.clone(); const off = camera.position.clone().sub(controls.target).normalize();
   const d = Math.max(6, Math.min(camera.position.distanceTo(P) * 0.8, camera.position.distanceTo(controls.target)));
-  volar(P.clone().addScaledVector(off, d), P, 650);
-});
+  volar(P.clone().addScaledVector(off, d), P, 650, false);
+}
 
 // ---------- unifilar OE-602
 const UNI_K = { l1123: 'l1123', atr: 'atr', atrT: 'atr', l1120: 'l1120', l1709: 'l1709', l1704: 'l1704', l1146: 'l1146', barra: 'barra', tv: 'barra', conductores: 'barra' };
 Object.keys(F).filter((k) => k.startsWith('l1123_')).forEach((k) => (UNI_K[k] = 'l1123'));
 const UNI_EQ = { l1123: 'l1123', atr: 'atr', l1120: 'l1120', l1709: 'l1709', l1704: 'l1704', l1146: 'l1146', barra: 'barra' };
-let uniSvg = null, vb0 = null, vb = null;
+const subsuelo = false; // Paragsha II no tiene vista de subsuelo (lo usan el picking y el tope del suelo, como en la SE Yumpag)
+function clicZonaUni(z) { const info = F[UNI_EQ[z.dataset.eq]]; if (info && info.objs) seleccionar(info, true); marcarUni(null, z.dataset.eq); }
+let uniSvg = null, vb0 = null, vb = null, uniP = null;
 async function abrirUni(zona) {
-  $('#uni').classList.remove('oculto'); $('#bUni').classList.add('on');
-  if (!uniSvg) {
-    const t = await fetch('unifilar.svg').then((r) => r.text());
+  $('#uni').classList.remove('oculto'); $('#bUni').classList.add('on'); if (movil) $('#der').classList.add('cerrado');
+  if (!uniSvg) { uniP = uniP || cargarUni().catch((e) => { uniP = null; throw e; }); try { await uniP; } catch (e) { aviso('No se pudo cargar el unifilar: ' + e.message); cerrarUni(); return; } }
+  irZonaUni(zona);
+}
+async function cargarUni() {
+  {
+    const r = await fetch('unifilar.svg'); if (!r.ok) throw new Error('HTTP ' + r.status); const t = await r.text();
     $('#uniSvg').innerHTML = t; uniSvg = $('#uniSvg svg');
     vb0 = uniSvg.getAttribute('viewBox').split(' ').map(Number); vb = vb0.slice();
     uniSvg.querySelectorAll('.z').forEach((z) => z.addEventListener('click', (ev) => {
-      ev.stopPropagation(); const info = F[UNI_EQ[z.dataset.eq]];
-      if (info && info.objs) seleccionar(info, true); marcarUni(null, z.dataset.eq);
-      const h = $('#hud'); h.textContent = z.querySelector('title')?.textContent || ''; h.classList.remove('oculto'); clearTimeout(h._t); h._t = setTimeout(() => h.classList.add('oculto'), 4200);
+      ev.stopPropagation(); if (movil) cerrarUni(); clicZonaUni(z);
+      aviso(z.querySelector('title')?.textContent || '');
     }));
     panZoom();
   }
+}
+function irZonaUni(zona) {
   if (zona) { marcarUni(null, zona); const z = uniSvg.querySelector(`.z[data-eq="${zona}"]`); if (z) { const b = z.getBBox(); fijarVB([b.x - b.width * 0.5, b.y - b.height * 0.5, b.width * 2, b.height * 2]); } }
 }
 function cerrarUni() { $('#uni').classList.add('oculto'); $('#bUni').classList.remove('on'); }
 $('#bUni').onclick = () => ($('#uni').classList.contains('oculto') ? abrirUni() : cerrarUni());
-$('#uniCerrar').onclick = cerrarUni; $('#uniFit').onclick = () => fijarVB(vb0.slice());
+$('#uniCerrar').onclick = cerrarUni; $('#uniFit').onclick = () => vb0 && fijarVB(vb0.slice());
 function marcarUni(key, zona) { if (!uniSvg) return; const z = zona || UNI_K[key]; uniSvg.querySelectorAll('.z').forEach((e) => e.classList.toggle('on', e.dataset.eq === z)); }
 function fijarVB(v) { vb = v; uniSvg.setAttribute('viewBox', v.join(' ')); }
 function panZoom() {
@@ -668,13 +699,31 @@ function panZoom() {
     const w = Math.min(vb0[2] * 1.5, Math.max(20, vb[2] * k)), h = w * (vb[3] / vb[2]);
     fijarVB([vb[0] + (vb[2] - w) * fx, vb[1] + (vb[3] - h) * fy, w, h]);
   }, { passive: false });
-  el.addEventListener('pointerdown', (e) => { if (e.target.closest('.z')) return; p0 = { x: e.clientX, y: e.clientY, vb: vb.slice() }; el.classList.add('drag'); el.setPointerCapture(e.pointerId); });
-  el.addEventListener('pointermove', (e) => { if (!p0) return; const r = el.getBoundingClientRect(); const s = Math.max(p0.vb[2] / r.width, p0.vb[3] / r.height); fijarVB([p0.vb[0] - (e.clientX - p0.x) * s, p0.vb[1] - (e.clientY - p0.y) * s, p0.vb[2], p0.vb[3]]); });
-  el.addEventListener('pointerup', () => { p0 = null; el.classList.remove('drag'); });
+  const pts = new Map(); let pinch = null;
+  el.addEventListener('pointerdown', (e) => {
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { const [p, q] = [...pts.values()]; pinch = { d: Math.max(10, Math.hypot(p.x - q.x, p.y - q.y)), cx: (p.x + q.x) / 2, cy: (p.y + q.y) / 2, vb: vb.slice() }; p0 = null; return; }
+    p0 = { x: e.clientX, y: e.clientY, vb: vb.slice(), id: e.pointerId, mov: false };
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const r = el.getBoundingClientRect();
+    if (pinch && pts.size === 2) {
+      const [p, q] = [...pts.values()], k = pinch.d / Math.max(10, Math.hypot(p.x - q.x, p.y - q.y));
+      const w = Math.min(vb0[2] * 1.5, Math.max(20, pinch.vb[2] * k)), h = w * (pinch.vb[3] / pinch.vb[2]), fx = (pinch.cx - r.left) / r.width, fy = (pinch.cy - r.top) / r.height;
+      fijarVB([pinch.vb[0] + (pinch.vb[2] - w) * fx, pinch.vb[1] + (pinch.vb[3] - h) * fy, w, h]); return;
+    }
+    if (!p0 || e.pointerId !== p0.id) return;
+    if (!p0.mov) { if (Math.hypot(e.clientX - p0.x, e.clientY - p0.y) < 4) return; p0.mov = true; el.classList.add('drag'); try { el.setPointerCapture(e.pointerId); } catch (_) {} }
+    const s = Math.max(p0.vb[2] / r.width, p0.vb[3] / r.height); fijarVB([p0.vb[0] - (e.clientX - p0.x) * s, p0.vb[1] - (e.clientY - p0.y) * s, p0.vb[2], p0.vb[3]]);
+  });
+  const fin = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!p0 || e.pointerId === p0.id) { p0 = null; el.classList.remove('drag'); } };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => el.addEventListener(t, fin));
 }
 
 // ---------- pantalla completa, celular, teclado
-$('#bFull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : visor.requestFullscreen());
+$('#bFull').onclick = () => { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) { const x = d.exitFullscreen || d.webkitExitFullscreen; if (x) Promise.resolve(x.call(d)).catch(() => {}); return; }
+  const rq = visor.requestFullscreen || visor.webkitRequestFullscreen; if (rq) Promise.resolve(rq.call(visor)).catch(() => {}); };
 if (movil) { $('#izq').classList.add('cerrado'); $('#der').classList.add('cerrado'); }
 $('#tIzq').onclick = () => { $('#izq').classList.toggle('cerrado'); $('#der').classList.add('cerrado'); };
 $('#tDer').onclick = () => { $('#der').classList.toggle('cerrado'); $('#izq').classList.add('cerrado'); };
@@ -682,6 +731,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') { seleccionar(null)
 
 // ---------- bucle
 controls.addEventListener('change', pedir);
+controls.addEventListener('start', () => { anim = null; zoomP = null; });
 let tAnt = performance.now();
 function bucle(now = performance.now()) {
   requestAnimationFrame(bucle);
@@ -689,6 +739,7 @@ function bucle(now = performance.now()) {
   if (anim) anim(now);
   const zoom = !!zoomP; if (zoomP) pasoZoom(dt);
   const mov = controls.update();
+  if (!anim) { const piso = alturaTerreno(camera.position.x, -camera.position.z) + (subsuelo ? -6 : 0.8), dz = piso - camera.position.y; if (dz > 0) { camera.position.y += dz; controls.target.y += dz; renderPend = true; } }
   if (!renderPend && !anim && !mov && !zoom) return;
   renderPend = false;
   rotulosVis();
