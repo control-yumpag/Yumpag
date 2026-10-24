@@ -12,9 +12,9 @@
   try {
     let datos = null, modo = 'visita';
     try { const j = sessionStorage.getItem('yumpagDatos'); if (j) { datos = JSON.parse(j); modo = 'completo'; } } catch (e) {}
-    const tplR = await fetch('plantilla.html', {cache: 'no-store'}); if (!tplR.ok) throw new Error('no se pudo cargar plantilla.html');
+    const tplR = await fetch('plantilla.html', {cache: 'no-cache'});   /* 24-Oct-26: no-cache revalida con el servidor (304 si no cambió) en vez de bajar 1,8 MB en cada visita */ if (!tplR.ok) throw new Error('no se pudo cargar plantilla.html');
     let t = await tplR.text();
-    if (!datos) { say('cargando los datos'); const r = await fetch('datos.json', {cache: 'no-store'}); if (!r.ok) throw new Error('no se pudo cargar datos.json');
+    if (!datos) { say('cargando los datos'); const r = await fetch('datos.json', {cache: 'no-cache'}); if (!r.ok) throw new Error('no se pudo cargar datos.json');
       const j = await r.json();
       /* 19-Oct-26 (decisión del usuario: «que esté libre, que ya no requiera clave ni contraseña, solo un botón de entrar»):
          si datos.json trae el tablero completo, se muestra entero sin sesión; si trae «visita», el modo visita de siempre. */

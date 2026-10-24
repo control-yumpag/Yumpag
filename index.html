@@ -185,7 +185,9 @@ $('btnPG2').onclick = () => { $('msg').className = 'msg ok'; $('msg').textConten
   location.href = 'se-paragsha2/'; };   // modelo estimado de la SE Paragsha II (se-paragsha2/)
 $('btnBIM').onclick = () => { $('msg').className = 'msg ok'; $('msg').textContent = 'Abriendo el BIM general del proyecto…';
   location.href = 'bim-general/'; };    // las 3 SE y la L-1123 con su seccionamiento y la derivación (bim-general/)
-addEventListener('keydown', e => { if (e.key === 'Enter' && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) ir(); });
+// Enter abre el tablero de la LT solo si el foco no está en un botón o enlace (24-Oct-26: con el foco en una parte del gráfico
+// abría su enlace y además el tablero)
+addEventListener('keydown', e => { const a = document.activeElement; if (e.key === 'Enter' && (!a || a === document.body || a === document.documentElement)) ir(); });
 try{ localStorage.removeItem('yumpagLlave'); }catch(e){}    // limpia el acceso recordado del esquema anterior
 /* 23-Oct-26 (24-Oct: un solo gráfico): el gráfico de la izquierda se relaciona con los botones (pasar por una parte resalta su botón y al revés)
    y muestran el estado de obra del último corte publicado (datos.json) y el avance de AXON en la SE Uchucchacua (uchu4d.js). */
