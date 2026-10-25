@@ -208,9 +208,19 @@ def main():
     fin_lb = max(f for f in fechas_todas if tp.get(f) is not None and tp[f] != tp.get(fechas_todas[fechas_todas.index(f) - 1]) ) if tp else corte
     hasta = a.hasta or max(fin_lb, corte)
     fechas = [f for f in fechas_todas if f <= hasta]
-    acts = []
+    acts, ajustes = [], []
     for x in U['acts']:
         p = serie_acum(x['_prog'], fechas); e = serie_acum(x['_ejec'], fechas, hasta=corte)
+        # Un % acumulado no retrocede (decisión del usuario, 25-Oct-26: «la curva S no puede bajar; puede estancarse»).
+        # Si el control trae un valor menor que el máximo anterior (p. ej. 0 el día que no se trabajó), se toma como
+        # «sin avance ese día» y se guarda el dato original en `ajustes` para mostrarlo.
+        mx = 0.0
+        for i, v in enumerate(e):
+            if v is None: continue
+            if v < mx - 1e-9:
+                ajustes.append(dict(f=fechas[i], n=x['n'], nombre=x['nombre'], peso=x['peso'], axon=v, usado=mx))
+                e[i] = mx
+            mx = max(mx, e[i])
         con = [f for f in fechas if (x['_prog'].get(f) or 0) > 0]
         ini_lb = x['ini'] or (con[0] if con else None)
         fin_lb_a = x['fin'] or (con[-1] if con else None)
@@ -221,9 +231,27 @@ def main():
             if y and (y['causa'] or y['justif']): hist[f] = dict(causa=y['causa'], justif=y['justif'], estado=y['estado'])
         acts.append(dict(n=x['n'], nombre=x['nombre'], ubic=x['ubic'], zonas=ZONAS_DE.get(x['ubic'], []), peso=x['peso'],
                          seccion=x['seccion'], grupo=x['grupo'], alcance=x['alcance'], ini=ini_lb, fin=fin_lb_a,
-                         prog=p, ejec=e, estado=x['estado'], pv=x['pv'], ev=x['ev'], causas=hist))
+                         prog=p, ejec=e, estado=x['estado'], pv=x['pv'],
+                         ev=(e[fechas.index(corte)] if corte in fechas and any(j['n'] == x['n'] for j in ajustes) else x['ev']),
+                         ev_axon=(x['ev'] if any(j['n'] == x['n'] for j in ajustes) else None), causas=hist))
     tot = dict(prog=serie_acum(U['tot']['prog'], fechas), ejec=serie_acum(U['tot'].get('ejec', {}), fechas, hasta=corte),
                cumpl=[U['tot'].get('cumpl', {}).get(f) for f in fechas])
+    dias_aj = sorted({j['f'] for j in ajustes})
+    if dias_aj:
+        tot['ejec_axon'] = list(tot['ejec'])
+        tot['cumpl_axon'] = list(tot['cumpl'])
+        for f in dias_aj:
+            i = fechas.index(f)
+            tot['ejec'][i] = round(tot['ejec'][i] + sum((j['peso'] or 0) * (j['usado'] - j['axon']) for j in ajustes if j['f'] == f), 6)
+            # cumplimiento del día = promedio de (avance ejecutado ÷ avance programado) de las actividades programadas ese día
+            rs = []
+            for x in acts:
+                dp = (x['prog'][i] or 0) - ((x['prog'][i - 1] or 0) if i else 0)
+                if dp > 1e-9:
+                    de = (x['ejec'][i] or 0) - ((x['ejec'][i - 1] or 0) if i else 0)
+                    rs.append(min(1.0, max(0.0, de / dp)))
+            tot['cumpl'][i] = round(sum(rs) / len(rs), 6) if rs else None
+        # un día en blanco después del error arrastra el valor bajo: queda como ajuste de ese día y se corrige igual
     # reporte de cada día: el control de ese día (o, si no lo hay, lo que la serie del último control dice de ese día)
     dias = {}
     for i, f in enumerate(fechas):
@@ -242,6 +270,11 @@ def main():
                        atrasadas=c.get('Actividades atrasadas'), restr_n=c.get('Restricciones abiertas'), hab_vencidos_n=c.get('Habilitantes vencidos'),
                        dias_fin=c.get('Días al fin del plan'), archivo=D['archivo'],
                        hab_vencidos=[h['id'] for h in D['hab'] if h['alerta'] == 'Vencido'])
+        if f in dias_aj and dia.get('ejec') is not None:
+            dia.update(ejec_axon=dia['ejec'], spi_axon=dia.get('spi'), ejec_dia_axon=dia.get('ejec_dia'),
+                       ejec=tot['ejec'][i], spi=round(tot['ejec'][i] / tot['prog'][i], 3) if tot['prog'][i] else None,
+                       ejec_dia=round((tot['ejec'][i] - (tot['ejec'][i - 1] if i else 0)) * 100, 2),
+                       ajustes=[dict(n=j['n'], nombre=j['nombre'], axon=j['axon'], usado=j['usado']) for j in ajustes if j['f'] == f])
         dias[f] = dia
     data = dict(
         titulo='Habilitación del nuevo tablero CPM L-1123 (=E01+WR01) · SE Uchucchacua',
@@ -249,7 +282,7 @@ def main():
         linea_base='Control diario de AXON (sigue el cronograma V8 de CONENHUA)',
         fuente=f'Control diario de AXON, reportes N.º {min(d["cab"].get("Reporte N°") for d in por_dia.values())}–{U["cab"].get("Reporte N°")} '
                f'({", ".join(sorted(f[8:10] for f in por_dia))}-Oct-26) · hojas AVANCE y PERSONAL Y RESTRICCIONES',
-        corte=corte, fechas=fechas, total=tot, acts=acts, dias=dias,
+        corte=corte, fechas=fechas, total=tot, acts=acts, dias=dias, ajustes=ajustes,
         habilitantes=U['hab'], restricciones=U['res'],
         cronogramas=dict(v8=cron_v8(a.v8) if a.v8 else [], axon_r1=cron_axon_r1(a.axr1) if a.axr1 else []),
         fotos=relacionar_fotos(json.load(open(a.fotos, encoding='utf-8')).get('fotos', []) if a.fotos and os.path.exists(a.fotos) else [], acts, dias))

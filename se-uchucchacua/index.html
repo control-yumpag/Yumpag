@@ -110,6 +110,21 @@ table.tb small,.ri small{display:block;color:var(--ink-mut);font-size:.6rem;marg
 .chart .el{fill:none;stroke:#2d7667;stroke-width:2.6}.chart .ar{fill:rgba(45,118,103,.14)}
 :root:not([data-theme="light"]) .chart .el{stroke:#95d5c7}:root:not([data-theme="light"]) .chart .ar{fill:rgba(149,213,199,.12)}
 .chart .cl{stroke:#d9714f;stroke-width:1.5;stroke-dasharray:3 3}.chart .ep{fill:#2d7667;stroke:var(--panel);stroke-width:2}
+.chart .ep.dd{stroke-width:1.2}.chart .aj{fill:none;stroke:var(--amber);stroke-width:1.6;stroke-dasharray:2 2;cursor:help}
+/* 25-Oct-26: avance día a día (una columna por día) y nota del acumulado que no retrocede */
+.dd-wrap{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:9px}
+table.dd{border-collapse:collapse;font-size:.66rem;min-width:100%;font-variant-numeric:tabular-nums}
+table.dd th,table.dd td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.dd thead th{font-size:.6rem;font-weight:700;color:var(--ink);background:var(--panel-2);position:sticky;top:0}
+table.dd thead th small{display:block;font-weight:500;color:var(--ink-mut);font-size:.55rem}
+table.dd tbody th{position:sticky;left:0;z-index:1;background:var(--panel);text-align:left;font-weight:600;color:var(--ink-2);font-size:.62rem}
+table.dd thead th:first-child{left:0;z-index:2}
+table.dd td.hoy,table.dd th.hoy{background:var(--sky-soft);font-weight:700;color:var(--ink)}
+table.dd td.fut,table.dd th.fut{color:var(--ink-mut);opacity:.7}
+table.dd .neg{color:var(--red);font-weight:600}
+table.dd tr:last-child td,table.dd tr:last-child th{border-bottom:0}
+.nota-aj{display:block;margin-top:6px;padding:6px 8px;border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:6px;font-size:.62rem;color:var(--ink-2);line-height:1.35}
+.rd .rs b.ra{font:700 .66rem "Archivo",sans-serif;color:var(--ink);white-space:nowrap}.rd .rs .nw{white-space:nowrap}
 .link{border:0;background:none;color:var(--sky);font-size:.66rem;font-weight:700;padding:4px 0;cursor:pointer}
 .link:hover{background:none;text-decoration:underline}
 :root:not([data-theme="light"]) .link{color:var(--sky-2)}
@@ -349,7 +364,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 
 /* ===== REPORTES DIARIOS ===== */
 #v-rep{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content}
-#repTira{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+#repTira{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px} /* 25-Oct-26: todos los días desde el inicio */
 .rd{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
 .rd .rf{font-size:.66rem;font-weight:700;color:var(--ink)}
 .rd b{font:800 1.15rem "Archivo",sans-serif;line-height:1.1}
@@ -388,7 +403,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
 @media (max-width:1250px){
   #v-res .kpi{grid-column:span 3}#v-res .half{grid-column:span 6}
   .zonas-list{grid-template-columns:repeat(4,minmax(0,1fr))}
-  #repTira{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #repTira{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
 }
 @media (max-width:900px){
   body{padding:6px 8px;gap:6px}
@@ -410,7 +425,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
   .g4 .cab .t span:nth-child(even):not(.on),.g4 .cab .t span.cerca{display:none}
   #fotDias{flex-direction:row;overflow-x:auto;flex:none}.fd{flex:none;gap:8px}
   .fgrid{grid-template-columns:repeat(2,1fr)}
-  #v-rep{grid-template-columns:1fr}#repTira{grid-template-columns:repeat(3,minmax(0,1fr))}#repDet{grid-template-columns:1fr}
+  #v-rep{grid-template-columns:1fr}#repTira{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}#repDet{grid-template-columns:1fr}
   #barraEnc .solo-pc{display:none}
   #cine .sub{padding:10px 14px 14px;bottom:0}#cine .sub b{font-size:16px}#cine .sub span{font-size:12px}#cine .sub i{display:none}
   .ficha img.frente{max-height:170px}
@@ -451,6 +466,7 @@ input[type=range]{width:100%;accent-color:var(--sky)}
     <div class="verdict wide" id="resVer"></div>
     <div class="card half"><h3><span class="dot"></span>Curva S del servicio</h3><div class="desc">Avance acumulado del control diario de AXON: programado frente a ejecutado, día por día (pesos de AXON).</div><div id="resCurva"></div></div>
     <div class="card half"><h3><span class="dot"></span>Avance por grupo de actividades</h3><div class="desc">Ejecutado y programado al último reporte, por grupo del control de AXON.</div><div id="resGrupos"></div></div>
+    <div class="card wide"><h3><span class="dot"></span>Avance día a día</h3><div class="desc">Acumulado programado y ejecutado de cada día del control de AXON, con la desviación, el avance del día y el cumplimiento. Desliza la tabla a los lados en el celular.</div><div id="resDias"></div></div>
     <div class="card half"><h3><span class="dot"></span>Personal de AXON por día</h3><div class="desc">Dotación en obra según el control diario.</div><div id="resPersonal"></div></div>
     <div class="card half"><h3><span class="dot"></span>Plazo y pronóstico</h3><div class="desc">Fechas del control de AXON y ritmo observado.</div><div id="resPlazo"></div></div>
     <div class="card half"><h3><span class="dot"></span>Restricciones</h3><div class="desc">Registro de restricciones del control de AXON (hoja PERSONAL Y RESTRICCIONES).</div><div id="resRestr"></div></div>
@@ -596,9 +612,9 @@ import { crearPersona, Rejilla } from './persona.js?v=1';
 import { Pelicula } from './pelicula.js?v=2';
 import { Minimapa, frenteDe, filasDe, encuadreDe, rectDe } from './sala.js?v=3';
 import { cablesDe, resumen, CLASE, OBRA, FUENTES } from './funcional.js?v=2';
-import { U4D } from './uchu4d.js?v=20261024';
+import { U4D } from './uchu4d.js?v=20261024b';
 import { iniciar4D, axonAlCorte } from './cuatrod.js?v=3';
-import { iniciarTablero } from './tablero.js?v=6';
+import { iniciarTablero } from './tablero.js?v=7';
 const AXON = axonAlCorte(U4D); // control diario de AXON al corte (mismo archivo que el BIM 4D)
 
 const $ = (s) => document.querySelector(s);
