@@ -22,7 +22,7 @@ def iso(v):
     if isinstance(v, dt.date): return v.isoformat()
     return None
 
-def num(v, d=4):
+def num(v, d=6):   # 6 decimales: con 4, 0,545454 se mostraba 54,6 % en vez del 54,5 % del control
     return round(float(v), d) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 NOMBRE = re.compile(r'(?:\b(?:el|la|al|del)\s+)?\b(Ing\.?|Ingeniero|Ingeniera|Sr\.?|Sra\.?|Srta\.?|Lic\.?|Téc\.?)\s+(?:[A-ZÁÉÍÓÚÑ](?:[a-záéíóúñ]+|\.)[ \t]*){1,4}')
@@ -46,6 +46,8 @@ def sin_nombres(t):
 import unicodedata as _ud
 def _n(t): return ''.join(c for c in _ud.normalize('NFD', str(t or '').lower()) if _ud.category(c) != 'Mn')
 CLAVES = [
+    (r'(marquillado|conexionado|timbrado).*ss\.? ?aa|ss\.? ?aa.*(marquillado|conexionado|timbrado)', ['12']),   # tableros de SS.AA.
+    (r'marquillado|timbrado', ['11']),                                                                         # tablero CPM
     (r'induccion|anexo 0?5|capacitacion', ['1']),
     (r'prueba.*aislamiento|aislamiento del cable|pulso de 1000|resistencia de los cables|megado', ['3']),
     (r'bobina|carrete', ['2', '3']),
@@ -184,7 +186,7 @@ def serie_acum(d, fechas, hasta=None):
         if hasta and f > hasta: out.append(None); continue
         v = d.get(f)
         if v is not None: ult = v
-        out.append(round(ult, 4))
+        out.append(round(ult, 6))
     return out
 
 def main():

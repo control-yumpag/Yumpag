@@ -1,5 +1,5 @@
 {
- "nota": "Revisión a ojo del 22-Oct-26. caras: elipses de desenfoque (x0, y0, x1, y1 en fracción del ancho y alto) para rostros de perfil que el detector no ve. pies: texto del sello de la propia foto cuando la foto no trae descripción; solo los sellos legibles.",
+ "nota": "Revisión a ojo del 22-Oct-26. caras: elipses de desenfoque (x0, y0, x1, y1 en fracción del ancho y alto) para rostros de perfil que el detector no ve. pies: texto del sello de la propia foto cuando la foto no trae descripción; solo los sellos legibles. sin_detector: fotos donde el detector difuminó algo que no es un rostro (p. ej. un bolso de herramientas); en ellas solo se aplican las elipses a mano.",
  "caras": {
   "1018-57": [
    [
@@ -76,11 +76,76 @@
     0.664,
     0.431
    ]
+  ],
+  "1023-137": [
+   [
+    0.199,
+    0.458,
+    0.281,
+    0.618
+   ],
+   [
+    0.855,
+    0.354,
+    0.906,
+    0.444
+   ]
+  ],
+  "1023-138": [
+   [
+    0.828,
+    0.417,
+    0.906,
+    0.549
+   ]
+  ],
+  "1023-142": [
+   [
+    0.473,
+    0.292,
+    0.52,
+    0.417
+   ]
+  ],
+  "1023-153": [
+   [
+    0.34,
+    0.167,
+    0.379,
+    0.25
+   ]
+  ],
+  "1023-144": [
+   [
+    0.34,
+    0.305,
+    0.417,
+    0.355
+   ]
+  ],
+  "1023-149": [
+   [
+    0.292,
+    0.391,
+    0.368,
+    0.449
+   ]
+  ],
+  "1024-163": [
+   [
+    0.403,
+    0.262,
+    0.5,
+    0.324
+   ]
   ]
  },
  "pies": {
   "1021-109": "Levantamiento de tapas de cemento en patio",
   "1021-113": "Preparación de cables en el tablero =E01+WR01",
   "1021-114": "Preparación de cables en el tablero =E01+WR01"
- }
+ },
+ "sin_detector": [
+  "1024-163"
+ ]
 }

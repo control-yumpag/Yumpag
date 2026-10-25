@@ -94,7 +94,7 @@ def dhash(img, n=8):
 def ham(a, b): return bin(a ^ b).count('1')
 
 def pie_drive(t):
-    t = re.sub(r'\.(jpe?g|png)$', '', t, flags=re.I)
+    t = re.sub(r'(\.(jpe?g|png))+$', '', t, flags=re.I)   # también «…jpg.jpeg»
     m = re.search(r'_(\d{8})_(\d{6})$', t)
     hora = f'{m.group(2)[:2]}:{m.group(2)[2:4]}' if m else None
     t = re.sub(r'_\d{8}_\d{6}$', '', t).strip(' ._')
@@ -143,7 +143,7 @@ def main():
     ap.add_argument('--excluir', help='archivo con ids a no publicar (uno por línea, # comentario)')
     ap.add_argument('--contacto', help='carpeta para hojas de contacto de revisión (no se publica)')
     ap.add_argument('--acts', help='uchu4d.js o json con las actividades (para reconocer la actividad del pie)')
-    ap.add_argument('--manual', help='json de la revisión a ojo: {"caras": {id: [[x0,y0,x1,y1] en 0–1]}, "pies": {id: texto del sello}}')
+    ap.add_argument('--manual', help='json de la revisión a ojo: {"caras": {id: [[x0,y0,x1,y1] en 0–1]}, "pies": {id: texto del sello}, "sin_detector": [id…]}')
     ap.add_argument('--dias', help='modo incremental: solo rearma estas fechas (AAAA-MM-DD,…); el resto se conserva de --previo')
     ap.add_argument('--previo', help='fotos.json publicado (modo incremental)')
     a = ap.parse_args()
@@ -153,6 +153,7 @@ def main():
     k0 = max((int(x['id'].split('-')[1]) for x in quedan), default=0)   # la numeración sigue después de lo que se conserva
     man = json.load(open(a.manual, encoding='utf-8')) if a.manual and os.path.exists(a.manual) else {}
     man_caras, man_pies = man.get('caras', {}), man.get('pies', {})
+    sin_det = set(man.get('sin_detector', []))   # falsos positivos grandes del detector: solo valen las elipses a mano
     excl = set()
     if a.excluir and os.path.exists(a.excluir):
         excl = {l.split('#')[0].strip() for l in open(a.excluir, encoding='utf-8') if l.split('#')[0].strip()}
@@ -172,7 +173,8 @@ def main():
         try: im = Image.open(io.BytesIO(b)); im.load()
         except Exception: continue
         if DIAS and fecha not in DIAS: continue
-        ex.append(dict(fecha=fecha, pie=(pie or '').strip() or None, img=im, h=dhash(im), src='excel', orden=(fila, col)))
+        pie = re.sub(r'_\d{8}_\d{6}$', '', (pie or '').strip()).strip()   # AXON a veces pega el nombre del archivo
+        ex.append(dict(fecha=fecha, pie=pie or None, img=im, h=dhash(im), src='excel', orden=(fila, col)))
     # 2) Drive
     dv = []
     if a.drive and a.drive_json:
@@ -206,7 +208,7 @@ def main():
         fid = f"{f['fecha'][5:].replace('-', '')}-{k0 + k + 1:02d}"
         if fid in excl or (f['drive'] and f['drive'] in excl): continue
         im = ImageOps.exif_transpose(f['img']).convert('RGB')
-        im, ncar = difuminar(im, det)
+        im, ncar = (im, 0) if fid in sin_det else difuminar(im, det)
         if fid in man_caras:   # rostros de perfil o tapados a medias que el detector no ve (revisión a ojo)
             im = difuminar_cajas(im, man_caras[fid]); ncar += len(man_caras[fid])
         if not (f['pie'] or f['detalle']) and man_pies.get(fid): f['detalle'] = man_pies[fid]

@@ -6,6 +6,8 @@ import { COL4, TXT4, fCorta, fLarga, pct, dias } from './cuatrod.js?v=3';
 
 // Primera letra en minúscula dentro de una frase, sin tocar siglas (CPM, SSAA, L-1123).
 const minus1 = (t) => String(t || '').replace(/^(\p{Lu})(?=\p{Ll})/u, (c) => c.toLowerCase());
+// Variación con signo: «+6,1 %» o «−8,6 %» (el control puede traer un avance del día negativo, p. ej. 24-Oct-26).
+const sig = (v, d) => (v < 0 ? '−' + pct(-v, d) : '+' + pct(v, d));
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -58,10 +60,12 @@ export function iniciarTablero(ctx) {
       kpi('Habilitantes vencidos', `${hv.length}<span> de ${habs.length}</span>`, hv.length ? `${hv.join(', ')} · requisitos previos en revisión` : 'ninguno vencido');
     // veredicto (solo hechos del control)
     const enCurso = ACTS.filter((a) => a.ini && estadoAct(a, IC) === 'curso');
+    const atras = ACTS.filter((a) => a.ini && estadoAct(a, IC) === 'atras');
     const prox = ACTS.filter((a) => a.ini && a.ini > U4D.corte).sort((a, b) => (a.ini < b.ini ? -1 : 1));
     const p0 = prox.length ? prox.filter((a) => a.ini === prox[0].ini) : [];
     const al = spi == null ? '' : spi >= 0.995 ? 'al día con su programa' : 'detrás de su programa';
     $('#resVer').innerHTML = `<div class="big">${spi == null ? 'Sin reporte' : spi >= 0.995 ? 'Según programa' : 'Detrás del programa'}</div><div class="txt">Servicio de AXON ${al}: ejecutado <b>${pct(e)}</b> frente a <b>${pct(p)}</b> programado al ${fCorta(U4D.corte)} (SPI ${num(spi)}). ` +
+      (atras.length ? `Detrás de lo programado: ${atras.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}. ` : '') +
       (enCurso.length ? `En curso: ${enCurso.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}. ` : '') +
       (p0.length ? `Desde el ${fCorta(p0[0].ini)}: ${p0.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}.` : '') + `</div>`;
     curvaS(); grupos(); personal(); plazo(); restricciones(); habilitantes();
@@ -249,7 +253,7 @@ export function iniciarTablero(ctx) {
       const de = k > 0 && U4D.total.ejec[k] != null && U4D.total.ejec[k - 1] != null ? U4D.total.ejec[k] - U4D.total.ejec[k - 1] : U4D.total.ejec[k];
       const dp = k > 0 ? U4D.total.prog[k] - U4D.total.prog[k - 1] : U4D.total.prog[k];
       const col = de == null ? COL4.cond : dp > 0.0001 && de < dp - 0.0005 ? COL4.atras : de > 0 ? COL4.term : COL4.pend;
-      return `<button class="rd${repDia === f ? ' sel' : ''}" data-d="${f}"><span class="rf">${fLarga(f)}</span><b style="color:${col}">${de == null ? '—' : '+' + pct(de)}</b><span class="rs">ejecutado del día · prog. +${pct(dp)}</span><span class="rs">${d.reporte ? `reporte N.º ${d.reporte}` : 'sin hoja AVANCE'} · ${d.personal && d.personal.axon != null ? d.personal.axon + ' personas' : 'personal —'}</span></button>`;
+      return `<button class="rd${repDia === f ? ' sel' : ''}" data-d="${f}"><span class="rf">${fLarga(f)}</span><b style="color:${col}">${de == null ? '—' : sig(de)}</b><span class="rs">ejecutado del día · prog. ${sig(dp)}</span><span class="rs">${d.reporte ? `reporte N.º ${d.reporte}` : 'sin hoja AVANCE'} · ${d.personal && d.personal.axon != null ? d.personal.axon + ' personas' : 'personal —'}</span></button>`;
     }).join('');
     const f = repDia, k = F.indexOf(f), d = U4D.dias[f] || {};
     const R = Object.fromEntries((U4D.restricciones || []).map((r) => [r.id, r])), H = Object.fromEntries((U4D.habilitantes || []).map((x) => [x.id, x]));
@@ -265,8 +269,8 @@ export function iniciarTablero(ctx) {
     $('#repDet').innerHTML = `
       <div class="card"><h3><span class="dot"></span>Trabajado ese día</h3><div class="desc">${fLarga(f)}${d.reporte ? ` · reporte N.º ${d.reporte}` : ''}${d.dia_plazo ? ` · día ${esc_(d.dia_plazo)} del plazo` : ''}</div>
         ${hechas.length ? hechas.map((a) => `<div class="ri"><code>${esc_(a.n)}</code><span>${esc_(a.nombre)}<small>${esc_(zonaTxt(a))} · ejecutado ${pct(prev(a), 0)} → <b>${pct(a.ejec[k], 0)}</b></small></span></div>`).join('') : '<div class="vacio">Sin actividades marcadas como trabajadas ese día.</div>'}</div>
-      <div class="card"><h3><span class="dot"></span>Cumplimiento del programa</h3><div class="desc">${prog.length ? `${cumpl} de ${prog.length} actividades programadas cumplidas · programado del día +${pct(U4D.total.prog[k] - (k > 0 ? U4D.total.prog[k - 1] : 0))} · ejecutado +${pct((U4D.total.ejec[k] ?? 0) - (k > 0 ? U4D.total.ejec[k - 1] ?? 0 : 0))}` : 'Sin avance programado ese día'}</div>
-        ${prog.map((a) => { const [t, c] = res(a); return `<div class="ri"><code>${esc_(a.n)}</code><span>${esc_(a.nombre)}<small>programado +${pct((a.prog[k] ?? 0) - prevP(a), 0)} · ejecutado +${pct((a.ejec[k] ?? 0) - prev(a), 0)}</small></span><em class="pill" style="border-color:${c};color:${c}">${t}</em></div>`; }).join('')}</div>
+      <div class="card"><h3><span class="dot"></span>Cumplimiento del programa</h3><div class="desc">${prog.length ? `${cumpl} de ${prog.length} actividades programadas cumplidas · programado del día ${sig(U4D.total.prog[k] - (k > 0 ? U4D.total.prog[k - 1] : 0))} · ejecutado ${sig((U4D.total.ejec[k] ?? 0) - (k > 0 ? U4D.total.ejec[k - 1] ?? 0 : 0))}` : 'Sin avance programado ese día'}</div>
+        ${prog.map((a) => { const [t, c] = res(a); return `<div class="ri"><code>${esc_(a.n)}</code><span>${esc_(a.nombre)}<small>programado ${sig((a.prog[k] ?? 0) - prevP(a), 0)} · ejecutado ${sig((a.ejec[k] ?? 0) - prev(a), 0)}</small></span><em class="pill" style="border-color:${c};color:${c}">${t}</em></div>`; }).join('')}</div>
       <div class="card"><h3><span class="dot"></span>Personal y seguridad</h3><div class="desc">Hoja PERSONAL Y RESTRICCIONES · solo cantidades</div>
         <table class="kv"><tr><td>Personal de AXON</td><td><b>${per.axon ?? '—'}</b></td></tr><tr><td>Ingenieros · técnicos · ayudantes</td><td>${per.ing ?? '—'} · ${per.tec ?? '—'} · ${per.ayu ?? '—'}</td></tr><tr><td>Supervisión en el frente</td><td>${per.sup ?? '—'}</td></tr></table>
         <div class="tw-sec">Checklist SSOMA del frente · ${ck.length ? `${ckOk} de ${ck.length}` : 'sin registro'}</div>${ck.map(([q, v]) => `<div class="ri"><span>${esc_(q)}</span><em class="pill ${/^s[ií]/i.test(String(v)) ? 'ok' : 'warn'}">${esc_(v ?? '—')}</em></div>`).join('')}</div>
