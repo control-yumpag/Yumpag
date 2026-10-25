@@ -8265,9 +8265,23 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       <div class="rp-tira" id="rpTira"></div>
       <div class="rp-kpis" id="rpKpis"></div>
     </div>
-    <div class="card rp-torres">
-      <h3><span class="dot"></span><span id="rpTorresTit">Torres intervenidas</span><span class="rp-ley-act"><i class="ok"></i>cumplida <i class="med"></i>parcial <i class="mal"></i>no ejecutada <i class="np"></i>sin programar</span></h3>
-      <div class="rp-grid" id="rpTorres"></div>
+    <!-- v72.60 (25-Oct-26, pedido del usuario: «los Word de reportes diarios tienen información importante de varias áreas:
+         arqueológico, seguridad, ambiental… claro, resumido, estructurado y no tan largo»): la columna izquierda sigue el orden
+         del Word — resumen ejecutivo, programación por torre y la sección de anexos (restricciones, SST, ambiental, arqueología
+         y social) con su hecho del día e indicadores. Datos: REPORTES_7D.dias[].ejecutivo y .areas (reportes7_build.py). -->
+    <div class="rp-izq">
+      <div class="card rp-resdia">
+        <h3><span class="dot"></span><span id="rpResTit">Resumen del día</span><span class="rp-cab-sub" id="rpClima"></span></h3>
+        <ul class="rp-ejec" id="rpEjec"></ul>
+      </div>
+      <div class="card rp-torres">
+        <h3><span class="dot"></span><span id="rpTorresTit">Torres intervenidas</span><span class="rp-ley-act"><i class="ok"></i>cumplida <i class="med"></i>parcial <i class="mal"></i>no ejecutada <i class="np"></i>sin programar</span></h3>
+        <div class="rp-grid" id="rpTorres"></div>
+      </div>
+      <div class="card rp-areas">
+        <h3><span class="dot"></span><span id="rpAreasTit">Áreas del día</span><span class="rp-cab-sub">anexos del reporte · hecho del día e indicadores</span></h3>
+        <div class="rp-ag" id="rpAreas"></div>
+      </div>
     </div>
     <div class="card rp-lado">
       <h3><span class="dot"></span>Personal en obra</h3>
@@ -16484,8 +16498,26 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 #v-rep.view.on{grid-template-columns:minmax(0,2fr) minmax(300px,1fr);grid-auto-rows:min-content;align-content:start;gap:10px}
 #v-rep .card{min-height:0}
 #v-rep .rp-cab-card,#v-rep .rp-cump,#v-rep .rp-texto{grid-column:1 / -1}
-#v-rep .rp-torres{grid-column:1} #v-rep .rp-lado{grid-column:2;grid-row:2}
-#v-rep .rp-torres{grid-row:2}
+#v-rep .rp-izq{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:10px;min-width:0} #v-rep .rp-lado{grid-column:2;grid-row:2}
+/* v72.60: resumen del día y áreas (anexos) */
+.rp-ejec{margin:4px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
+.rp-ejec li{font-size:.7rem;line-height:1.4;color:var(--ink)} .rp-ejec li::marker{color:var(--accent,#2f6f4f)}
+.rp-ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.rp-a{border:1px solid var(--line-2);border-radius:10px;padding:7px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:4px;min-width:0}
+.rp-a-cab{display:flex;align-items:center;gap:6px} .rp-a-cab b{font-size:.72rem;color:var(--ink)}
+.rp-a-n{font-size:.54rem;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.rp-a-tit{font-size:.74rem;color:var(--ink);margin-top:-2px}
+.rp-a-chip{margin-left:auto;font-size:.58rem;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;background:var(--panel);color:var(--ink-2);border:1px solid var(--line-2)}
+.rp-a-chip.ok{background:color-mix(in srgb,var(--green,#4b7f2f) 16%,var(--panel));border-color:transparent;color:var(--green,#4b7f2f)}
+.rp-a-chip.med{background:color-mix(in srgb,#d8a200 22%,var(--panel));border-color:transparent;color:#8a6400}
+.rp-a ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.rp-a li{font-size:.65rem;line-height:1.35;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;padding-left:10px;text-indent:-10px}
+.rp-a li::before{content:'▸ ';color:var(--accent,#2f6f4f);font-size:.6rem}
+.rp-a li.sin{color:var(--ink-2)} .rp-a li.sin::before{content:''}
+.rp-a-cif{font-size:.6rem;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:3px 8px} .rp-a-cif b{color:var(--ink);font-weight:700}
+.rp-a-pre{font-size:.6rem;color:var(--ink-mut);line-height:1.3}
+.rp-a-fte{font-size:.56rem;color:var(--ink-mut);margin-top:auto;padding-top:2px;border-top:1px dashed var(--line-2)}
+.rp-eq li.robado i{background:var(--red,#b4342b)} .rp-eq li.robado .ct{color:var(--red,#b4342b)}
 .rp-cab-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .rp-cab-top h3{margin:0}
 .rp-cab-sub{font-size:.66rem;color:var(--ink-mut);font-weight:400}
@@ -16553,7 +16585,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-texto details summary::after{content:'▸';color:var(--ink-mut);font-size:.7rem} .rp-texto details[open] summary::after{content:'▾'}
 .rp-tx{font-size:.7rem;line-height:1.5;margin:6px 0 0} .rp-clima{color:var(--ink-mut)}
 @media(max-width:1200px){ .rp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media(max-width:860px){ #v-rep.view.on{display:flex!important;flex-direction:column;gap:10px} .rp-tira{flex-wrap:wrap} .rp-dia{flex:1 1 60px} .rp-barras{gap:4px} .rp-grid{grid-template-columns:1fr} .rp-ley-act{display:none} }
+@media(max-width:860px){ #v-rep.view.on{display:flex!important;flex-direction:column;gap:10px} .rp-tira{flex-wrap:wrap} .rp-dia{flex:1 1 60px} .rp-barras{gap:4px} .rp-grid,.rp-ag{grid-template-columns:1fr} .rp-ley-act{display:none} }
 
 #v-hit.view.on{grid-template-columns:minmax(360px,42fr) minmax(0,58fr);grid-template-rows:minmax(0,1fr)}
 #v-hit .card{min-height:0;overflow:auto;overscroll-behavior:contain}
@@ -16672,7 +16704,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 
   function kpis(d){
     const c = d.cumplimiento || {}, p = d.personal || {}, eq = d.equipos || [];
-    const enObra = eq.filter(e => !e.fuera);
+    const enObra = eq.filter(e => !e.fuera && !e.robado);   // v72.60: un equipo robado no está en obra
+    const robados = eq.filter(e => e.robado).length;
     const parados = enObra.filter(e => e.parado).length;
     const ppc = pct(c.ppc), am = pct(c.avance_metrado);   // v72.51: la cifra grande es el metrado ejecutado; el PPC va en la línea pequeña
     const tz = (d.torres || []).filter(t => (t.actividades || []).some(a => !esNoEj(a))).length;
@@ -16680,7 +16713,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       <div class="rp-kpi"><b>${(d.torres || []).length}</b><span>torres en el programa</span><small>${tz} con trabajo ejecutado</small></div>
       <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplidas · <i class="med"></i>${n(c.parciales)} parciales · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · PPC ${ppc === null ? '—' : ppc + ' %'}${c.no_programadas ? ` · ${c.no_programadas} fuera de programa` : ''}</small></div>
       <div class="rp-kpi"><b>${n(p.total_obra)}</b><span>personas en obra</span><small>MEGASIL ${n(p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null)} · supervisión ${n(p.conenhua_staff)} · arqueología ${n(p.arqueologia)}</small></div>
-      <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length ? ` · ${eq.length - enObra.length} fuera de obra` : ''}</small></div>`;
+      <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length - robados ? ` · ${eq.length - enObra.length - robados} fuera de obra` : ''}${robados ? ` · ${robados} robado${robados > 1 ? 's' : ''}` : ''}</small></div>`;
   }
 
   function hoyDe(t){
@@ -16733,10 +16766,53 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   function equipos(d){
     const eq = d.equipos || [];
     if (!eq.length) return '<p class="rp-vacio">Sin registro de equipos ese día.</p>';
-    const ord = eq.slice().sort((a, b) => (a.fuera - b.fuera) || (b.parado - a.parado));
-    return `<ul class="rp-eq">${ord.map(e => `<li class="${e.fuera ? 'fuera' : (e.parado ? 'parado' : 'ok')}" title="${esc(e.nota || '')}">
-      <i></i><span class="nm">${esc(e.eq)}</span><span class="ct">${e.fuera ? 'fuera' : `${n(e.operativos)}/${n(e.total)}`}</span>
-      ${(e.parado || e.fuera) && e.nota ? `<small>${esc(e.nota)}</small>` : ''}</li>`).join('')}</ul>`;
+    const ord = eq.slice().sort((a, b) => (a.fuera - b.fuera) || ((b.robado || 0) - (a.robado || 0)) || (b.parado - a.parado));
+    // v72.60: un equipo robado (cantidad 0 con robo o sustracción en la nota) se marca «robado», como en el Word
+    return `<ul class="rp-eq">${ord.map(e => `<li class="${e.robado ? 'robado' : (e.fuera ? 'fuera' : (e.parado ? 'parado' : 'ok'))}" title="${esc(e.nota || '')}">
+      <i></i><span class="nm">${esc(e.eq)}</span><span class="ct">${e.robado ? 'robado' : (e.fuera ? 'fuera' : `${n(e.operativos)}/${n(e.total)}`)}</span>
+      ${(e.parado || e.fuera || e.robado) && e.nota ? `<small>${esc(e.nota)}</small>` : ''}</li>`).join('')}</ul>`;
+  }
+
+  // v72.60: resumen ejecutivo del Word del día y una ficha por área (anexos), sin nombres de personas
+  const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const fc = iso => { if (!iso) return ''; const [y, m, dd] = iso.split('-'); return `${dd}-${MES[+m - 1]}`; };
+  function climaCorto(c){
+    if (!c) return '';
+    if (/^\s*sin\s+dato/i.test(c)) return 'Clima: sin registro del día';
+    const t = c.split(/;|\s\(|:\s/)[0].trim();
+    return 'Clima: ' + (t.length > 90 ? t.slice(0, 88).replace(/\s\S*$/, '') + '…' : t);
+  }
+  function resDia(d){
+    const E = d.ejecutivo || [];
+    if (E.length) return E.map(x => `<li>${mk(x)}</li>`).join('');
+    return d.resumen ? `<li>${mk(d.resumen)}</li>` : '<li class="rp-vacio">Sin resumen del día.</li>';
+  }
+  function areas(d){
+    const A = d.areas; if (!A) return '<p class="rp-vacio">Sin datos de las áreas para este día.</p>';
+    const lis = (H, vacio) => (H && H.length) ? `<ul>${H.map(h => `<li title="${esc(h)}">${mk(h)}</li>`).join('')}</ul>`
+      : `<ul><li class="sin">${esc(vacio || 'Sin movimientos en el registro ese día.')}</li></ul>`;
+    const ficha = (num, tit, chip, cl, cuerpo, cif, fte, extra) => `<div class="rp-a">
+        <div class="rp-a-cab"><span class="rp-a-n">${num || 'Control técnico'}</span>${chip ? `<span class="rp-a-chip ${cl || ''}">${chip}</span>` : ''}</div>
+        <b class="rp-a-tit">${tit}</b>
+        ${cuerpo}${extra || ''}${cif ? `<div class="rp-a-cif">${cif}</div>` : ''}<div class="rp-a-fte">${esc(fte || '')}</div></div>`;
+    const r = A.restricciones || {}, rc = r.cifras || {};
+    const s = A.sst || {}, sc = s.cifras || {};
+    const m = A.ambiental || {}, mc = m.cifras || {};
+    const q = A.arqueologia || {}, so = A.social || {}, cp = so.compromisos;
+    const sinInc = h => (h || []).length === 1 && /^Sin incidencias relevantes/.test(h[0]);
+    return [
+      ficha('Anexo 1', 'Restricciones y alertas', (r.nuevas || []).length ? `${r.nuevas.length} nueva${r.nuevas.length > 1 ? 's' : ''} por validar` : ((r.hechos || []).length ? `${r.hechos.length} hecho${r.hechos.length > 1 ? 's' : ''}` : ''), (r.nuevas || []).length ? 'med' : '',
+        lis(r.hechos), r.cifras ? `<span><b>${n(rc.abiertas)}</b> abiertas</span><span><b>${n(rc.vencidas)}</b> vencidas</span><span><b>${n(rc.alertas)}</b> alertas vigentes</span>` : '', r.fuente),
+      ficha('Anexo 2', 'Seguridad (SST)', s.eventos_n ? `${s.eventos_n} evento${s.eventos_n > 1 ? 's' : ''}${s.nuevas_n ? ` · ${s.nuevas_n} obs.` : ''}` : (s.nuevas_n ? `${s.nuevas_n} obs. nueva${s.nuevas_n > 1 ? 's' : ''}` : (s.cifras ? 'sin incidencias' : '')), (s.nuevas_n || s.eventos_n) ? 'med' : 'ok',
+        lis(s.hechos, 'Sin registro SST del día.'), s.cifras ? `<span><b>${n(sc.abiertas)}</b> abiertas</span><span><b>${n(sc.en_proceso)}</b> en proceso</span><span><b>${n(sc.cerradas)}</b> cerradas${sc.sin_cierre_desde ? ` (sin cierres desde el ${fc(sc.sin_cierre_desde)})` : (sc.cerradas_hoy ? ` (${sc.cerradas_hoy} hoy)` : '')}</span><span><b>${n(sc.altas_sin_cerrar)}</b> de riesgo alto sin cerrar</span>` : '', s.fuente,
+        (s.preventivas || []).length ? `<div class="rp-a-pre">Preventivas: ${s.preventivas.map(mk).join(' · ')}</div>` : ''),
+      ficha('Anexo 3', 'Ambiental', m.nuevas_n ? `${m.nuevas_n} obs. nueva${m.nuevas_n > 1 ? 's' : ''}` : (sinInc(m.hechos) ? 'sin incidencias' : ''), m.nuevas_n ? 'med' : 'ok',
+        lis(m.hechos, 'Sin registro ambiental del día.'), m.cifras ? `<span><b>${n(mc.total)}</b> registradas</span><span><b>${n(mc.abiertas)}</b> abiertas</span><span><b>${n(mc.en_proceso)}</b> en proceso</span><span><b>${n(mc.cerradas)}</b> cerradas${mc.cerradas_hoy ? ` (${mc.cerradas_hoy} hoy)` : ''}</span>` : '', m.fuente),
+      ficha('', 'Arqueología (AYAC)', q.presente > 0 ? 'presente' : (q.presente === 0 ? 'sin registro del día' : ''), q.presente > 0 ? 'ok' : 'med',
+        lis(q.hechos, 'Sin dato de arqueología del día.'), [q.frente ? `<span>Frente <b>${esc(q.frente)}</b></span>` : '', q.evidencia ? `<span>${esc(q.evidencia)}</span>` : ''].join(''), q.fuente),
+      ficha('Anexo 4', 'Asuntos sociales', cp ? `${cp.abiertos} de ${cp.total} compromisos abiertos` : '', cp && cp.abiertos ? 'med' : '',
+        lis(so.hechos, 'Sin registro social del día.'), so.n_hechos ? `<span><b>${so.n_hechos}</b> hecho${so.n_hechos > 1 ? 's' : ''} en el registro del día</span>` : '', so.fuente)
+    ].join('');
   }
 
   function grafico(){
@@ -16762,6 +16838,11 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     tira();
     document.getElementById('rpCabSub').textContent = `${d.reporte || ''} · ${d.fecha_txt} · ${d.dia_semana}`;
     document.getElementById('rpKpis').innerHTML = kpis(d);
+    document.getElementById('rpResTit').textContent = `Resumen del día · ${d.fecha_txt}`;
+    document.getElementById('rpClima').textContent = climaCorto(d.clima);
+    document.getElementById('rpEjec').innerHTML = resDia(d);
+    document.getElementById('rpAreasTit').textContent = `Áreas del día · ${d.fecha_txt}`;
+    document.getElementById('rpAreas').innerHTML = areas(d);
     document.getElementById('rpTorresTit').textContent = `Torres intervenidas el ${d.fecha_txt}`;
     document.getElementById('rpTorres').innerHTML = torres(d);
     document.getElementById('rpPersonal').innerHTML = personal(d);
