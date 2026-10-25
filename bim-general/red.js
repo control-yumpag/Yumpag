@@ -37,6 +37,24 @@ export const MAT = {
   proyectada: new THREE.MeshStandardMaterial({ color: 0xb9c3c9, metalness: 0.45, roughness: 0.45, transparent: true, opacity: 0.5, depthWrite: false }),
   fund: { none: new THREE.MeshLambertMaterial({ color: 0x9aa3ab }), prog: new THREE.MeshLambertMaterial({ color: 0xb1cc3d }), fin: new THREE.MeshLambertMaterial({ color: 0x22a04b }) },
 };
+// 25-Oct-26 (pedido del usuario: «en el BIM general las torres no se distinguen muy bien» con la ortofoto): la misma regla del
+// tablero de la LT (decisión v72.17): sobre la ortofoto, torre proyectada en cian #00a6e6 casi opaca y con brillo propio, acero
+// montado (y existente) #0086c2, tendido cian al 55 %; sobre el relieve digital, la paleta de acero galvanizado. Se mutan los
+// materiales compartidos, así que todo lo ya dibujado cambia a la vez. [color, opacidad, brillo propio]
+const PALETA = {
+  digital: { acero: [0xa3abb1, 1, 0], aceroExist: [0x8c949a, 1, 0], proyectada: [0xb9c3c9, 0.62, 0], fantasma: [0xb7c2c8, 0.28, 0],
+    conductor: [0x40464c, 1], guarda: [0x6b7278, 1], conductorFant: [0x40464c, 0.6], guardaFant: [0x6b7278, 0.6] },
+  orto: { acero: [0x0086c2, 1, 0.35], aceroExist: [0x0086c2, 1, 0.35], proyectada: [0x00a6e6, 0.92, 0.55], fantasma: [0x00a6e6, 0.3, 0.2],
+    conductor: [0x00a6e6, 0.9], guarda: [0x8fd8f2, 0.9], conductorFant: [0x00a6e6, 0.55], guardaFant: [0x8fd8f2, 0.55] },
+};
+export function paleta(orto) {
+  const P = PALETA[orto ? 'orto' : 'digital'];
+  for (const [k, [col, op, em]] of Object.entries(P)) {
+    const m = MAT[k]; m.color.set(col); m.opacity = op; m.transparent = op < 1 || k === 'proyectada' || k === 'fantasma';
+    if (m.emissive) { m.emissive.set(col); m.emissiveIntensity = em || 0; }
+    m.needsUpdate = true;
+  }
+}
 
 // ---------- celosía paramétrica: montantes, X por cara, horizontales, crucetas (cuerda inferior y superior) y aisladores
 const UP = new THREE.Vector3(0, 1, 0), _q = new THREE.Quaternion();

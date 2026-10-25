@@ -102,6 +102,11 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
 - Origen del dato en cada ficha: `D` documento · `R` referencial/aproximado. **Nunca inventes un dato**: cada fila de `datos`
   lleva su fuente; lo calculado dice «calculado».
 - Colores: L-1123 `#e07b1f`, L-1724 `#3d7fe0`, derivación `#9fbf2a`, L-1123 antes `#c0652a`, caminos `#8a6036`.
+- **Ortofoto por defecto** (25-Oct-26, pedido del usuario: «deja por defecto la ortofoto en primera vista cuando se ingrese a esa
+  pestaña»): la pestaña BIM abre en ortofoto; `?vista=digital` abre en relieve digital. **Sobre la ortofoto, torres y tendido van en
+  cian** (misma regla v72.17 del tablero de la LT: torre proyectada `#00a6e6` casi opaca con brillo propio, acero montado y existente
+  `#0086c2`, tendido cian al 55 %); sobre el relieve digital, acero galvanizado y grafito. `paleta(orto)` en `red.js` muta los
+  materiales compartidos; `fijarVista` la llama y rehace el brillo de selección.
   Estado de obra (como en el BIM 4D): terminada `#22a04b`, en curso `#b1cc3d`, por iniciar `#9aa3ab`; torre sin montaje
   en acero translúcido, montada en acero.
 - **Navegación (no cambiar sin pedirlo)**: arrastrar con el botón izquierdo mueve el terreno (el punto agarrado sigue al

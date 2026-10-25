@@ -330,7 +330,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { ViewCube } from './navsala.js';
 import { aGeo, ESTAD } from './geo.js';
 import { ORIGEN, aEsc, deEsc, definirParches, cargarDEM, cotaDEM, AJUSTES, fijarOffset, OFFSET_DEM, cotaDetalle, cotaSegura, mallaParche, cotaEn, cargarOrto, Foco, U } from './terreno.js';
-import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM } from './red.js?v=4';
+import { construirRed, ajustesDeTerreno, torreDelTablero, COL, COLH, MAT, MATS_LINEA, fmt, fUTM, paleta } from './red.js?v=5';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -553,7 +553,8 @@ function fijarVista(v) {
   if (vistaOrto) { const [E, N] = deEsc(controls.target), aqui = DET.find((P) => E > P.e0 && E < P.e1 && N > P.n0 && N < P.n1); [...(aqui ? [aqui] : []), R, ...DET.filter((P) => P !== aqui), FON].forEach((P) => cargarOrto(P, renderer, pedir)); hud('Ortofoto: Esri World Imagery (Esri, Maxar, Earthstar Geographics). Al acercarse se carga a mayor detalle.', 5200); }
   else foco.quitar();
   $('#vCur').checked = curvas[v]; U.uCurvas.value = curvas[v] ? 1 : 0; // curvas de nivel: sí en la vista digital, no en la ortofoto (se pueden activar)
-  scene.fog.color.set(vistaOrto ? 0xd7dee2 : 0xdde6ea); pedir();
+  scene.fog.color.set(vistaOrto ? 0xd7dee2 : 0xdde6ea);
+  resaltar(null); RESALTE.clear(); paleta(vistaOrto); resaltar(actual); pedir();   // 25-Oct-26: torres y tendido en cian sobre la ortofoto (regla v72.17 del tablero de la LT)
 }
 $('#sVista').onclick = (e) => { const b = e.target.closest('button[data-v]'); if (b) fijarVista(b.dataset.v); };
 $('#vCur').onchange = (e) => { curvas[vistaOrto ? 'orto' : 'digital'] = e.target.checked; U.uCurvas.value = e.target.checked ? 1 : 0; pedir(); };
@@ -709,11 +710,16 @@ const vc = new ViewCube($('#vcBox'), {
 const RESALTE = new Map(), resaltadas = [];
 const conBrillo = (m) => { if (!m || !m.emissive) return m; if (!RESALTE.has(m)) { const c = m.clone(); c.emissive = new THREE.Color(0xb1cc3d); c.emissiveIntensity = m.transparent ? 0.3 : 0.25; RESALTE.set(m, c); } return RESALTE.get(m); };
 function resaltar(f) {
-  resaltadas.forEach(([m, mat]) => { if (m.material === RESALTE.get(mat)) m.material = mat; }); resaltadas.length = 0;   // si otro código ya cambió el material (estado 4D), se respeta
+  // se restaura en orden inverso (una pieza registrada dos veces —grupo y malla— anidaba clones y se quedaba brillando tras deseleccionar)
+  for (let i = resaltadas.length - 1; i >= 0; i--) { const [m, mat] = resaltadas[i]; if (m.material === RESALTE.get(mat)) m.material = mat; } resaltadas.length = 0;
   if (!f) return;
   // 24-Oct-26 (pedido del usuario: «¿por qué está de un color verde?»): el modelo completo de una SE no se baña de lima al
   // elegirla —quedaba toda verde—; la SE se señala con el vuelo de la cámara, el rótulo y la ficha
-  for (const o of objsDe(f)) { if (o.isInstancedMesh || o.isLineSegments || o.userData.modeloSE) continue; o.traverse((m) => { if (m.isMesh && !m.isInstancedMesh && m.material && !Array.isArray(m.material) && m.material.emissive) { resaltadas.push([m, m.material]); m.material = conBrillo(m.material); } }); }
+  const vistos = new Set();
+  for (const o of objsDe(f)) {
+    if (o.isInstancedMesh || o.isLineSegments || o.userData.modeloSE) continue;
+    o.traverse((m) => { if (vistos.has(m) || !m.isMesh || m.isInstancedMesh || !m.material || Array.isArray(m.material) || !m.material.emissive) return; vistos.add(m); resaltadas.push([m, m.material]); m.material = conBrillo(m.material); });
+  }
 }
 let actual = null;
 const ORI = { D: ['Dato de documento', 'var(--D)'], R: ['Referencial / aproximado', 'var(--R)'] };
@@ -1264,7 +1270,9 @@ setTimeout(() => torreDelTablero().then((TB) => {
   RED.torresDer.forEach((T) => { if (!T.fuenteGeo) return; const r = T.f.datos.find((x) => x[0] === 'Geometría en el 3D'); if (r) { r[1] = `${T.fuenteGeo} · familia TS2, extensión de cuerpo ${T.tp.ext >= 0 ? '+' : ''}${T.tp.ext} m`; r[2] = 'ME_TS2-Rev.B · el mismo código de la plantilla del tablero'; } });
   window.__bim.torreTablero = TB.version || 'sí'; if (actual) seleccionar(actual); pedir();
 }).catch((e) => console.warn('torre del tablero', e)), 600);
-if (new URLSearchParams(location.search).get('vista') === 'orto') fijarVista('orto');
+// 25-Oct-26 (pedido del usuario: «deja por defecto la ortofoto en primera vista cuando se ingrese a esa pestaña»): se abre en
+// ortofoto; `?vista=digital` abre en relieve digital
+fijarVista(new URLSearchParams(location.search).get('vista') === 'digital' ? 'digital' : 'orto');
 // foto(w, h): captura del 3D a otro tamaño (para revisar la página desde un panel chico; los rótulos HTML no salen)
 const foto = (w = 1600, h = 900) => { const w0 = visor.clientWidth, h0 = visor.clientHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(1); renderer.setSize(w, h, false);
   MATS_LINEA.forEach((m) => m.resolution.set(w, h)); renderer.render(scene, camera); const url = renderer.domElement.toDataURL('image/jpeg', 0.82);

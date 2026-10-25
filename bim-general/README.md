@@ -68,3 +68,10 @@ y representar… esa conexión mal hecha en Paragsha».
   terreno); los vanos del seccionamiento a la T1 siguen la misma regla 4D.
 - Elegir una SE ya no tiñe de verde todo su modelo (el brillo de selección se limita a torres y piezas sueltas) y la cámara
   llega en 3/4, no desde arriba.
+
+## 25-Oct-26 · ortofoto por defecto y torres en cian sobre la ortofoto
+- Pedido del usuario: «las torres no se distinguen muy bien… deja por defecto la ortofoto en primera vista». La pestaña BIM abre
+  en ortofoto (`?vista=digital` para el relieve digital) y, sobre la ortofoto, torres, acero existente y tendido van en cian intenso
+  (la regla del tablero de la LT); en la vista digital, acero galvanizado y grafito como antes.
+- Una torre deseleccionada ya no se queda brillando (los clones del brillo se anidaban al registrar grupo y malla).
+
