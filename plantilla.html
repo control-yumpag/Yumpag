@@ -16699,7 +16699,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       // v72.51 (21-Oct-26, pedido del usuario: «0 % se ve muy preocupante cuando también hay parciales»): el % del día es el
       // metrado ejecutado sobre el programado (la línea del gráfico de abajo); el PPC estricto va debajo como «c/p al 100 %».
       const c = d.cumplimiento || {}, am = pct(c.avance_metrado), p = pct(c.ppc);
-      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${clPPC(am === null ? p : am)}" data-i="${i}" title="${esc(d.reporte || '')}${p === null ? '' : ` · PPC ${p} %`}">
+      return `<button class="rp-dia ${i === sel ? 'on' : ''} ${clPPC(am === null ? p : am)}" data-i="${i}" title="${esc(d.reporte || '')}${p === null ? '' : ` · Porcentaje de Plan Cumplido (PPC) ${p} %`}">
         <b>${esc(d.fecha_txt.slice(0, 6))}</b><small>${esc(d.dia_semana.slice(0, 3))}</small>
         <em>${am === null ? (p === null ? '—' : p + ' %') : am + ' %'}</em><i>${c.programadas ? `${n(c.cumplidas)}/${n(c.programadas)} al 100 %` : ''}</i></button>`;
     }).join('');
@@ -16715,7 +16715,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     const tz = (d.torres || []).filter(t => (t.actividades || []).some(a => !esNoEj(a))).length;
     return `
       <div class="rp-kpi"><b>${(d.torres || []).length}</b><span>torres en el programa</span><small>${tz} con trabajo ejecutado</small></div>
-      <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplidas · <i class="med"></i>${n(c.parciales)} parciales · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · PPC ${ppc === null ? '—' : ppc + ' %'}${npe(c) ? ` · <i class="np"></i>${npe(c)} no programado${npe(c) > 1 ? 's' : ''}, ejecutado${npe(c) > 1 ? 's' : ''}` : ''}</small></div>
+      <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplida${c.cumplidas === 1 ? '' : 's'} · <i class="med"></i>${n(c.parciales)} parcial${c.parciales === 1 ? '' : 'es'} · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · Porcentaje de Plan Cumplido (PPC) ${ppc === null ? '—' : ppc + ' %'}${npe(c) ? ` · <i class="np"></i>${npe(c)} no programado${npe(c) > 1 ? 's' : ''}, ejecutado${npe(c) > 1 ? 's' : ''}` : ''}</small></div>
       <div class="rp-kpi"><b>${n(p.total_obra)}</b><span>personas en obra</span><small>MEGASIL ${n(p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null)} · supervisión ${n(p.conenhua_staff)} · arqueología ${n(p.arqueologia)}</small></div>
       <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length - robados ? ` · ${eq.length - enObra.length - robados} fuera de obra` : ''}${robados ? ` · ${robados} robado${robados > 1 ? 's' : ''}` : ''}</small></div>`;
   }
@@ -16831,7 +16831,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const h = v => tot ? Math.round((v || 0) / tot * alto) : 0;
       const hc = Math.min(h(npC(k)), alto), hp = Math.min(h(npP(k)), alto - hc);
       const am = pct(k.avance_metrado), p = pct(k.ppc);
-      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${npe(k) ? ` · ${npe(k)} no programado, ejecutado (${npC(k)} completada${npC(k) === 1 ? '' : 's'}, ${npP(k)} parcial${npP(k) === 1 ? '' : 'es'})` : ''}">
+      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: Porcentaje de Plan Cumplido (PPC) ${p === null ? '—' : p + ' %'} · ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${npe(k) ? ` · ${npe(k)} no programado, ejecutado (${npC(k)} completada${npC(k) === 1 ? '' : 's'}, ${npP(k)} parcial${npP(k) === 1 ? '' : 'es'})` : ''}">
         <span class="rp-b-ppc ${clPPC(p)}">${p === null ? '—' : p + ' %'}</span>
         <div class="rp-b-col" style="height:${alto + hc + hp}px">
           ${hp ? `<i class="npp" style="height:${hp}px"></i>` : ''}${hc ? `<i class="npc" style="height:${hc}px"></i>` : ''}${hc + hp ? '<i class="np-tope" style="height:0"></i>' : ''}<i class="mal" style="height:${h(k.no_ejecutadas)}px"></i><i class="med" style="height:${h(k.parciales)}px"></i><i class="ok" style="height:${h(k.cumplidas)}px"></i>
@@ -16840,7 +16840,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
         <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span><span class="rp-b-pr">${n(k.programadas)} prog.${npe(k) ? ` +${npe(k)}` : ''}</span>
       </div>`;
     }).join('') + `</div>
-      <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span>${D.some(x => npC(x.cumplimiento || {})) ? '<span><i class="npc"></i>no programado, ejecutado: completada</span>' : ''}${D.some(x => npP(x.cumplimiento || {})) ? '<span><i class="npp"></i>no programado, ejecutado: parcial</span>' : ''}${D.some(x => npe(x.cumplimiento || {})) ? '<span>+N: partidas no programadas, ejecutadas</span>' : ''}</div>`;
+      <div class="rp-ley"><span><b>% sobre la barra</b>: Porcentaje de Plan Cumplido (PPC)</span><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span>${D.some(x => npC(x.cumplimiento || {})) ? '<span><i class="npc"></i>no programado, ejecutado: completada</span>' : ''}${D.some(x => npP(x.cumplimiento || {})) ? '<span><i class="npp"></i>no programado, ejecutado: parcial</span>' : ''}${D.some(x => npe(x.cumplimiento || {})) ? '<span>+N: partidas no programadas, ejecutadas</span>' : ''}</div>`;
   }
 
   function pinta(){
