@@ -16536,6 +16536,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-ley-act{margin-left:auto;font-size:.6rem;font-weight:400;color:var(--ink-mut);display:inline-flex;gap:8px;align-items:center}
 .rp-ley-act i,.rp-ley i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
 .rp-ley-act i.ok,.rp-ley i.ok,.rp-b-col i.ok{background:var(--green,#4b7f2f)} .rp-ley-act i.med,.rp-ley i.med,.rp-b-col i.med{background:#d8a200} .rp-ley-act i.mal,.rp-ley i.mal,.rp-b-col i.mal{background:var(--red,#b4342b)} .rp-ley-act i.np,.rp-ley i.np{background:#2f6fa8}
+.rp-b-col i.npc,.rp-ley i.npc{background:repeating-linear-gradient(135deg,var(--green,#4b7f2f) 0 3px,#1f4e79 3px 5px)} .rp-b-col i.npp,.rp-ley i.npp{background:repeating-linear-gradient(135deg,#d8a200 0 3px,#1f4e79 3px 5px)}
+.rp-b-col i.np-tope{border-bottom:1px dashed var(--ink-mut)}
 .rp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
 .rp-t{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:4px;min-width:0}
 .rp-t.rp-t-sin{border-style:dashed}
@@ -16723,7 +16725,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     // v72.61: lo «no programado, ejecutado» que registra el Resumen (sin metrado) también es trabajo del día
     const A = (t.actividades || []).filter(a => !esNoEj(a) && (a.ejec || kRes(a.resultado) === 'ok' || (kRes(a.resultado) === 'np' && a.avance)));
     if (!A.length) return (t.actividades || []).length ? 'Programada, sin ejecución registrada.' : '';
-    return A.map(a => `${a.partida}${a.ejec ? ` ${num(a.ejec)}${a.prog ? ` de ${num(a.prog)}` : ''} ${und(a.und)}` : (a.avance ? ` (${a.avance}; no programado, ejecutado)` : '')}`).join(' · ');
+    return A.map(a => `${a.partida}${a.ejec ? ` ${num(a.ejec)}${a.prog ? ` de ${num(a.prog)}` : ''} ${und(a.und)}` : (a.avance ? ` (${a.avance}; no programado, ejecutado${a.estado ? ', ' + a.estado : ''})` : '')}`).join(' · ');
   }
 
   function torres(d){
@@ -16734,7 +16736,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const noEj = (t.actividades || []).filter(esNoEj);
       return `<div class="rp-t ${noEj.length && noEj.length === (t.actividades || []).length ? 'rp-t-sin' : ''}">
         <div class="rp-t-cab"><button class="rp-t-n" data-t="${esc(t.t)}" title="Ver en el BIM 4D">${esc(t.t)}</button>
-          <div class="rp-chips">${(t.actividades || []).map(a => `<span class="rp-act ${kRes(a.resultado)}" title="${esc(kRes(a.resultado) === 'np' ? 'No programado, ejecutado' : (a.resultado || ''))}${a.fuente ? ` · ${esc(a.fuente)}` : ''}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(und(a.und))}` : ''}">${esc(a.partida)}${a.prog ? `<small>${num(a.ejec)}/${num(a.prog)} ${esc(und(a.und))}</small>` : (a.avance ? `<small>${esc(a.avance)}</small>` : '')}</span>`).join('')}</div>
+          <div class="rp-chips">${(t.actividades || []).map(a => `<span class="rp-act ${kRes(a.resultado)}" title="${esc(kRes(a.resultado) === 'np' ? 'No programado, ejecutado' + (a.estado ? ' · ' + a.estado : '') : (a.resultado || ''))}${a.fuente ? ` · ${esc(a.fuente)}` : ''}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(und(a.und))}` : ''}">${esc(a.partida)}${a.prog ? `<small>${num(a.ejec)}/${num(a.prog)} ${esc(und(a.und))}</small>` : (a.avance ? `<small>${esc(a.avance)}</small>` : '')}</span>`).join('')}</div>
         </div>
         ${hoyDe(t) ? `<p class="rp-hoy">${esc(hoyDe(t))}</p>` : ''}
         ${noEj.map(a => `<p class="rp-t-res">${esc(a.partida)} sin ejecutar${a.restriccion ? ` · ${mk(a.restriccion)}` : ' · sin restricción declarada'}</p>`).join('')}
@@ -16819,21 +16821,26 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   }
 
   function grafico(){
-    const alto = 110;
+    // v72.62 (26-Oct-26): lo no programado, ejecutado se dibuja SOBRE el 100 % del programa, en la misma escala (cada partida
+    // vale 1 / programadas) y con el color de su estado —completada o parcial— rayado en azul. El PPC y el metrado no cambian.
+    const npC = k => k.np_completadas ?? 0, npP = k => (k.np_parciales ?? 0) + Math.max(0, npe(k) - (k.np_completadas ?? 0) - (k.np_parciales ?? 0));
+    const sobre = D.map(x => { const k = x.cumplimiento || {}; return k.programadas ? (npC(k) + npP(k)) / k.programadas : 0; });
+    const alto = Math.round(110 / (1 + Math.min(1, Math.max(0, ...sobre))));
     return `<div class="rp-barras">` + D.map((x, i) => {
       const k = x.cumplimiento || {}; const tot = k.programadas || 0;
       const h = v => tot ? Math.round((v || 0) / tot * alto) : 0;
+      const hc = Math.min(h(npC(k)), alto), hp = Math.min(h(npP(k)), alto - hc);
       const am = pct(k.avance_metrado), p = pct(k.ppc);
-      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${npe(k) ? ` · ${npe(k)} no programado, ejecutado` : ''}">
+      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${npe(k) ? ` · ${npe(k)} no programado, ejecutado (${npC(k)} completada${npC(k) === 1 ? '' : 's'}, ${npP(k)} parcial${npP(k) === 1 ? '' : 'es'})` : ''}">
         <span class="rp-b-ppc ${clPPC(p)}">${p === null ? '—' : p + ' %'}</span>
-        <div class="rp-b-col" style="height:${alto}px">
-          <i class="mal" style="height:${h(k.no_ejecutadas)}px"></i><i class="med" style="height:${h(k.parciales)}px"></i><i class="ok" style="height:${h(k.cumplidas)}px"></i>
+        <div class="rp-b-col" style="height:${alto + hc + hp}px">
+          ${hp ? `<i class="npp" style="height:${hp}px"></i>` : ''}${hc ? `<i class="npc" style="height:${hc}px"></i>` : ''}${hc + hp ? '<i class="np-tope" style="height:0"></i>' : ''}<i class="mal" style="height:${h(k.no_ejecutadas)}px"></i><i class="med" style="height:${h(k.parciales)}px"></i><i class="ok" style="height:${h(k.cumplidas)}px"></i>
           ${am === null ? '' : `<u style="bottom:${Math.round(am / 100 * alto)}px"></u>`}
         </div>
         <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span><span class="rp-b-pr">${n(k.programadas)} prog.${npe(k) ? ` +${npe(k)}` : ''}</span>
       </div>`;
     }).join('') + `</div>
-      <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span><span>+N: no programado, ejecutado</span></div>`;
+      <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span>${D.some(x => npC(x.cumplimiento || {})) ? '<span><i class="npc"></i>no programado, ejecutado: completada</span>' : ''}${D.some(x => npP(x.cumplimiento || {})) ? '<span><i class="npp"></i>no programado, ejecutado: parcial</span>' : ''}${D.some(x => npe(x.cumplimiento || {})) ? '<span>+N: partidas no programadas, ejecutadas</span>' : ''}</div>`;
   }
 
   function pinta(){
