@@ -47,6 +47,8 @@ import unicodedata as _ud
 def _n(t): return ''.join(c for c in _ud.normalize('NFD', str(t or '').lower()) if _ud.category(c) != 'Mn')
 CLAVES = [
     (r'(marquillado|conexionado|timbrado).*ss\.? ?aa|ss\.? ?aa.*(marquillado|conexionado|timbrado)', ['12']),   # tableros de SS.AA.
+    # 25-Oct-26: AXON amplió la 12 a la intervención de 3 tableros de SS.AA. (48 Vcc, 230 Vca esencial y 110 Vcc)
+    (r'(breaker|interruptor|adecuacion|calado).*(ss\.? ?aa|servicios auxiliares)', ['12']),
     (r'marquillado|timbrado', ['11']),                                                                         # tablero CPM
     (r'induccion|anexo 0?5|capacitacion', ['1']),
     (r'prueba.*aislamiento|aislamiento del cable|pulso de 1000|resistencia de los cables|megado', ['3']),

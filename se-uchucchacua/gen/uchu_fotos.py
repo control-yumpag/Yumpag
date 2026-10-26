@@ -95,10 +95,12 @@ def ham(a, b): return bin(a ^ b).count('1')
 
 def pie_drive(t):
     t = re.sub(r'(\.(jpe?g|png))+$', '', t, flags=re.I)   # también «…jpg.jpeg»
-    m = re.search(r'_(\d{8})_(\d{6})$', t)
-    hora = f'{m.group(2)[:2]}:{m.group(2)[2:4]}' if m else None
-    t = re.sub(r'_\d{8}_\d{6}$', '', t).strip(' ._')
+    m = re.search(r'_(\d{8})_(\d{6})$', t) or re.search(r'_()(\d{6})$', t)   # «…_AAAAMMDD_HHMMSS» o solo «…_HHMMSS»
+    hh = m.group(2) if m else ''
+    hora = f'{hh[:2]}:{hh[2:4]}' if hh and int(hh[:2]) < 24 and int(hh[2:4]) < 60 else None
+    t = re.sub(r'(_\d{8})?_\d{6}$', '', t).strip(' ._')
     t = re.sub(r'\s*\(\d+\)$', '', t)
+    t = re.sub(r'\.?_\s+', ' ', t)   # «Auxiliares._ 110VDC» → «Auxiliares 110VDC»
     return (t[:1].upper() + t[1:]) if t else None, hora
 
 def difuminar(img, det):
@@ -173,7 +175,8 @@ def main():
         try: im = Image.open(io.BytesIO(b)); im.load()
         except Exception: continue
         if DIAS and fecha not in DIAS: continue
-        pie = re.sub(r'_\d{8}_\d{6}$', '', (pie or '').strip()).strip()   # AXON a veces pega el nombre del archivo
+        pie = re.sub(r'(_\d{8})?_\d{6}$', '', (pie or '').strip()).strip()   # AXON a veces pega el nombre del archivo
+        pie = re.sub(r'\.?_\s+', ' ', pie)
         ex.append(dict(fecha=fecha, pie=pie or None, img=im, h=dhash(im), src='excel', orden=(fila, col)))
     # 2) Drive
     dv = []
