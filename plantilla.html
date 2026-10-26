@@ -8275,7 +8275,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
         <ul class="rp-ejec" id="rpEjec"></ul>
       </div>
       <div class="card rp-torres">
-        <h3><span class="dot"></span><span id="rpTorresTit">Torres intervenidas</span><span class="rp-ley-act"><i class="ok"></i>cumplida <i class="med"></i>parcial <i class="mal"></i>no ejecutada <i class="np"></i>sin programar</span></h3>
+        <h3><span class="dot"></span><span id="rpTorresTit">Torres intervenidas</span><span class="rp-ley-act"><i class="ok"></i>cumplida <i class="med"></i>parcial <i class="mal"></i>no ejecutada <i class="np"></i>no programado, ejecutado</span></h3>
         <div class="rp-grid" id="rpTorres"></div>
       </div>
       <div class="card rp-areas">
@@ -16527,7 +16527,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-dia b{font-size:.7rem;color:var(--ink)} .rp-dia small{font-size:.56rem;opacity:.7;text-transform:lowercase} .rp-dia em{font-style:normal;font-weight:700;font-size:.74rem;margin-top:2px}
 .rp-dia.ok em{color:var(--green,#4b7f2f)} .rp-dia.med em{color:#b8860b} .rp-dia.mal em{color:var(--red,#b4342b)}
 .rp-dia i{font-style:normal;font-size:.52rem;color:var(--ink-mut);line-height:1.1;margin-top:1px;white-space:nowrap}
-.rp-kpi-res i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:0} .rp-kpi-res i.ok{background:var(--green,#4b7f2f)} .rp-kpi-res i.med{background:#e0a800} .rp-kpi-res i.mal{background:var(--red,#b4342b)}
+.rp-kpi-res i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:0} .rp-kpi-res i.ok{background:var(--green,#4b7f2f)} .rp-kpi-res i.med{background:#e0a800} .rp-kpi-res i.mal{background:var(--red,#b4342b)} .rp-kpi-res i.np{background:#2f6fa8}
 .rp-dia.on{border-color:var(--accent,#2f6f4f);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#2f6f4f) 28%,transparent);background:var(--panel)}
 .rp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .rp-kpi{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;line-height:1.15}
@@ -16535,7 +16535,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-kpi.ok b{color:var(--green,#4b7f2f)} .rp-kpi.med b{color:#b8860b} .rp-kpi.mal b{color:var(--red,#b4342b)}
 .rp-ley-act{margin-left:auto;font-size:.6rem;font-weight:400;color:var(--ink-mut);display:inline-flex;gap:8px;align-items:center}
 .rp-ley-act i,.rp-ley i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}
-.rp-ley-act i.ok,.rp-ley i.ok,.rp-b-col i.ok{background:var(--green,#4b7f2f)} .rp-ley-act i.med,.rp-ley i.med,.rp-b-col i.med{background:#d8a200} .rp-ley-act i.mal,.rp-ley i.mal,.rp-b-col i.mal{background:var(--red,#b4342b)} .rp-ley-act i.np{background:#8a8f99}
+.rp-ley-act i.ok,.rp-ley i.ok,.rp-b-col i.ok{background:var(--green,#4b7f2f)} .rp-ley-act i.med,.rp-ley i.med,.rp-b-col i.med{background:#d8a200} .rp-ley-act i.mal,.rp-ley i.mal,.rp-b-col i.mal{background:var(--red,#b4342b)} .rp-ley-act i.np,.rp-ley i.np{background:#2f6fa8}
 .rp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
 .rp-t{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:4px;min-width:0}
 .rp-t.rp-t-sin{border-style:dashed}
@@ -16544,7 +16544,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 .rp-chips{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
 .rp-act{font-size:.62rem;border-radius:999px;padding:2px 8px;border:1px solid transparent;color:var(--ink);display:inline-flex;align-items:baseline;gap:4px;line-height:1.2;background:var(--panel)}
 .rp-act small{font-size:.56rem;color:var(--ink-mut)}
-.rp-act.ok{background:color-mix(in srgb,var(--green,#4b7f2f) 18%,var(--panel))} .rp-act.med{background:color-mix(in srgb,#d8a200 26%,var(--panel))} .rp-act.mal{background:color-mix(in srgb,var(--red,#b4342b) 16%,var(--panel))} .rp-act.np{background:var(--panel);border-color:var(--line-2);color:var(--ink-2)}
+.rp-act.ok{background:color-mix(in srgb,var(--green,#4b7f2f) 18%,var(--panel))} .rp-act.med{background:color-mix(in srgb,#d8a200 26%,var(--panel))} .rp-act.mal{background:color-mix(in srgb,var(--red,#b4342b) 16%,var(--panel))} .rp-act.np{background:color-mix(in srgb,#2f6fa8 16%,var(--panel));border-color:color-mix(in srgb,#2f6fa8 45%,var(--panel));color:var(--ink)}
 .rp-hoy{font-size:.68rem;line-height:1.4;margin:0;color:var(--ink)}
 .rp-t-sig{font-size:.64rem;margin:0;color:var(--ink-mut)} .rp-t-sig b{color:var(--ink-2);font-weight:700}
 .rp-t-res{font-size:.63rem;margin:0;color:var(--red,#b4342b)}
@@ -16687,6 +16687,8 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   const rN = r => String(r || '').toLowerCase();
   const esNoEj = a => rN(a.resultado).startsWith('no ejec');
   const kRes = r => { const x = rN(r); return x.startsWith('cumpl') ? 'ok' : (x.startsWith('parc') ? 'med' : (x.startsWith('no ejec') ? 'mal' : 'np')); };
+  // v72.61 (26-Oct-26, usuario): «no programado, ejecutado» = lo que MEGASIL declara sin haberlo programado + lo que solo registra el Resumen
+  const npe = c => (c && c.no_prog_ejec !== undefined && c.no_prog_ejec !== null) ? c.no_prog_ejec : ((c && c.no_programadas) || 0);
   const pct = v => (v === null || v === undefined) ? null : Math.round(v * 100);
   const clPPC = p => p === null ? '' : (p >= 50 ? 'ok' : (p >= 25 ? 'med' : 'mal'));
 
@@ -16711,16 +16713,17 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     const tz = (d.torres || []).filter(t => (t.actividades || []).some(a => !esNoEj(a))).length;
     return `
       <div class="rp-kpi"><b>${(d.torres || []).length}</b><span>torres en el programa</span><small>${tz} con trabajo ejecutado</small></div>
-      <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplidas · <i class="med"></i>${n(c.parciales)} parciales · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · PPC ${ppc === null ? '—' : ppc + ' %'}${c.no_programadas ? ` · ${c.no_programadas} fuera de programa` : ''}</small></div>
+      <div class="rp-kpi ${clPPC(am === null ? ppc : am)}"><b>${am === null ? (ppc === null ? '—' : ppc + ' %') : am + ' %'}</b><span>programa del día · metrado ejecutado</span><small class="rp-kpi-res"><i class="ok"></i>${n(c.cumplidas)} cumplidas · <i class="med"></i>${n(c.parciales)} parciales · <i class="mal"></i>${n(c.no_ejecutadas)} sin ejecutar · de ${n(c.programadas)} · PPC ${ppc === null ? '—' : ppc + ' %'}${npe(c) ? ` · <i class="np"></i>${npe(c)} no programado${npe(c) > 1 ? 's' : ''}, ejecutado${npe(c) > 1 ? 's' : ''}` : ''}</small></div>
       <div class="rp-kpi"><b>${n(p.total_obra)}</b><span>personas en obra</span><small>MEGASIL ${n(p.megasil_staff !== null && p.operativos !== null && p.operadores_choferes !== null ? (p.megasil_staff || 0) + (p.operativos || 0) + (p.operadores_choferes || 0) : null)} · supervisión ${n(p.conenhua_staff)} · arqueología ${n(p.arqueologia)}</small></div>
       <div class="rp-kpi ${parados ? 'med' : ''}"><b>${enObra.length}</b><span>equipos en obra</span><small>${parados ? `${parados} con unidades inoperativas` : 'todos operativos'}${eq.length - enObra.length - robados ? ` · ${eq.length - enObra.length - robados} fuera de obra` : ''}${robados ? ` · ${robados} robado${robados > 1 ? 's' : ''}` : ''}</small></div>`;
   }
 
   function hoyDe(t){
     // una línea con lo ejecutado ese día en la torre, a partir de las partidas (sin repetir el texto largo del estado)
-    const A = (t.actividades || []).filter(a => !esNoEj(a) && (a.ejec || kRes(a.resultado) === 'ok'));
+    // v72.61: lo «no programado, ejecutado» que registra el Resumen (sin metrado) también es trabajo del día
+    const A = (t.actividades || []).filter(a => !esNoEj(a) && (a.ejec || kRes(a.resultado) === 'ok' || (kRes(a.resultado) === 'np' && a.avance)));
     if (!A.length) return (t.actividades || []).length ? 'Programada, sin ejecución registrada.' : '';
-    return A.map(a => `${a.partida}${a.ejec ? ` ${num(a.ejec)}${a.prog ? ` de ${num(a.prog)}` : ''} ${und(a.und)}` : ''}`).join(' · ');
+    return A.map(a => `${a.partida}${a.ejec ? ` ${num(a.ejec)}${a.prog ? ` de ${num(a.prog)}` : ''} ${und(a.und)}` : (a.avance ? ` (${a.avance}; no programado, ejecutado)` : '')}`).join(' · ');
   }
 
   function torres(d){
@@ -16731,7 +16734,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const noEj = (t.actividades || []).filter(esNoEj);
       return `<div class="rp-t ${noEj.length && noEj.length === (t.actividades || []).length ? 'rp-t-sin' : ''}">
         <div class="rp-t-cab"><button class="rp-t-n" data-t="${esc(t.t)}" title="Ver en el BIM 4D">${esc(t.t)}</button>
-          <div class="rp-chips">${(t.actividades || []).map(a => `<span class="rp-act ${kRes(a.resultado)}" title="${esc(a.resultado || '')}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(und(a.und))}` : ''}">${esc(a.partida)}${a.prog ? `<small>${num(a.ejec)}/${num(a.prog)} ${esc(und(a.und))}</small>` : ''}</span>`).join('')}</div>
+          <div class="rp-chips">${(t.actividades || []).map(a => `<span class="rp-act ${kRes(a.resultado)}" title="${esc(kRes(a.resultado) === 'np' ? 'No programado, ejecutado' : (a.resultado || ''))}${a.fuente ? ` · ${esc(a.fuente)}` : ''}${a.prog ? ` · ${num(a.ejec)} de ${num(a.prog)} ${esc(und(a.und))}` : ''}">${esc(a.partida)}${a.prog ? `<small>${num(a.ejec)}/${num(a.prog)} ${esc(und(a.und))}</small>` : (a.avance ? `<small>${esc(a.avance)}</small>` : '')}</span>`).join('')}</div>
         </div>
         ${hoyDe(t) ? `<p class="rp-hoy">${esc(hoyDe(t))}</p>` : ''}
         ${noEj.map(a => `<p class="rp-t-res">${esc(a.partida)} sin ejecutar${a.restriccion ? ` · ${mk(a.restriccion)}` : ' · sin restricción declarada'}</p>`).join('')}
@@ -16821,16 +16824,16 @@ html body #v-bim > .bim-stages{grid-row:7!important}
       const k = x.cumplimiento || {}; const tot = k.programadas || 0;
       const h = v => tot ? Math.round((v || 0) / tot * alto) : 0;
       const am = pct(k.avance_metrado), p = pct(k.ppc);
-      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${k.no_programadas ? ` · ${k.no_programadas} fuera de programa` : ''}">
+      return `<div class="rp-b ${i === sel ? 'on' : ''}" data-i="${i}" title="${esc(x.fecha_txt)}: ${n(k.cumplidas)} de ${n(k.programadas)} cumplidas · ${n(k.parciales)} parciales · ${n(k.no_ejecutadas)} sin ejecutar${npe(k) ? ` · ${npe(k)} no programado, ejecutado` : ''}">
         <span class="rp-b-ppc ${clPPC(p)}">${p === null ? '—' : p + ' %'}</span>
         <div class="rp-b-col" style="height:${alto}px">
           <i class="mal" style="height:${h(k.no_ejecutadas)}px"></i><i class="med" style="height:${h(k.parciales)}px"></i><i class="ok" style="height:${h(k.cumplidas)}px"></i>
           ${am === null ? '' : `<u style="bottom:${Math.round(am / 100 * alto)}px"></u>`}
         </div>
-        <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span><span class="rp-b-pr">${n(k.programadas)} prog.${k.no_programadas ? ` +${k.no_programadas}` : ''}</span>
+        <span class="rp-b-fe">${esc(x.fecha_txt.slice(0, 6))}</span><span class="rp-b-pr">${n(k.programadas)} prog.${npe(k) ? ` +${npe(k)}` : ''}</span>
       </div>`;
     }).join('') + `</div>
-      <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span></div>`;
+      <div class="rp-ley"><span><i class="ok"></i>cumplida al 100 %</span><span><i class="med"></i>parcial</span><span><i class="mal"></i>no ejecutada</span><span><u></u>% de metrado ejecutado</span><span>+N: no programado, ejecutado</span></div>`;
   }
 
   function pinta(){
