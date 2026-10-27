@@ -52,6 +52,22 @@ export function iniciarTablero(ctx) {
     return `El control de AXON del ${fCorta(f)} pone ${js.map((j) => `${pct(j.axon, 0)} en la actividad ${esc_(j.n)}`).join(' y ')}, que ${js.length > 1 ? 'venían' : 'venía'} de ${[...new Set(js.map((j) => pct(j.usado, 0)))].join(' / ')}. ` +
       `Un avance acumulado no retrocede: el tablero mantiene ${[...new Set(js.map((j) => pct(j.usado, 0)))].join(' / ')}${d.ejec_axon != null ? ` (AXON informa ${pct(d.ejec_axon)} de ejecutado${d.spi_axon != null ? ` y SPI ${num(d.spi_axon)}` : ''})` : ''}.`;
   }
+  // Actividades que AXON agregó en un control posterior (U4D.rebase): cambian los pesos y recalculan días ya publicados.
+  // El tablero muestra la serie del control vigente y dice qué decía el control anterior.
+  const RB = (U4D.rebase || []).filter((r) => r.control <= U4D.corte);
+  function notaRebase(r) {
+    const u = r.cambios[r.cambios.length - 1];
+    const nv = r.nuevas.map((z) => `la actividad ${esc_(z.n)} «${esc_(z.nombre)}»${z.ini ? `, con fecha del ${fCorta(z.ini)}` : ''}${z.dias_peso ? ` y ${num(z.dias_peso, 0)} día${z.dias_peso === 1 ? '' : 's'} de peso` : ''}`).join(' y ');
+    return `En el control del ${fCorta(r.control)} AXON agregó ${nv}. ` +
+      (r.base_antes && r.base && r.base_antes !== r.base ? `La base de pesos pasa de ${num(r.base_antes, 0)} a ${num(r.base, 0)} días y el avance` : 'El avance') +
+      ` de los días anteriores se recalculó` + (u ? `: el ${fCorta(u.f)} pasa de ${pct(u.ejec_antes)} a ${pct(u.ejec)} ejecutado (programado de ${pct(u.prog_antes)} a ${pct(u.prog)})` : '') +
+      '. El tablero muestra la serie del control vigente.';
+  }
+  function notaRebaseDia(f) {
+    const r = RB.find((x) => x.cambios.some((c) => c.f === f)); if (!r) return '';
+    const c = r.cambios.find((x) => x.f === f);
+    return `Cifras recalculadas con el control del ${fCorta(r.control)}, en el que AXON agregó ${r.nuevas.map((z) => `la actividad ${esc_(z.n)}`).join(' y ')}. El control de ese día decía ${pct(c.ejec_antes)} ejecutado y ${pct(c.prog_antes)} programado.`;
+  }
   function kpi(lab, val, foot, cls = '') { return `<div class="kpi ${cls}"><div class="lab">${lab}</div><div class="val">${val}</div><div class="foot">${foot}</div></div>`; }
   function resumen() {
     const p = U4D.total.prog[IC], e = U4D.total.ejec[IC], spi = p ? e / p : null; const per = DC.personal || {};
@@ -76,7 +92,8 @@ export function iniciarTablero(ctx) {
       (atras.length ? `Detrás de lo programado: ${atras.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}. ` : '') +
       (enCurso.length ? `En curso: ${enCurso.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}. ` : '') +
       (p0.length ? `Desde el ${fCorta(p0[0].ini)}: ${p0.map((a) => `${esc_(minus1(a.nombre))} (${esc_(a.n)})`).join('; ')}.` : '') +
-      ([...new Set(AJ.map((j) => j.f))].filter((f) => f <= U4D.corte).map((f) => `<br><small class="nota-aj">Nota: ${notaAjuste(f)}</small>`).join('')) + `</div>`;
+      ([...new Set(AJ.map((j) => j.f))].filter((f) => f <= U4D.corte).map((f) => `<br><small class="nota-aj">Nota: ${notaAjuste(f)}</small>`).join('')) +
+      RB.map((r) => `<br><small class="nota-aj">Nota: ${notaRebase(r)}</small>`).join('') + `</div>`;
     curvaS(); diaADia(); grupos(); personal(); plazo(); restricciones(); habilitantes();
   }
   function curvaS() {
@@ -116,7 +133,7 @@ export function iniciarTablero(ctx) {
     ];
     $('#resDias').innerHTML = `<div class="dd-wrap"><table class="dd"><thead><tr><th></th>${F.map((f, k) => `<th class="${k === IC ? 'hoy ' : ''}${k > IC ? 'fut' : ''}">${fLarga(f).replace(/-\d{2}$/, '').replace('-', ' ')}<small>${k <= IC && U4D.dias[f] && U4D.dias[f].reporte ? `rep. ${U4D.dias[f].reporte}` : k > IC ? 'programa' : '&nbsp;'}</small></th>`).join('')}</tr></thead>
       <tbody>${filas.map(([lab, fn]) => `<tr><th>${lab}</th>${F.map((f, k) => cel(k, fn(k))).join('')}</tr>`).join('')}</tbody></table></div>
-      <div class="leg"><span>Columna resaltada: último reporte (${fCorta(U4D.corte)})</span><span>Días grises: solo programado</span>${aj.size ? `<span><sup>*</sup> acumulado que no retrocede: ${[...aj].map((f) => esc_(notaAjuste(f))).join(' ')}</span>` : ''}</div>`;
+      <div class="leg"><span>Columna resaltada: último reporte (${fCorta(U4D.corte)})</span><span>Días grises: solo programado</span>${RB.map((r) => `<span>Hasta el ${fCorta(r.previo)}: recalculado con el control del ${fCorta(r.control)} (AXON agregó ${r.nuevas.map((z) => `la actividad ${esc_(z.n)}`).join(' y ')}; pesos sobre ${num(r.base, 0)} días)</span>`).join('')}${aj.size ? `<span><sup>*</sup> acumulado que no retrocede: ${[...aj].map((f) => esc_(notaAjuste(f))).join(' ')}</span>` : ''}</div>`;
   }
   function grupos() {
     const gs = [...new Set(ACTS.map((a) => a.grupo))];
@@ -278,6 +295,18 @@ export function iniciarTablero(ctx) {
   // ---------------------------------------------------------------- REPORTES DIARIOS (todos los días desde el inicio)
   const diasRep = F.slice(0, IC + 1);
   const aj2 = new Set((U4D.ajustes || []).map((j) => j.f));
+  // Programado del día con la regla del control de AXON (columnas CJ y DG de la hoja AVANCE): el avance de la línea base del día;
+  // si no lo hay y la actividad venía atrasada, su ritmo diario (columna BW); siempre con tope en lo que le falta.
+  // Cumplimiento de cada actividad = ejecutado ÷ programado (máx. 1); el del día es su promedio (fila «Cumpl.»).
+  function progDia(k) {
+    return ACTS.map((a) => {
+      const pk = a.prog[k] ?? 0, pk1 = k > 0 ? a.prog[k - 1] ?? 0 : 0, ek1 = k > 0 ? a.ejec[k - 1] ?? 0 : 0, ek = a.ejec[k] ?? ek1;
+      const inc = pk - pk1, atr = ek1 < pk1 - 0.005;
+      const dp = Math.max(0, Math.min(1 - ek1, inc > 0.00005 ? inc : atr ? a.ritmo || 0 : 0)), de = ek - ek1;
+      if (dp > 0.00005) return { a, dp, de, atr: atr && !(inc > 0.00005), r: de >= dp - 0.005 ? 1 : Math.max(0, de) / dp };   // atr = programado solo por arrastre
+      return de > 0.00005 ? { a, dp: 0, de, atr: false, r: null } : null;
+    }).filter(Boolean);
+  }
   function repTab() {
     if (!repDia) repDia = diasRep[diasRep.length - 1];
     $('#repTira').innerHTML = diasRep.map((f) => {
@@ -289,20 +318,22 @@ export function iniciarTablero(ctx) {
     }).join('');
     const f = repDia, k = F.indexOf(f), d = U4D.dias[f] || {};
     const R = Object.fromEntries((U4D.restricciones || []).map((r) => [r.id, r])), H = Object.fromEntries((U4D.habilitantes || []).map((x) => [x.id, x]));
-    const prev = (a) => (k > 0 ? (a.ejec[k - 1] ?? 0) : 0), prevP = (a) => (k > 0 ? (a.prog[k - 1] ?? 0) : 0);
+    const prev = (a) => (k > 0 ? (a.ejec[k - 1] ?? 0) : 0);
     const hechas = (d.hechas || []).map((n) => byN[n]).filter(Boolean);
-    const prog = ACTS.filter((a) => a.ini && (a.prog[k] ?? 0) - prevP(a) > 0.0005);
-    const res = (a) => { const dp = (a.prog[k] ?? 0) - prevP(a), de = (a.ejec[k] ?? 0) - prev(a); return de >= dp - 0.0005 ? ['Cumplido', COL4.term] : de > 0.0005 ? ['Parcial', COL4.curso] : ['No ejecutado', COL4.atras]; };
-    const cumpl = prog.filter((a) => res(a)[0] === 'Cumplido').length;
+    const PD = progDia(k), prog = PD.filter((x) => x.dp > 0), extra = PD.filter((x) => !(x.dp > 0));
+    const res = (x) => (x.r >= 0.995 ? ['Cumplido', COL4.term] : x.r > 0.0005 ? [`Parcial · ${pct(x.r, 0)}`, COL4.curso] : ['No ejecutado', COL4.atras]);
+    const cumpl = prog.filter((x) => x.r >= 0.995).length;
+    const cDia = prog.length ? prog.reduce((s, x) => s + x.r, 0) / prog.length : null;
     const per = d.personal || {}; const ck = Object.entries(d.checklist || {}); const ckOk = ck.filter(([, v]) => /^s[ií]/i.test(String(v))).length;
     const ab = (d.restr_abiertas || []).map((id) => R[id]).filter(Boolean), nuevas = new Set(d.restr_nuevas || []);
     const hv = (d.hab_vencidos || []).map((id) => H[id]).filter(Boolean);
     const fotos = FOTOS.filter((x) => x.f === f);
     $('#repDet').innerHTML = `
-      <div class="card"><h3><span class="dot"></span>Trabajado ese día</h3><div class="desc">${fLarga(f)}${d.reporte ? ` · reporte N.º ${d.reporte}` : ''}${d.dia_plazo ? ` · día ${esc_(d.dia_plazo)} del plazo` : ''}</div>${aj2.has(f) ? `<div class="nota-aj">${notaAjuste(f)}</div>` : ''}
+      <div class="card"><h3><span class="dot"></span>Trabajado ese día</h3><div class="desc">${fLarga(f)}${d.reporte ? ` · reporte N.º ${d.reporte}` : ''}${d.dia_plazo ? ` · día ${esc_(d.dia_plazo)} del plazo` : ''}</div>${aj2.has(f) ? `<div class="nota-aj">${notaAjuste(f)}</div>` : ''}${RB.filter((r) => r.control === f).map((r) => `<div class="nota-aj">${notaRebase(r)}</div>`).join('')}${notaRebaseDia(f) ? `<div class="nota-aj">${notaRebaseDia(f)}</div>` : ''}
         ${hechas.length ? hechas.map((a) => `<div class="ri"><code>${esc_(a.n)}</code><span>${esc_(a.nombre)}<small>${esc_(zonaTxt(a))} · ejecutado ${pct(prev(a), 0)} → <b>${pct(a.ejec[k], 0)}</b></small></span></div>`).join('') : '<div class="vacio">Sin actividades marcadas como trabajadas ese día.</div>'}</div>
-      <div class="card"><h3><span class="dot"></span>Cumplimiento del programa</h3><div class="desc">${prog.length ? `${cumpl} de ${prog.length} actividades programadas cumplidas · programado del día ${sig(U4D.total.prog[k] - (k > 0 ? U4D.total.prog[k - 1] : 0))} · ejecutado ${sig((U4D.total.ejec[k] ?? 0) - (k > 0 ? U4D.total.ejec[k - 1] ?? 0 : 0))}` : 'Sin avance programado ese día'}</div>
-        ${prog.map((a) => { const [t, c] = res(a); return `<div class="ri"><code>${esc_(a.n)}</code><span>${esc_(a.nombre)}<small>programado ${sig((a.prog[k] ?? 0) - prevP(a), 0)} · ejecutado ${sig((a.ejec[k] ?? 0) - prev(a), 0)}</small></span><em class="pill" style="border-color:${c};color:${c}">${t}</em></div>`; }).join('')}</div>
+      <div class="card"><h3><span class="dot"></span>Cumplimiento del programa</h3><div class="desc">${prog.length ? `${cumpl} de ${prog.length} actividades programadas cumplidas · cumplimiento del día <b>${pct(cDia, 0)}</b>` : 'Sin avance programado ese día'}<br><small>Regla del control de AXON: lo programado del día es el avance de su línea base; a una actividad atrasada se le vuelve a programar su ritmo diario hasta completarla.</small></div>
+        ${prog.map((x) => { const [t, c] = res(x); return `<div class="ri"><code>${esc_(x.a.n)}</code><span>${esc_(x.a.nombre)}<small>programado ${sig(x.dp, 0)}${x.atr ? ' (arrastra atraso)' : ''} · ejecutado ${sig(x.de, 0)}</small></span><em class="pill" style="border-color:${c};color:${c}">${t}</em></div>`; }).join('')}
+        ${extra.map((x) => `<div class="ri"><code>${esc_(x.a.n)}</code><span>${esc_(x.a.nombre)}<small>sin programar ese día · ejecutado ${sig(x.de, 0)}</small></span><em class="pill" style="border-color:${COL4.term};color:${COL4.term}">Adelantado</em></div>`).join('')}</div>
       <div class="card"><h3><span class="dot"></span>Personal y seguridad</h3><div class="desc">Hoja PERSONAL Y RESTRICCIONES · solo cantidades</div>
         <table class="kv"><tr><td>Personal de AXON</td><td><b>${per.axon ?? '—'}</b></td></tr><tr><td>Ingenieros · técnicos · ayudantes</td><td>${per.ing ?? '—'} · ${per.tec ?? '—'} · ${per.ayu ?? '—'}</td></tr><tr><td>Supervisión en el frente</td><td>${per.sup ?? '—'}</td></tr></table>
         <div class="tw-sec">Checklist SSOMA del frente · ${ck.length ? `${ckOk} de ${ck.length}` : 'sin registro'}</div>${ck.map(([q, v]) => `<div class="ri"><span>${esc_(q)}</span><em class="pill ${/^s[ií]/i.test(String(v)) ? 'ok' : 'warn'}">${esc_(v ?? '—')}</em></div>`).join('')}</div>

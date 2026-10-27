@@ -97,12 +97,17 @@ def leer_avance(path):
         n = str(int(n)) if isinstance(n, float) and n == int(n) else str(n)
         prog = {f: num(A.cell(r, c).value) for c, f in cols}
         ejec = {f: num(A.cell(r + 1, c).value) for c, f in cols} if A.cell(r + 1, 8).value == 'Ejec.' else {}
+        # ritmo diario de la línea base = columna BW del control: MAX(I:AE de Prog.) / COUNT(I:AE de Prog.); con él el formato
+        # vuelve a programar lo atrasado al día siguiente (columna CJ). BT = días de peso (G = BT ÷ Σ BT).
+        vp = [v for v in prog.values() if v is not None]
+        ritmo = round(max(vp) / len(vp), 6) if vp else 0
         acts.append(dict(n=n, nombre=' '.join(str(A.cell(r, 5).value).split()), ubic=str(A.cell(r, 6).value or '').strip(),
                          peso=num(A.cell(r, 7).value), seccion=seccion, grupo=grupo,
                          alcance='B' if (grupo or '').upper().startswith('ALCANCE B') else 'A',
                          pv=num(A.cell(r, 32).value), ev=num(A.cell(r, 33).value), estado=A.cell(r, 35).value,
                          causa=sin_nombres(A.cell(r, 37).value), justif=sin_nombres(A.cell(r, 38).value),
-                         ini=iso(A.cell(r, 65).value), fin=iso(A.cell(r, 66).value), _prog=prog, _ejec=ejec))
+                         ini=iso(A.cell(r, 65).value), fin=iso(A.cell(r, 66).value), ritmo=ritmo, dias_peso=num(A.cell(r, 72).value),
+                         _prog=prog, _ejec=ejec))
     tot = {}
     for r in range(50, 60):
         lab = str(A.cell(r, 2).value or '')
@@ -235,7 +240,7 @@ def main():
         for f, D in por_dia.items():
             y = next((z for z in D['acts'] if z['n'] == x['n']), None)
             if y and (y['causa'] or y['justif']): hist[f] = dict(causa=y['causa'], justif=y['justif'], estado=y['estado'])
-        acts.append(dict(n=x['n'], nombre=x['nombre'], ubic=x['ubic'], zonas=ZONAS_DE.get(x['ubic'], []), peso=x['peso'],
+        acts.append(dict(n=x['n'], nombre=x['nombre'], ubic=x['ubic'], zonas=ZONAS_DE.get(x['ubic'], []), peso=x['peso'], ritmo=x['ritmo'],
                          seccion=x['seccion'], grupo=x['grupo'], alcance=x['alcance'], ini=ini_lb, fin=fin_lb_a,
                          prog=p, ejec=e, estado=x['estado'], pv=x['pv'],
                          ev=(e[fechas.index(corte)] if corte in fechas and any(j['n'] == x['n'] for j in ajustes) else x['ev']),
@@ -282,13 +287,32 @@ def main():
                        ejec_dia=round((tot['ejec'][i] - (tot['ejec'][i - 1] if i else 0)) * 100, 2),
                        ajustes=[dict(n=j['n'], nombre=j['nombre'], axon=j['axon'], usado=j['usado']) for j in ajustes if j['f'] == f])
         dias[f] = dia
+    # Actividades que AXON agrega en un control posterior (p. ej. la 10.2 del 26-Oct, fechada el 19-Oct): cambian los pesos y
+    # recalculan días ya publicados. El tablero muestra la serie del control vigente y dice qué decía el control anterior.
+    rebase, fcs = [], sorted(por_dia)
+    base = lambda D: round(sum((z.get('dias_peso') or 0) for z in D['acts']), 3)
+    for ic in range(1, len(fcs)):
+        fc, fp = fcs[ic], fcs[ic - 1]
+        ns_prev = {z['n'] for z in por_dia[fp]['acts']}
+        nuevas = [z for z in por_dia[fc]['acts'] if z['n'] not in ns_prev]
+        if not nuevas: continue
+        Tp = por_dia[fp]['tot']; cambios = []
+        for i, f in enumerate(fechas):
+            if f > fp: break
+            pa, ea = Tp.get('prog', {}).get(f), Tp.get('ejec', {}).get(f)
+            pn, en = tot['prog'][i], tot['ejec'][i]
+            if (pa is not None and pn is not None and abs(pa - pn) > 0.0005) or (ea is not None and en is not None and abs(ea - en) > 0.0005):
+                cambios.append(dict(f=f, prog_antes=num(pa), ejec_antes=num(ea), prog=pn, ejec=en))
+        rebase.append(dict(control=fc, previo=fp, base_antes=base(por_dia[fp]), base=base(por_dia[fc]), cambios=cambios,
+                           nuevas=[dict(n=z['n'], nombre=z['nombre'], peso=z['peso'], dias_peso=z['dias_peso'], ini=z['ini'], fin=z['fin'])
+                                   for z in nuevas]))
     data = dict(
         titulo='Habilitación del nuevo tablero CPM L-1123 (=E01+WR01) · SE Uchucchacua',
         contratista='AXON Group (AX-26138 · OS BVN 5800003219)', supervision='CONENHUA', propietario='Buenaventura',
         linea_base='Control diario de AXON (sigue el cronograma V8 de CONENHUA)',
         fuente=f'Control diario de AXON, reportes N.º {min(d["cab"].get("Reporte N°") for d in por_dia.values())}–{U["cab"].get("Reporte N°")} '
                f'({", ".join(sorted(f[8:10] for f in por_dia))}-Oct-26) · hojas AVANCE y PERSONAL Y RESTRICCIONES',
-        corte=corte, fechas=fechas, total=tot, acts=acts, dias=dias, ajustes=ajustes,
+        corte=corte, fechas=fechas, total=tot, acts=acts, dias=dias, ajustes=ajustes, rebase=rebase,
         habilitantes=U['hab'], restricciones=U['res'],
         cronogramas=dict(v8=cron_v8(a.v8) if a.v8 else [], axon_r1=cron_axon_r1(a.axr1) if a.axr1 else []),
         fotos=relacionar_fotos(json.load(open(a.fotos, encoding='utf-8')).get('fotos', []) if a.fotos and os.path.exists(a.fotos) else [], acts, dias))
