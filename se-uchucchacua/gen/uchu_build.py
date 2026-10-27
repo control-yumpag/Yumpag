@@ -49,11 +49,15 @@ CLAVES = [
     (r'(marquillado|conexionado|timbrado).*ss\.? ?aa|ss\.? ?aa.*(marquillado|conexionado|timbrado)', ['12']),   # tableros de SS.AA.
     # 25-Oct-26: AXON amplió la 12 a la intervención de 3 tableros de SS.AA. (48 Vcc, 230 Vca esencial y 110 Vcc)
     (r'(breaker|interruptor|adecuacion|calado).*(ss\.? ?aa|servicios auxiliares)', ['12']),
+    # 26-Oct-26: encendido y pruebas previas del tablero = 13; conexionado en el CPM = 11 (o 10 si es antes del 22-Oct)
+    (r'encendido', ['13']),
+    (r'conexionado.*(e01|wr01|cpm)', ['11', '10']),
     (r'marquillado|timbrado', ['11']),                                                                         # tablero CPM
     (r'induccion|anexo 0?5|capacitacion', ['1']),
     (r'prueba.*aislamiento|aislamiento del cable|pulso de 1000|resistencia de los cables|megado', ['3']),
     (r'bobina|carrete', ['2', '3']),
     (r'tapas', ['5']),
+    (r'sellad[oa].*(cable|multiconductor|punta|vulcaniz)|resguardo de (los )?cables|cubierta de plastico', ['6', '4']),   # sellado de puntas tras el tendido
     (r'tendido.*(tsm|ss\.? ?aa)', ['10.1']),
     (r'tendido.*(patio|tcmp|multiconductor)|movilizacion de cables|ordenamiento de cables en patio', ['6']),
     (r'desembalaje|anclaje|ingreso del tablero', ['7', '8']),
