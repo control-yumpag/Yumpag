@@ -109,7 +109,7 @@ export function iniciarTablero(ctx) {
     $('#resCurva').innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Curva S del servicio de AXON">${g}
       <polygon points="${area}" class="ar"/><polyline points="${pp}" class="pl"/><polyline points="${ee.join(' ')}" class="el"/>
       <line x1="${x(IC)}" x2="${x(IC)}" y1="${T}" y2="${H - B}" class="cl"/><circle cx="${x(IC)}" cy="${y(ec)}" r="4" class="ep"/>
-      <text x="${x(IC) + 6}" y="${y(ec) - 8}" class="lb">${pct(ec)}</text><text x="${x(IC) + 6}" y="${T + 10}" class="ax">${fCorta(U4D.corte)}</text>
+      <text x="${x(IC) + 6}" y="${y(ec) - 8}" class="lb">${pct(ec)}</text><text x="${IC > (N - 1) / 2 ? x(IC) - 6 : x(IC) + 6}" y="${T + 10}"${IC > (N - 1) / 2 ? ' text-anchor="end"' : ''} class="ax">${fCorta(U4D.corte)}</text>
       <text x="${x(N - 1)}" y="${y(U4D.total.prog[N - 1]) - 7}" text-anchor="end" class="ax">programado ${pct(U4D.total.prog[N - 1])}</text>
       ${U4D.total.ejec.slice(0, IC).map((v, k) => (v == null ? '' : `<circle cx="${x(k)}" cy="${y(v)}" r="2.6" class="ep dd"/>`)).join('')}
       ${AJ.filter((j) => F.indexOf(j.f) >= 0 && F.indexOf(j.f) <= IC).map((j) => F.indexOf(j.f)).filter((k, i, A) => A.indexOf(k) === i).map((k) => `<circle cx="${x(k)}" cy="${y(U4D.total.ejec[k])}" r="7" class="aj"><title>${esc_(notaAjuste(F[k]))}</title></circle>`).join('')}

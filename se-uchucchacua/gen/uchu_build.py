@@ -51,6 +51,9 @@ CLAVES = [
     (r'(breaker|interruptor|adecuacion|calado).*(ss\.? ?aa|servicios auxiliares)', ['12']),
     # 26-Oct-26: encendido y pruebas previas del tablero = 13; conexionado en el CPM = 11 (o 10 si es antes del 22-Oct)
     (r'encendido', ['13']),
+    # 27-Oct-26: pruebas FAT/SAT de relés = 14; validación rojo-verde (continuidad) = timbrado del CPM o de SS.AA.
+    (r'pruebas? (fat|sat)|(fat|sat)/(fat|sat)', ['14']),
+    (r'rojo.?verde|validacion de (las )?conexiones', ['11', '12']),
     (r'conexionado.*(e01|wr01|cpm)', ['11', '10']),
     (r'marquillado|timbrado', ['11']),                                                                         # tablero CPM
     (r'induccion|anexo 0?5|capacitacion', ['1']),
