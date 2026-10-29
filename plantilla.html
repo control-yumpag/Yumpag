@@ -7730,8 +7730,9 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 /* ---- v72.34: fila «hoy» del Resumen — pronóstico de término (Earned Schedule) · avance con evidencia fotográfica · clima en obra ---- */
 #v-res .third{grid-column:span 2;min-height:max-content}
 #v-res .third .body{min-height:0!important;flex:none}
-@media(max-width:1100px){#v-res #pronCard,#v-res #evidCard{grid-column:span 2}#v-res #climaCard{grid-column:span 4}}
-@media(max-width:860px){#v-res .third,#v-res #pronCard,#v-res #evidCard,#v-res #climaCard{grid-column:span 2}}
+#v-res #pronCard,#v-res #evidCard{grid-column:span 3}   /* v72.64: sin la tarjeta de clima, las dos tarjetas de la fila «hoy» van a media fila */
+@media(max-width:1100px){#v-res #pronCard,#v-res #evidCard{grid-column:span 2}}
+@media(max-width:860px){#v-res .third,#v-res #pronCard,#v-res #evidCard{grid-column:span 2}}
 .pr-big{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
 .pr-big>b{font-family:"Archivo";font-size:1.55rem;font-weight:800;line-height:1;color:var(--red)}
 .pr-big span b{color:var(--ink)}
@@ -7923,7 +7924,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <!-- La tarjeta de personal operativo se retiró de la vista; estos contenedores
          ocultos evitan tocar la lógica que la rellenaba. -->
     <div id="persOculto" hidden><div id="persDesc"></div><div id="persK"></div><div id="persT"></div></div>
-    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · ponderado por pesos de la hoja Avance <b id="k-oc-pond">—</b> · PV_AC financiero (último semanal) 33.3 %</div></div>
+    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · ponderado por pesos de la hoja Avance <b id="k-oc-pond">—</b> · PV_AC financiero 33.3 % <span class="sem-inf">(último informe semanal)</span></div></div>
     <div class="kpi"><div class="lab">Accesos habilitados</div><div class="val" id="k-acc">—</div><div class="foot" id="k-acc-f">caminos de acceso a torre</div></div>
     <div class="kpi"><div class="lab">Torres iniciadas</div><div class="val" id="k-ini">—</div><div class="foot">al menos acceso o cimentación</div></div>
     <div class="kpi"><div class="lab">EV integral proyecto</div><div class="val" id="k-ev">—<span>%</span></div><div class="foot">valor ganado global (hoja PV_AC)</div></div>
@@ -7940,8 +7941,8 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
       <div class="desc" id="pronDesc"></div><div class="body" id="pronBody"></div></div>
     <div class="card third" id="evidCard"><h3><span class="dot"></span>Avance del día con evidencia fotográfica</h3>
       <div class="desc" id="evidDesc"></div><div class="body" id="evidBody"><div class="ev-res">Cargando las fotos de obra…</div></div></div>
-    <div class="card third" id="climaCard"><h3><span class="dot"></span>Clima en obra · vaciados</h3>
-      <div class="desc" id="climaDesc">Pronóstico para los próximos días a 4 550 m s.n.m. (centro de la línea) y criterio para programar vaciados.</div><div class="body" id="climaBody"><div class="ev-res">Cargando el pronóstico…</div></div></div>
+    <!-- v72.64 (29-Oct-26, auditoría, ok del usuario): se retira la tarjeta «Clima en obra · vaciados»; el flujo de clima (MET Norway)
+         se eliminó el 14-Oct y la tarjeta quedó mostrando «Pronóstico del 13-Oct… ya venció». clima() no hace nada sin #climaBody. -->
 
     <div class="card half"><h3><span class="dot"></span>Avance por macro-fase constructiva</h3>
       <div class="desc">Cada torre atraviesa 3 fases en secuencia: acceso → obra civil → electromecánica. Promedio de las 23 estructuras.</div>
@@ -11719,6 +11720,7 @@ function renderKPIs(){
         const f = $(id + 'f') || el.parentElement.querySelector('.foot');
         if (f) f.textContent = foot;
       };
+      window.__spiCorte = { spi0, spi1, ref };   // v72.64: el veredicto usa estos mismos valores (antes los del cierre de semana de AVFIS)
       set('k-spi0', spi0, `EV ${F(ej,2)} % / LB0 ${F(lb0,2)} % · atraso frente al contrato · ${ref}`);
       set('k-spi',  spi1, `EV ${F(ej,2)} % / LB1 ${F(lb1,2)} % · atraso frente al planificado · ${ref}`);
     }catch(e){
@@ -11726,7 +11728,7 @@ function renderKPIs(){
       if(a) a.textContent='—'; if(b) b.textContent='—';
     }
   })();
-  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres; ${F(DATA.ocGlobalPond)} % ponderado por pesos). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${F(pr.civil)}%</b>) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de construcción ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0) · S${AVFIS.corte} de obra.`;
+  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres; ${F(DATA.ocGlobalPond)} % ponderado por pesos). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${c.civilFin} de ${c.total}</b> torres concluidas) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de construcción ${(window.__spiCorte && window.__spiCorte.spi1 != null ? window.__spiCorte.spi1 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(window.__spiCorte && window.__spiCorte.spi0 != null ? window.__spiCorte.spi0 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0)${window.__spiCorte && window.__spiCorte.ref ? ' ' + window.__spiCorte.ref : ''} · S${AVFIS.corte} de obra.`;
 }
 
 /* Crea el gráfico solo si su canvas sigue existiendo (hay vistas que se retiraron) */
@@ -12586,7 +12588,7 @@ function drawAvanceFisico(){
   // línea de corte
   const cx = x(AVFIS.corte-1);
   s+=`<line x1="${cx}" y1="${mT-4}" x2="${cx}" y2="${mT+ph}" stroke="${css('--sky')}" stroke-width="1.6" stroke-dasharray="4 3"/>`;
-  s+=`<text x="${cx-6}" y="${mT-8}" text-anchor="end" font-size="9" font-weight="700" fill="${css('--sky')}">CORTE · S${AVFIS.corte} de obra · ${DATA.corte_diario ? 'Sem ' + ((DATA.corte_diario.ultimo_semanal && DATA.corte_diario.ultimo_semanal.semana) || (DATA.corte_diario.semana - 1)) + ' · último reporte semanal' : 'Sem ⟦sem_cal_etiqueta⟧ calendario · ⟦fecha_larga⟧'}</text>`;
+  s+=`<text x="${cx-6}" y="${mT-8}" text-anchor="end" font-size="9" font-weight="700" fill="${css('--sky')}">CORTE · S${AVFIS.corte} de obra · ${DATA.corte_diario ? ((u => /^\d{4}-\d{2}-\d{2}/.test(u) ? 'informe semanal del ' + u.slice(8, 10) + '-' + ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'][+u.slice(5, 7) - 1] + '-' + u.slice(2, 4) : 'Sem ' + ((DATA.corte_diario.ultimo_semanal && DATA.corte_diario.ultimo_semanal.semana) || (DATA.corte_diario.semana - 1)) + ' · último reporte semanal')((DATA.corte_diario.ultimo_semanal || {}).fecha || '')) : 'Sem ⟦sem_cal_etiqueta⟧ calendario · ⟦fecha_larga⟧'}</text>`;
   // series
   s+=`<path d="${path(AVFIS.base)}"  fill="none" stroke="#2f6fd0" stroke-width="2.4"/>`;
   s+=`<path d="${path(AVFIS.recup)}" fill="none" stroke="#6b7a4a" stroke-width="2.4"/>`;
@@ -13795,11 +13797,21 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
     const cd = DATA.corte_diario;
     if (cd){
       const semPrev = (cd.ultimo_semanal && cd.ultimo_semanal.semana) || ((cd.semana || 0) - 1);   // v42 (H-11): del generador
-      ['k-ev', 'k-spi', 'k-bac'].forEach(id => { const el = $(id); const f = el && el.parentElement.querySelector('.foot'); if (f && !/reporte semanal/.test(f.textContent)) f.textContent += ` · último reporte semanal (Sem ${semPrev})`; });
+      // v72.64 (29-Oct-26, auditoría): las cifras del informe semanal llevan la FECHA del informe (DATA.corte_diario.ultimo_semanal.fecha);
+      // «Sem N» mostraba la semana de obra de la Base MS (configs: semana_reporte), no la del informe, y parecía una cifra de esta semana
+      const fUS = (cd.ultimo_semanal && cd.ultimo_semanal.fecha) || '';
+      const MESus = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+      const infSem = /^\d{4}-\d{2}-\d{2}/.test(fUS) ? `informe semanal del ${fUS.slice(8, 10)}-${MESus[+fUS.slice(5, 7) - 1]}-${fUS.slice(2, 4)}` : `último informe semanal (Sem ${semPrev})`;
+      window.__infSem = infSem;
+      // v72.64: año del distintivo «SEM n · AAAA» = año ISO de la semana del corte (antes 2026 fijo en la plantilla; el proyecto cruza a 2027)
+      try { const fc = cd.fecha || ''; if (/^\d{4}-\d{2}-\d{2}/.test(fc)) { const d0 = new Date(fc + 'T12:00:00'), t = new Date(d0); t.setDate(d0.getDate() + 3 - ((d0.getDay() + 6) % 7));
+        document.querySelectorAll('.badge').forEach(b => { const tx = b.textContent.trim(); if (/^SEM \d+ · \d{4}$/.test(tx)) b.textContent = tx.replace(/\d{4}$/, String(t.getFullYear())); }); } } catch(e){}
+      document.querySelectorAll('.sem-inf').forEach(e => { e.textContent = '(' + infSem + ')'; });
+      ['k-ev', 'k-spi', 'k-bac'].forEach(id => { const el = $(id); const f = el && el.parentElement.querySelector('.foot'); if (f && !/informe semanal|reporte semanal/.test(f.textContent)) f.textContent += ` · ${infSem}`; });
       const h3 = [...document.querySelectorAll('#v-cur .card h3')].find(h => /Curva S de Construcción/.test(h.textContent));
       const d = h3 && h3.parentElement.querySelector('.desc');
-      if (d && !/corte diario/.test(d.textContent)) d.textContent += ` Último reporte semanal disponible: Sem ${semPrev}; el corte diario del tablero (${cd.fuente}) actualiza torres y actividades.`;
-      const vd = $('vd-txt'); if (vd && !/corte diario/.test(vd.innerHTML)) vd.insertAdjacentHTML('beforeend', ` <span style="color:var(--ink-mut)">Avance de torres al corte diario (${cd.fuente}); EV, SPI y costos del último reporte semanal (Sem ${semPrev}).</span>`);
+      if (d && !/corte diario/.test(d.textContent)) d.textContent += ` Último informe semanal disponible: ${infSem}; el corte diario del tablero (${cd.fuente}) actualiza torres y actividades.`;
+      const vd = $('vd-txt'); if (vd && !/corte diario/.test(vd.innerHTML)) vd.insertAdjacentHTML('beforeend', ` <span style="color:var(--ink-mut)">Avance de torres al corte diario (${cd.fuente}); EV integral y costos del ${infSem}.</span>`);
     }
   } catch(e){}
 
@@ -13855,7 +13867,7 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
     const el = $('pcSum'); if (!el) return;
     if (grupo === 'civil'){
       const oc = DATA.ocGlobal, pr = DATA.phaseRollup;
-      el.innerHTML = `Obra civil <b>${F1(oc)} %</b> (media de las 23 torres) · accesos ${F1(pr.acceso)} % (media por torre; ${F1((DATA.actEV || {}).Caminos)} % ponderado en el reporte) · fundaciones ${F1(pr.civil)} % · ${DATA.counts.civilFin}/${DATA.counts.total} torres con fundaciones concluidas`;
+      el.innerHTML = `Obra civil <b>${F1(oc)} %</b> (media de las 23 torres) · accesos ${F1(pr.acceso)} % (media por torre; ${F1((DATA.actEV || {}).Caminos)} % ponderado en el reporte) · ${DATA.counts.civilFin}/${DATA.counts.total} torres con fundaciones concluidas`;   // v72.64: sin «fundaciones ${pr.civil} %», que era la obra civil con caminos
     } else {
       const planElm = (typeof CURVAS !== 'undefined' && CURVAS.elmPlan) ? CURVAS.elmPlan[CUT] : null;
       let hit = '';
@@ -15444,7 +15456,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     const cd = (typeof DATA !== 'undefined' && DATA.corte_diario) || {};
     const US = cd.ultimo_semanal || {}; const semRep = US.semana || (cd.semana ? cd.semana - 1 : null);
     const bits = [];
-    if (semRep) bits.push(`Último informe semanal: <b>Sem ${semRep}</b>${US.fecha ? ' (corte ' + fdl(US.fecha) + ')' : ''}`);
+    if (US.fecha) bits.push(`Último informe semanal: <b>${fdl(US.fecha)}</b>`); else if (semRep) bits.push(`Último informe semanal: <b>Sem ${semRep}</b>`);   // v72.64: la fecha del informe, no «Sem N»
     if (cd.fecha) bits.push(`Corte diario del tablero: <b>${fdl(cd.fecha)}</b> (${esc(cd.fuente || 'reporte diario')})`);
     if (typeof DATA !== 'undefined' && DATA.integral && DATA.integral.spi != null) bits.push(`SPI integral (forecast): <b>${DATA.integral.spi}</b>`);
     bits.push(`Base de seguimiento MS: <b>S${AC.semana} de obra</b> (${fdl(AC.sem_ini)} → ${fdl(AC.sem_fin)})`);
@@ -15463,8 +15475,10 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       { c: 'lb1', l: 'Planificado LB1 · Plan de Recuperación', v: F2(AC.lb1) + '<small> %</small>', f: `al ${fd(AC.fecha)} · cierre S${AC.semana} (${fd(AC.sem_fin)}): ${F2(AC.lb1_sem)} %` },
       { c: 'ev', l: 'Ejecutado (EV)', v: F2(AC.ev) + '<small> %</small>', f: `valorizado al ${fd(AC.ev_fecha)} · % del presupuesto de construcción` },
       { c: ds < 0 ? 'bad' : 'good', l: 'Desfase vs planificado (LB1)', v: (ds > 0 ? '+' : '−') + F2(Math.abs(ds)) + '<small> pts</small>', f: `S${AC.semana} (reporte) · al ${fd(AC.fecha)} diario: ${dd > 0 ? '+' : '−'}${F2(Math.abs(dd))} pts` },
-      { c: (AC.spi_ab_sem || 0) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB0 · contractual', v: F2(AC.spi_ab_sem) + '<small> LB0</small>', f: `EV ${F2(AC.ev)} % / LB0 ${F2(AC.lb0)} % · mide el atraso frente al contrato` },
-      { c: (AC.spi_are_sem || 0) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB1 · planificado', v: F2(AC.spi_are_sem) + '<small> LB1</small>', f: `EV ${F2(AC.ev)} % / LB1 ${F2(AC.lb1)} % · mide el atraso frente al Plan de Recuperación` },
+      // v72.64 (29-Oct-26, auditoría): el valor es EV/PV AL DÍA, igual que su fórmula y que las tarjetas SPI de arriba (antes mostraba el del
+      // cierre de la semana —spi_ab_sem / spi_are_sem— con la fórmula del día: «0,29 = 29,35 / 91,16»)
+      { c: ((AC.lb0 > 0 ? AC.ev / AC.lb0 : 0)) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB0 · contractual', v: (AC.lb0 > 0 ? F2(AC.ev / AC.lb0) : '—') + '<small> LB0</small>', f: `EV ${F2(AC.ev)} % / LB0 ${F2(AC.lb0)} % · mide el atraso frente al contrato` },
+      { c: ((AC.lb1 > 0 ? AC.ev / AC.lb1 : 0)) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB1 · planificado', v: (AC.lb1 > 0 ? F2(AC.ev / AC.lb1) : '—') + '<small> LB1</small>', f: `EV ${F2(AC.ev)} % / LB1 ${F2(AC.lb1)} % · mide el atraso frente al Plan de Recuperación` },
       { c: 'ritmo', l: 'Ritmo requerido', v: F2(AC.ritmo_req_dia) + '<small> %/día</small>', f: `observado ${F2(AC.ritmo_obs_dia)} %/día · hay que multiplicarlo por ${(AC.ritmo_req_dia / Math.max(AC.ritmo_obs_dia, 0.01)).toFixed(1)} para cerrar el ${fd(B.fin)}` } ];
     el.innerHTML = items.map(k => `<div class="k ${k.c}"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="f">${k.f}</div></div>`).join('');
     const tt = $('bmsTitle'); if (tt) tt.textContent = `· Base de seguimiento MS · S${AC.semana} de obra · corte ${fdl(AC.fecha)}`;
@@ -16922,7 +16936,7 @@ html body #v-bim > .bim-stages{grid-row:7!important}
     lanes.forEach(([k,t],i)=>{ const y=top+i*lh; g+=`<rect class="lane" x="${L}" y="${y+2}" width="${W-L-R}" height="${lh-4}" rx="3"/><text x="${L-6}" y="${y+lh/2+4}" text-anchor="end">${t}</text>`; });
     (window.HITOS.vacios||[]).forEach(v=>{ g+=`<rect class="vac" x="${X(v.desde)-dw/2}" y="${top}" width="${X(v.hasta)-X(v.desde)+dw}" height="${lanes.length*lh}"><title>${esc(fc(v.desde))} a ${esc(fc(v.hasta))}: ${esc(v.nota)}</title></rect>`; });
     Object.entries(diasPar()).forEach(([d,t])=>{ g+=`<rect class="${t==='total'?'par-t':'par-p'}" x="${X(d)-dw/2}" y="${top}" width="${Math.max(dw,3)}" height="${lanes.length*lh}"><title>${fc(d)}: paralización ${t}</title></rect>`; });
-    for(let m=5; m<=11; m++){ const s=`2026-${String(m+1).padStart(2,'0')}-01`; if(dd(s).getTime()>x1) break;
+    for(let k=2026*12+5; k<=2026*12+5+48; k++){ const m=k%12, s=`${Math.floor(k/12)}-${String(m+1).padStart(2,'0')}-01`; if(dd(s).getTime()>x1) break;   // v72.64: meses con su año (cruza a 2027)
       const lejos = X(s) < X(corte)-110;
       g+=`<line class="mes" x1="${X(s)}" x2="${X(s)}" y1="${top-4}" y2="${top+lanes.length*lh}"/>${lejos?`<text x="${X(s)+3}" y="${top-6}">${MES_L[m]}</text>`:''}`; }
     g+=`<line class="corte" x1="${X(corte)}" x2="${X(corte)}" y1="${top-4}" y2="${top+lanes.length*lh}"/><text x="${X(corte)-3}" y="${top-6}" text-anchor="end" style="fill:var(--sky)">corte ${fc(corte)}</text>`;
@@ -16972,10 +16986,10 @@ html body #v-bim > .bim-stages{grid-row:7!important}
   }
   function barras(){
     const pd=diasPar(), hs=H(); if(!hs.length) return '';
-    const corte=(window.HITOS.corte)||hs[hs.length-1].fecha, m1=dd(corte).getMonth();
-    const meses=[]; for(let m=5;m<=m1;m++) meses.push(m);
-    const dat=meses.map(m=>{ const ds=Object.entries(pd).filter(([d])=>dd(d).getMonth()===m);
-      return {m, t:ds.filter(([,x])=>x==='total').length, p:ds.filter(([,x])=>x!=='total').length, n:hs.filter(h=>dd(h.fecha).getMonth()===m).length}; });
+    const corte=(window.HITOS.corte)||hs[hs.length-1].fecha, ym=s=>{ const d=dd(s); return d.getFullYear()*12+d.getMonth(); }, k1=ym(corte);
+    const meses=[]; for(let k=2026*12+5;k<=k1;k++) meses.push(k);   // v72.64: año y mes (antes solo el mes: enero de 2027 caía con enero de 2026)
+    const dat=meses.map(k=>{ const ds=Object.entries(pd).filter(([d])=>ym(d)===k);
+      return {m:k%12, t:ds.filter(([,x])=>x==='total').length, p:ds.filter(([,x])=>x!=='total').length, n:hs.filter(h=>ym(h.fecha)===k).length}; });
     const mx=Math.max(4,...dat.map(d=>d.t+d.p)), W=420, Hh=130, b0=18, bh=Hh-b0-16, bw=(W-30)/dat.length;
     let g=`<line x1="24" x2="${W}" y1="${Hh-b0}" y2="${Hh-b0}" stroke="var(--line-2)"/>`;
     dat.forEach((d,i)=>{ const x=26+i*bw+bw*.2, w=bw*.6, ht=d.t/mx*bh, hp=d.p/mx*bh, y0=Hh-b0;
