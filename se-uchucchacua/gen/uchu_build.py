@@ -54,6 +54,10 @@ CLAVES = [
     # 27-Oct-26: pruebas FAT/SAT de relés = 14; validación rojo-verde (continuidad) = timbrado del CPM o de SS.AA.
     (r'pruebas? (fat|sat)|(fat|sat)/(fat|sat)', ['14']),
     (r'rojo.?verde|validacion de (las )?conexiones', ['11', '12']),
+    # 28-Oct-26: vistas del tablero «luego del acabado» = acabado de circuitos (17); entrega de bobinas sobrantes, carretes vacíos
+    # y punta final de cada cable = orden, limpieza y desmovilización (18). Van antes de «bobina|carrete» (recepción y megado).
+    (r'acabado|vista (frontal|posterior|interna|lateral)', ['17']),
+    (r'sobrante|carrete vacio|punta final del cable', ['18']),
     (r'conexionado.*(e01|wr01|cpm)', ['11', '10']),
     (r'marquillado|timbrado', ['11']),                                                                         # tablero CPM
     (r'induccion|anexo 0?5|capacitacion', ['1']),

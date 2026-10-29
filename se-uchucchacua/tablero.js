@@ -78,14 +78,14 @@ export function iniciarTablero(ctx) {
     $('#resKpis').innerHTML =
       kpi('Avance ejecutado del servicio', `${pct(e).replace(' %', '')}<span>%</span>`, `programado ${pct(p)} al ${fCorta(U4D.corte)} · ${DC.ejec_axon != null ? `AXON informa ${pct(DC.ejec_axon)} (ver nota)` : 'pesos del control de AXON'}`, 'accent') +
       kpi('SPI · ejecutado / programado', num(spi), `reporte N.º ${DC.reporte ?? '—'} del ${fCorta(U4D.corte)} · avance del día ${DC.ejec_dia != null ? num(DC.ejec_dia) + ' %' : '—'}`) +
-      kpi('Plazo', `${esc_(DC.dia_plazo || '—')}<span> días</span>`, `${DC.dias_fin != null ? DC.dias_fin + ' días al fin del plan · ' : ''}programa de actividades hasta el ${fCorta(finPrograma)}`) +
+      kpi('Plazo', `${esc_(DC.dia_plazo || '—')}<span> días</span>`, `${DC.dias_fin != null ? DC.dias_fin + (DC.dias_fin === 1 ? ' día' : ' días') + ' al fin del plan · ' : ''}programa de actividades hasta el ${fCorta(finPrograma)}`) +
       kpi('Personal de AXON en obra', `${per.axon ?? '—'}`, `${per.ing ?? '—'} ing. · ${per.tec ?? '—'} téc.${per.ayu ? ` · ${per.ayu} ayud.` : ''} · supervisión ${per.sup ?? '—'}`) +
       kpi('Restricciones abiertas', `${rAb.length}<span> de ${restr.length}</span>`, ult ? `última: ${esc_(ult.id)} del ${fCorta(ult.fecha)} (${esc_(ult.cat || '')}) · ${esc_(ult.estado || '')}` : 'sin registro') +
       kpi('Habilitantes vencidos', `${hv.length}<span> de ${habs.length}</span>`, hv.length ? `${hv.join(', ')} · requisitos previos en revisión` : 'ninguno vencido');
     // veredicto (solo hechos del control)
     const enCurso = ACTS.filter((a) => a.ini && estadoAct(a, IC) === 'curso');
     const atras = ACTS.filter((a) => a.ini && estadoAct(a, IC) === 'atras');
-    const prox = ACTS.filter((a) => a.ini && a.ini > U4D.corte).sort((a, b) => (a.ini < b.ini ? -1 : 1));
+    const prox = ACTS.filter((a) => a.ini && a.ini > U4D.corte && estadoAct(a, IC) === 'pend').sort((a, b) => (a.ini < b.ini ? -1 : 1));
     const p0 = prox.length ? prox.filter((a) => a.ini === prox[0].ini) : [];
     const al = spi == null ? '' : spi >= 0.995 ? 'al día con su programa' : 'detrás de su programa';
     $('#resVer').innerHTML = `<div class="big">${spi == null ? 'Sin reporte' : spi >= 0.995 ? 'Según programa' : 'Detrás del programa'}</div><div class="txt">Servicio de AXON ${al}: ejecutado <b>${pct(e)}</b> frente a <b>${pct(p)}</b> programado al ${fCorta(U4D.corte)} (SPI ${num(spi)}). ` +
@@ -97,7 +97,7 @@ export function iniciarTablero(ctx) {
     curvaS(); diaADia(); grupos(); personal(); plazo(); restricciones(); habilitantes();
   }
   function curvaS() {
-    const W = 640, H = 230, L = 40, R = 14, T = 12, B = 30; const x = (k) => L + (k / (N - 1)) * (W - L - R), y = (v) => T + (1 - v) * (H - T - B);
+    const W = 640, H = 230, L = 40, R = 14, T = 24, B = 30; const x = (k) => L + (k / (N - 1)) * (W - L - R), y = (v) => T + (1 - v) * (H - T - B);
     const pp = U4D.total.prog.map((v, k) => `${x(k)},${y(v ?? 0)}`).join(' ');
     const ee = U4D.total.ejec.slice(0, IC + 1).map((v, k) => `${x(k)},${y(v ?? 0)}`);
     let g = '';
@@ -109,7 +109,7 @@ export function iniciarTablero(ctx) {
     $('#resCurva').innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Curva S del servicio de AXON">${g}
       <polygon points="${area}" class="ar"/><polyline points="${pp}" class="pl"/><polyline points="${ee.join(' ')}" class="el"/>
       <line x1="${x(IC)}" x2="${x(IC)}" y1="${T}" y2="${H - B}" class="cl"/><circle cx="${x(IC)}" cy="${y(ec)}" r="4" class="ep"/>
-      <text x="${x(IC) + 6}" y="${y(ec) - 8}" class="lb">${pct(ec)}</text><text x="${IC > (N - 1) / 2 ? x(IC) - 6 : x(IC) + 6}" y="${T + 10}"${IC > (N - 1) / 2 ? ' text-anchor="end"' : ''} class="ax">${fCorta(U4D.corte)}</text>
+      <text x="${x(IC) + 6}" y="${y(ec) - 8}" class="lb">${pct(ec)}</text><text x="${IC > (N - 1) / 2 ? x(IC) - 6 : x(IC) + 6}" y="${y(pc) > T + 26 ? T + 10 : H - B - 6}"${IC > (N - 1) / 2 ? ' text-anchor="end"' : ''} class="ax">${fCorta(U4D.corte)}</text>
       <text x="${x(N - 1)}" y="${y(U4D.total.prog[N - 1]) - 7}" text-anchor="end" class="ax">programado ${pct(U4D.total.prog[N - 1])}</text>
       ${U4D.total.ejec.slice(0, IC).map((v, k) => (v == null ? '' : `<circle cx="${x(k)}" cy="${y(v)}" r="2.6" class="ep dd"/>`)).join('')}
       ${AJ.filter((j) => F.indexOf(j.f) >= 0 && F.indexOf(j.f) <= IC).map((j) => F.indexOf(j.f)).filter((k, i, A) => A.indexOf(k) === i).map((k) => `<circle cx="${x(k)}" cy="${y(U4D.total.ejec[k])}" r="7" class="aj"><title>${esc_(notaAjuste(F[k]))}</title></circle>`).join('')}
@@ -168,7 +168,7 @@ export function iniciarTablero(ctx) {
     const incomp = ACTS.filter((a) => a.ini && (a.prog[N - 1] ?? 0) < 0.999 && (a.peso || 0) > 0);
     const filas = [
       ['Inicio del programa', fLarga(F[0])],
-      ['Día del plazo', `${esc_(DC.dia_plazo || '—')}${DC.dias_fin != null ? ` · ${DC.dias_fin} días al fin del plan` : ''}`],
+      ['Día del plazo', `${esc_(DC.dia_plazo || '—')}${DC.dias_fin != null ? ` · ${DC.dias_fin} ${DC.dias_fin === 1 ? 'día' : 'días'} al fin del plan` : ''}`],
       ['Programa de actividades', `hasta el ${fLarga(finPrograma)} (última actividad programada)`],
       ['El programa llega a', `${pct(U4D.total.prog[N - 1])} el ${fCorta(F[N - 1])}${incomp.length ? ` · no llegan al 100 % en el programa: ${incomp.map((a) => esc_(a.n)).join(', ')}` : ''}`],
       ['Ritmo de los últimos 7 días', ritmo == null ? '—' : `${num(ritmo * 100)} %/día`],

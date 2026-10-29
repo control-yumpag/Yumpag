@@ -346,6 +346,14 @@
     0.578,
     0.355
    ]
+  ],
+  "1028-207": [
+   [
+    0.7,
+    0.345,
+    0.75,
+    0.485
+   ]
   ]
  },
  "pies": {
@@ -358,5 +366,8 @@
  ],
  "corrige": {
   "1027-197": "Charla de 5 minutos"
+ },
+ "corrige_pie": {
+  "1028-212": "Entrega del equipo de Registrador de Fallas"
  }
 }

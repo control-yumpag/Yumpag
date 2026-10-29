@@ -216,6 +216,7 @@ def main():
             im = difuminar_cajas(im, man_caras[fid]); ncar += len(man_caras[fid])
         if not (f['pie'] or f['detalle']) and man_pies.get(fid): f['detalle'] = man_pies[fid]
         if man.get('corrige', {}).get(fid): f['detalle'] = man['corrige'][fid]   # errata del nombre del archivo
+        if man.get('corrige_pie', {}).get(fid): f['pie'] = man['corrige_pie'][fid]   # errata del pie escrito en el Excel de AXON
         g = im.copy(); g.thumbnail((1280, 1280), Image.LANCZOS); g.save(os.path.join(a.out, fid + '.jpg'), 'JPEG', quality=82, optimize=True)
         t = im.copy(); t.thumbnail((360, 360), Image.LANCZOS); t.save(os.path.join(a.out, 'm', fid + '.jpg'), 'JPEG', quality=78, optimize=True)
         act = act_de(f['pie']) or act_de(f['detalle'])
