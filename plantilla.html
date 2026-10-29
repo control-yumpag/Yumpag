@@ -7911,6 +7911,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   <button data-v="v-res" class="active"><span class="ic">◈</span> Resumen</button>
   <button data-v="v-bim" class="bim-badge"><span class="ic">🏛️</span> BIM 4D · Construcción</button>
   <button data-v="v-proc"><span class="ic">🏗️</span> Proceso Constructivo</button>
+  <button data-v="v-ing"><span class="ic">📐</span> Ingeniería LT</button>
   <button data-v="v-fot"><span class="ic">📷</span> Fotos de obra</button>
   <button data-v="v-hit"><span class="ic">⚠️</span> Eventos del proyecto</button>
   <button data-v="v-rep"><span class="ic">📋</span> Reportes diarios</button>
@@ -8208,6 +8209,25 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
   </section>
 
   <!-- ==================== PROCESO CONSTRUCTIVO ==================== -->
+  <!-- ==================== INGENIERÍA LT (v72.65 · 29-Oct-26) ====================
+       Pedido del usuario (encargo del jefe de proyecto): «crear una pestaña y subir el status de la ingeniería de la LT 138 kV»;
+       fuente única, el control semanal (hojas Entregables LT138kV, Resumen ID LT138kV, Dashboard y PV_AC). «Aparte la curva de
+       ingeniería… no mezclar»: esta pestaña no toca ninguna cifra de construcción. Datos: bloque INGENIERIA (ingenieria_build.py). -->
+  <section id="v-ing" class="view">
+    <div class="card ing-cab">
+      <div class="ing-cab-top"><h3><span class="dot"></span>Ingeniería de detalle · Línea de transmisión 138 kV</h3><span class="ing-sub" id="ingSub"></span></div>
+      <div class="ing-kpis" id="ingKpis"></div>
+    </div>
+    <div class="card ing-grupos"><h3><span class="dot"></span>Avance por grupo de entregables</h3>
+      <div class="desc">Planos aprobados para construcción (APC) sobre el total de cada grupo, y las fechas del control semanal: FC = fecha prevista (forecast), LB = línea base; la holgura es frente al deadline.</div>
+      <div id="ingGrupos"></div></div>
+    <div class="card ing-pend"><h3><span class="dot"></span>Pendientes</h3><div id="ingPend"></div></div>
+    <div class="card ing-curva"><h3><span class="dot"></span>Curva S de la ingeniería de detalle</h3><div class="desc" id="ingCurvaDesc"></div><div id="ingCurva"></div></div>
+    <div class="card ing-notas"><h3><span class="dot"></span>Notas de la fuente</h3><div id="ingNotas"></div></div>
+    <div class="card ing-lista"><h3><span class="dot"></span>Lista de entregables<span class="ing-sub" id="ingListaSub"></span></h3>
+      <div class="ing-filtros" id="ingFiltros"></div><div class="ing-tabla-w" id="ingTabla"></div></div>
+  </section>
+
   <!-- ==================== FOTOS DE OBRA (v72.3 · línea de tiempo v72.7) ==================== -->
   <section id="v-fot" class="view">
     <div class="card fot-hist"><h3 class="fh-tit"><span class="dot"></span><span id="fotTitulo">Línea de tiempo</span><span class="fh-acc" id="fotAcc"></span></h3>
@@ -17055,5 +17075,170 @@ html body #v-bim > .bim-stages{grid-row:7!important}
 })();
 </script>
 <script src="nav-tableros.js" defer></script><!-- v72.58: navegación entre tableros (en el HTML suelto, sin el portal, no carga y no pasa nada) -->
+<!-- ==================== INGENIERÍA LT (v72.65) ==================== -->
+<style>
+#v-ing.view.on{grid-template-columns:minmax(0,2fr) minmax(280px,1fr);grid-auto-rows:min-content;align-content:start;gap:10px}
+#v-ing .card{min-height:0}
+#v-ing .ing-cab,#v-ing .ing-lista{grid-column:1 / -1}
+#v-ing .ing-grupos{grid-column:1} #v-ing .ing-pend{grid-column:2} #v-ing .ing-curva{grid-column:1} #v-ing .ing-notas{grid-column:2}
+.ing-cab-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ing-sub{font-size:.64rem;color:var(--ink-mut);font-weight:500;margin-left:auto}
+.card>h3 .ing-sub{margin-left:auto}
+.ing-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.ing-k{border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.ing-k .l{font-size:.58rem;color:var(--ink-mut);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.ing-k .v{font-family:"Archivo";font-size:1.45rem;font-weight:800;line-height:1.05;color:var(--ink)}
+.ing-k .v small{font-size:.75rem;color:var(--ink-mut);font-weight:600}
+.ing-k .f{font-size:.62rem;color:var(--ink-2);line-height:1.3}
+.ing-k.ok .v{color:var(--lime)} .ing-k.warn .v{color:var(--amber)} .ing-k.bad .v{color:var(--red)}
+.ing-g{display:grid;grid-template-columns:minmax(150px,1.1fr) minmax(0,2fr);gap:4px 12px;padding:8px 0;border-top:1px solid var(--line)}
+.ing-g:first-child{border-top:none}
+.ing-g-n b{font-size:.74rem;color:var(--ink);display:block} .ing-g-n small{font-size:.6rem;color:var(--ink-mut)}
+.ing-bar{height:9px;border-radius:5px;background:var(--panel-3);overflow:hidden;margin-top:3px}
+.ing-bar i{display:block;height:100%;background:var(--lime);border-radius:5px}
+.ing-bar i.inc{background:var(--amber)}
+.ing-g-t{font-size:.64rem;color:var(--ink-2);margin-top:3px}
+.ing-g-t b{color:var(--ink)}
+.ing-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.ing-chip{font-size:.58rem;border:1px solid var(--line-2);border-radius:999px;padding:1px 7px;color:var(--ink-2);background:var(--panel);white-space:nowrap}
+.ing-chip.bad{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent);background:var(--red-soft)}
+.ing-chip.ok{color:var(--lime);border-color:color-mix(in srgb,var(--lime) 45%,transparent);background:var(--lime-soft)}
+.ing-p{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)}
+.ing-p:first-child{border-top:none}
+.ing-p .t{flex:1;min-width:0} .ing-p .t b{font-size:.7rem;color:var(--ink);display:block;line-height:1.3} .ing-p .t small{font-size:.58rem;color:var(--ink-mut);word-break:break-all}
+.ing-est{font-size:.58rem;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ing-est.apc{background:var(--lime-soft);color:var(--lime)} .ing-est.pend{background:var(--amber-soft);color:var(--amber)} .ing-est.otro{background:var(--panel-3);color:var(--ink-2)}
+.ing-nota{font-size:.64rem;color:var(--ink-2);line-height:1.4;margin-top:6px;padding:6px 8px;border-left:3px solid var(--amber);background:var(--panel-2);border-radius:0 6px 6px 0}
+#ingCurva svg{width:100%;height:auto;display:block}
+#ingCurva text{font-size:10px;fill:var(--ink-mut)}
+.ing-ley{display:flex;gap:12px;flex-wrap:wrap;font-size:.62rem;color:var(--ink-2);margin-top:4px}
+.ing-ley i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.ing-notas ul{margin:0;padding-left:15px;display:flex;flex-direction:column;gap:4px}
+.ing-notas li{font-size:.64rem;color:var(--ink-2);line-height:1.4}
+.ing-ley-est{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;font-size:.6rem;color:var(--ink-mut)}
+.ing-ley-est b{color:var(--ink-2)}
+.ing-fuente{font-size:.58rem;color:var(--ink-mut);margin-top:8px;line-height:1.4}
+.ing-filtros{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px}
+.ing-filtros button{font:inherit;font-size:.62rem;border:1px solid var(--line-2);background:var(--panel);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.ing-filtros button.on{background:var(--sky);border-color:var(--sky);color:#fff}
+.ing-tabla-w{overflow-x:auto;max-width:100%}
+.ing-tabla{width:100%;border-collapse:collapse;font-size:.66rem;min-width:560px}
+.ing-tabla small.ing-hojas{display:block;font-size:.56rem;color:var(--ink-mut);white-space:normal}
+.ing-tabla th{font-size:.56rem;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-mut);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.ing-tabla td{padding:5px 6px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top}
+.ing-tabla td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ing-tabla td.c{color:var(--ink-mut);white-space:nowrap}
+.ing-tabla tr.sec td{background:var(--panel-2);font-weight:700;font-size:.6rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px}
+.ing-vacio{font-size:.72rem;color:var(--ink-2);padding:10px 2px}
+@media(max-width:1100px){.ing-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){ #v-ing.view.on{display:flex!important;flex-direction:column;gap:10px} .ing-g{grid-template-columns:1fr} .ing-sub{margin-left:0} }
+</style>
+<script id="ingenieria-data">window.INGENIERIA = ⟦bloque:INGENIERIA⟧;</script>
+<script>
+// ===== Ingeniería LT (v72.65, 29-Oct-26) · estado de la ingeniería de detalle desde el control semanal =====
+(function(){
+  const I = window.INGENIERIA;
+  const $i = id => document.getElementById(id);
+  if (!$i('v-ing')) return;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const fD = iso => { if (!iso) return '—'; const [y, m, d] = String(iso).slice(0, 10).split('-'); return `${d}-${MES[+m - 1]}-${y.slice(2)}`; };
+  const fDM = iso => { if (!iso) return '—'; const [, m, d] = String(iso).slice(0, 10).split('-'); return `${d}-${MES[+m - 1]}`; };
+  const F1 = v => v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+  if (!I || !(I.entregables || []).length){
+    $i('ingKpis').innerHTML = '<div class="ing-vacio">Este corte no tiene un control semanal de ingeniería cargado.</div>';
+    ['ingGrupos','ingPend','ingCurva','ingNotas','ingTabla'].forEach(id => { const e = $i(id); if (e) e.innerHTML = ''; });
+    return;
+  }
+  const T = I.totales || {}, G = I.grupos || [], Fu = I.fuente || {};
+  const lbFin = G.map(g => g.lb).filter(Boolean).sort().slice(-1)[0];
+  $i('ingSub').textContent = `Control semanal Sem ${Fu.semana || '—'}-${Fu.anio || ''} · al ${fD(Fu.fecha)} · aparte del avance de construcción`;
+  const P0 = I.pendientes || [], estP = [...new Set(P0.map(p => p.estado).filter(Boolean))];
+  const pendTxt = P0.length ? `planos sin aprobación para construcción, en ${P0.length} entregable${P0.length === 1 ? '' : 's'}${estP.length ? ` (estado ${estP.map(s => `«${s}»`).join(', ')})` : ''}` : '';
+  $i('ingKpis').innerHTML = [
+    {c: T.avance >= 99.5 ? 'ok' : 'warn', l: 'Avance de elaboración', v: `${F1(T.avance)}<small> %</small>`, f: `${T.apc} de ${T.total} planos aprobados para construcción`},
+    {c: 'ok', l: 'Aprobados para construcción', v: `${T.apc}`, f: `APC Rev 0 · ${T.rev_int || 0} en revisión interna · ${T.rev1 || 0} en Rev 1 o más`},
+    {c: T.pendientes ? 'warn' : 'ok', l: 'Pendientes', v: `${T.pendientes || 0}`, f: pendTxt || 'ninguno'},
+    {c: (I.fin && lbFin && I.fin > lbFin) ? 'bad' : '', l: 'Fin previsto', v: `<span style="font-size:1.1rem">${fD(I.fin)}</span>`, f: `línea base ${fD(lbFin)} · inicio ${fD(I.inicio)}`}
+  ].map(k => `<div class="ing-k ${k.c}"><span class="l">${esc(k.l)}</span><span class="v">${k.v}</span><span class="f">${esc(k.f)}</span></div>`).join('');
+  // avance por grupo
+  const holg = h => { const m = /(-?\d+)\s*d\s*\/\s*(-?\d+)\s*d/i.exec(h || ''); return m ? [+m[1], +m[2]] : null; };
+  $i('ingGrupos').innerHTML = G.map(g => {
+    const p = g.total ? g.apc / g.total * 100 : 0, h = holg(g.holgura);
+    const nh = g.nombre_hoja && g.nombre_hoja.trim().toLowerCase() !== String(g.nombre).trim().toLowerCase() ? `${g.nombre_hoja} · ` : '';
+    return `<div class="ing-g"><div class="ing-g-n"><b>${esc(g.nombre)}</b><small>${esc(nh)}${g.entregables} entregable${g.entregables === 1 ? '' : 's'}</small></div>
+      <div><div class="ing-bar"><i class="${p < 99.5 ? 'inc' : ''}" style="width:${Math.max(0, Math.min(100, p))}%"></i></div>
+        <div class="ing-g-t"><b>${g.apc} de ${g.total}</b> planos APC · ${F1(g.avance)} %${g.pendientes ? ` · <b>${g.pendientes}</b> pendientes` : ''}</div>
+        <div class="ing-chips">${g.fc ? `<span class="ing-chip">FC ${fD(g.fc)}</span>` : ''}${g.lb ? `<span class="ing-chip">LB ${fD(g.lb)}</span>` : ''}${g.deadline ? `<span class="ing-chip">deadline ${fD(g.deadline)}</span>` : ''}${h ? `<span class="ing-chip ${h[0] < 0 ? 'bad' : 'ok'}">holgura FC ${h[0]} d · LB ${h[1]} d</span>` : ''}</div></div></div>`;
+  }).join('');
+  // códigos: el prefijo común del contrato («CN-PCY-26-03/») se quita al mostrar; el código completo queda en el title
+  const E = I.entregables || [];
+  const PRE = (() => { const ps = E.map(e => String(e.codigo || '')); const p0 = ps[0].includes('/') ? ps[0].split('/')[0] + '/' : '';
+    return p0 && ps.every(c => c.startsWith(p0)) ? p0 : ''; })();
+  const codC = c => { const s = String(c || ''); return PRE && s.startsWith(PRE) ? s.slice(PRE.length) : s; };
+  const codH = c => { const s = codC(c), i = s.indexOf(' ('); return i > 0 ? `${esc(s.slice(0, i))}<small class="ing-hojas">${esc(s.slice(i + 1))}</small>` : esc(s); };
+  // pendientes
+  const P = P0;
+  $i('ingPend').innerHTML = (P.length ? P.map(p => `<div class="ing-p"><div class="t"><b>${esc(p.descripcion)}</b><small title="${esc(p.codigo)}">${esc(codC(p.codigo))} · ${p.planos} plano${p.planos === 1 ? '' : 's'}</small></div><span class="ing-est pend">${esc(p.estado || 'pendiente')}</span></div>`).join('')
+    : '<div class="ing-vacio">Sin entregables pendientes.</div>') + (I.nota ? `<div class="ing-nota">Nota del control semanal: «${esc(I.nota)}»</div>` : '');
+  // curva S (valor ganado de la ingeniería, hoja PV_AC)
+  const C = I.curva;
+  if (C && (C.fechas || []).length > 1){
+    $i('ingCurvaDesc').textContent = `Planificado y ejecutado acumulados de la ingeniería de detalle, en % de su total (hoja PV_AC del control semanal, filas 2.1 a 2.3). Mide el valor ganado: ${F1(C.ev_ultimo)} % al ${fDM(C.ev_hasta)}; el avance de elaboración de arriba (${F1(T.avance)} %) cuenta planos.`;
+    // el SVG se dibuja al ancho real del contenedor (texto legible en celular); se redibuja cuando la pestaña se muestra o cambia el ancho
+    let wPrev = 0;
+    const dibujar = () => { const box = $i('ingCurva'), wc = Math.round(box.clientWidth); if (!wc || wc === wPrev) return; wPrev = wc;
+    const W = Math.max(300, Math.min(900, wc)), H = W < 480 ? 210 : 230, L = 34, R = 14, Tp = 14, B = 26, n = C.fechas.length;
+    const t = s => new Date(s + 'T00:00:00').getTime(), x0 = t(C.fechas[0]), x1 = t(C.fechas[n - 1]);
+    const X = s => L + (t(s) - x0) / Math.max(1, x1 - x0) * (W - L - R), Y = v => Tp + (100 - v) / 100 * (H - Tp - B);
+    let g = '';
+    [0, 25, 50, 75, 100].forEach(v => { g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}%</text>`; });
+    const d0 = new Date(C.fechas[0] + 'T00:00:00');
+    for (let k = d0.getFullYear() * 12 + d0.getMonth() + 1; ; k++){
+      const s = `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`; if (t(s) > x1) break;
+      g += `<line x1="${X(s)}" x2="${X(s)}" y1="${Tp}" y2="${H - B}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${X(s) + 3}" y="${H - B + 13}">${MES[k % 12]}</text>`;
+    }
+    const linea = (arr, col, dash) => { const pts = C.fechas.map((f, i) => arr[i] == null ? null : `${X(f).toFixed(1)},${Y(arr[i]).toFixed(1)}`);
+      const tramos = []; let cur = []; pts.forEach(p => { if (p) cur.push(p); else if (cur.length){ tramos.push(cur); cur = []; } }); if (cur.length) tramos.push(cur);
+      return tramos.map(tr => `<polyline points="${tr.join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" ${dash ? 'stroke-dasharray="5 4"' : ''} stroke-linejoin="round"/>`).join(''); };
+    g += linea(C.pv, 'var(--ink-mut)', true) + linea(C.ev, 'var(--sky)', false);
+    if (C.ev_hasta){ const i = C.fechas.indexOf(C.ev_hasta); if (i >= 0){ const xe = X(C.ev_hasta), ye = Y(C.ev[i]);
+      g += `<circle cx="${xe}" cy="${ye}" r="4" fill="var(--sky)"/><text x="${xe - 6}" y="${ye + 15}" text-anchor="end" style="fill:var(--ink);font-weight:700">${F1(C.ev[i])} % al ${fDM(C.ev_hasta)}</text>`; } }
+    if (C.pv_fin){ g += `<text x="${X(C.pv_fin)}" y="${Y(100) - 4}" text-anchor="middle">plan al 100 %: ${fDM(C.pv_fin)}</text>`; }
+    if (Fu.fecha && t(Fu.fecha) <= x1){ g += `<line x1="${X(Fu.fecha)}" x2="${X(Fu.fecha)}" y1="${Tp}" y2="${H - B}" stroke="var(--ink-mut)" stroke-width="1" stroke-dasharray="3 3"/><text x="${X(Fu.fecha) - 3}" y="${H - B - 4}" text-anchor="end">Sem ${Fu.semana}</text>`; }
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Curva S de la ingeniería de detalle">${g}</svg>
+      <div class="ing-ley"><span><i style="background:var(--ink-mut)"></i>Planificado (línea base)</span><span><i style="background:var(--sky)"></i>Ejecutado</span><span><i style="background:var(--ink-mut);opacity:.5"></i>Sem ${esc(Fu.semana || '—')}: fecha del control semanal</span></div>`;
+    };
+    dibujar();
+    try { new ResizeObserver(dibujar).observe($i('ingCurva')); } catch (e) { window.addEventListener('resize', dibujar); }
+  } else { $i('ingCurvaDesc').textContent = 'El control semanal no trae la curva de la ingeniería.'; $i('ingCurva').innerHTML = ''; }
+  // notas de la fuente, leyenda y fuente
+  const L_ = I.leyenda || {};
+  $i('ingNotas').innerHTML = ((I.avisos || []).length ? `<ul>${I.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : '<div class="ing-vacio">Sin observaciones a la fuente.</div>')
+    + `<div class="ing-ley-est">${Object.entries(L_).map(([k, v]) => `<span><b>${esc(k)}</b> ${esc(v)}</span>`).join('')}</div>`
+    + `<div class="ing-fuente">Fuente: control semanal «${esc(Fu.archivo || '')}» (Drive CLAUDE/01_reportes/Control semanal), hojas ${esc((Fu.hojas || []).join(', '))}. Se actualiza cuando llega un control semanal nuevo; el corte diario la arrastra.</div>`;
+  // lista de entregables con filtros
+  const esPend = e => (e.apc || 0) + (e.rev1 || 0) < (e.planos || 0);
+  const cls = e => esPend(e) ? 'pend' : (/aprobado para construcci/i.test(e.estado) ? 'apc' : 'otro');
+  const ABR = Object.fromEntries(Object.entries(L_).map(([k, v]) => [String(v).trim().toLowerCase(), k]));   // estado → sigla de la leyenda del propio control (p. ej. APC)
+  const estC = s => ABR[String(s || '').trim().toLowerCase()] || s || '—';
+  const OPC = [['todos', 'Todos', () => true]].concat(G.map(g => [g.k, g.nombre, e => e.grupo === g.k]), [['pend', 'Pendientes', esPend]]);
+  let filt = 'todos';
+  function tabla(){
+    const f = (OPC.find(o => o[0] === filt) || OPC[0])[2], V = E.filter(f);
+    $i('ingFiltros').innerHTML = OPC.map(([k, lab, fn]) => `<button data-f="${k}" class="${k === filt ? 'on' : ''}">${esc(lab)} · ${E.filter(fn).length}</button>`).join('');
+    $i('ingFiltros').querySelectorAll('button').forEach(b => b.onclick = () => { filt = b.dataset.f; tabla(); });
+    let sec = null, h = '';
+    V.forEach(e => {
+      if (e.seccion !== sec){ sec = e.seccion; h += `<tr class="sec"><td colspan="8">${esc(sec)}</td></tr>`; }
+      h += `<tr><td class="n">${e.n == null ? '' : e.n}</td><td class="c" title="${esc(e.codigo)}">${codH(e.codigo)}</td><td>${esc(e.descripcion)}</td>
+        <td><span class="ing-est ${cls(e)}" title="${esc(e.estado || '')}">${esc(estC(e.estado))}</span></td><td class="n">${e.planos}</td><td class="n">${e.rev_int}</td><td class="n">${e.apc}</td><td class="n">${e.rev1}</td></tr>`;
+    });
+    $i('ingTabla').innerHTML = `<table class="ing-tabla"><thead><tr><th>N°</th><th>Código</th><th>Descripción</th><th>Estado</th><th>Planos</th><th>Rev int</th><th>APC Rev 0</th><th>Rev 1+</th></tr></thead><tbody>${h}</tbody></table>`;
+    $i('ingListaSub').textContent = `${V.length} de ${E.length} entregables · ${V.reduce((a, e) => a + (e.planos || 0), 0)} planos${PRE ? ` · códigos ${PRE}…` : ''}`;
+  }
+  tabla();
+})();
+</script>
 </body>
 </html>
