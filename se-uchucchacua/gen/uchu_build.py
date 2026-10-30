@@ -79,6 +79,11 @@ def relacionar_fotos(fotos, acts, dias):
     for f in fotos:
         if f.get('act'): f['rel'] = 'registro'; continue
         t = _n(f.get('pie')) + ' ' + _n(f.get('detalle'))
+        hechas = set((dias.get(f['f']) or {}).get('hechas') or [])
+        # 29-Oct-26: el orden y la limpieza de la desmovilización y la cubierta de las bobinas sobrantes son la actividad 18,
+        # no un tema de SSOMA, cuando la 18 se trabajó ese día
+        if re.search(r'desmovilizaci|cubierta de (las |los )?bobinas|enmallado', t) and '18' in hechas:
+            f['act'] = '18'; f['rel'] = 'pie'; continue
         if re.search(SSOMA, t): f['tema'] = 'SSOMA'; continue
         for pat, cands in CLAVES:
             if not re.search(pat, t): continue
@@ -302,7 +307,6 @@ def main():
         fc, fp = fcs[ic], fcs[ic - 1]
         ns_prev = {z['n'] for z in por_dia[fp]['acts']}
         nuevas = [z for z in por_dia[fc]['acts'] if z['n'] not in ns_prev]
-        if not nuevas: continue
         Tp = por_dia[fp]['tot']; cambios = []
         for i, f in enumerate(fechas):
             if f > fp: break
@@ -310,9 +314,29 @@ def main():
             pn, en = tot['prog'][i], tot['ejec'][i]
             if (pa is not None and pn is not None and abs(pa - pn) > 0.0005) or (ea is not None and en is not None and abs(ea - en) > 0.0005):
                 cambios.append(dict(f=f, prog_antes=num(pa), ejec_antes=num(ea), prog=pn, ejec=en))
+        if not nuevas:
+            # sin actividades nuevas solo cuenta lo que el control fc cambió respecto del fp (no lo que cambió después)
+            Tc = por_dia[fc]['tot']
+            dif = lambda k, f: (Tp.get(k, {}).get(f) is not None and Tc.get(k, {}).get(f) is not None
+                                and abs(Tp[k][f] - Tc[k][f]) > 0.0005)
+            cambios = [c for c in cambios if dif('prog', c['f']) or dif('ejec', c['f'])]
+            if not cambios: continue
+        # 29-Oct-26: sin actividades nuevas, un control posterior también puede corregir días ya reportados (el del 29-Oct
+        # baja la 18 del 28-Oct de 100 a 50 %): se registra qué actividad y qué día cambió, con el mismo criterio de nota.
+        acts_c = []
+        if not nuevas:
+            ap_ = {z['n']: z for z in por_dia[fp]['acts']}
+            for z in por_dia[fc]['acts']:
+                y = ap_.get(z['n'])
+                if not y: continue
+                ea_s, en_s = serie_acum(y['_ejec'], fechas, hasta=fp), serie_acum(z['_ejec'], fechas, hasta=fp)
+                for i, f in enumerate(fechas):
+                    if f > fp: break
+                    if abs((ea_s[i] or 0) - (en_s[i] or 0)) > 0.0005:
+                        acts_c.append(dict(n=z['n'], nombre=z['nombre'], f=f, ejec_antes=ea_s[i], ejec=en_s[i]))
         rebase.append(dict(control=fc, previo=fp, base_antes=base(por_dia[fp]), base=base(por_dia[fc]), cambios=cambios,
                            nuevas=[dict(n=z['n'], nombre=z['nombre'], peso=z['peso'], dias_peso=z['dias_peso'], ini=z['ini'], fin=z['fin'])
-                                   for z in nuevas]))
+                                   for z in nuevas], acts=acts_c))
     data = dict(
         titulo='Habilitación del nuevo tablero CPM L-1123 (=E01+WR01) · SE Uchucchacua',
         contratista='AXON Group (AX-26138 · OS BVN 5800003219)', supervision='CONENHUA', propietario='Buenaventura',

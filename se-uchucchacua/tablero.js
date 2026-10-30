@@ -55,8 +55,12 @@ export function iniciarTablero(ctx) {
   // Actividades que AXON agregó en un control posterior (U4D.rebase): cambian los pesos y recalculan días ya publicados.
   // El tablero muestra la serie del control vigente y dice qué decía el control anterior.
   const RB = (U4D.rebase || []).filter((r) => r.control <= U4D.corte);
+  // corrección de AXON sin actividades nuevas (p. ej. el control del 29-Oct baja la 18 del 28-Oct de 100 a 50 %)
+  const actsCorr = (r) => (r.acts || []).map((z) => `la actividad ${esc_(z.n)} «${esc_(z.nombre)}» del ${fCorta(z.f)} de ${pct(z.ejec_antes, 0)} a ${pct(z.ejec, 0)}`).join('; ');
   function notaRebase(r) {
     const u = r.cambios[r.cambios.length - 1];
+    if (!r.nuevas.length) return `En el control del ${fCorta(r.control)} AXON corrigió ${actsCorr(r) || 'días anteriores'}` +
+      (u ? `: el ${fCorta(u.f)} pasa de ${pct(u.ejec_antes)} a ${pct(u.ejec)} ejecutado` : '') + '. El tablero muestra la serie del control vigente.';
     const nv = r.nuevas.map((z) => `la actividad ${esc_(z.n)} «${esc_(z.nombre)}»${z.ini ? `, con fecha del ${fCorta(z.ini)}` : ''}${z.dias_peso ? ` y ${num(z.dias_peso, 0)} día${z.dias_peso === 1 ? '' : 's'} de peso` : ''}`).join(' y ');
     return `En el control del ${fCorta(r.control)} AXON agregó ${nv}. ` +
       (r.base_antes && r.base && r.base_antes !== r.base ? `La base de pesos pasa de ${num(r.base_antes, 0)} a ${num(r.base, 0)} días y el avance` : 'El avance') +
@@ -66,6 +70,7 @@ export function iniciarTablero(ctx) {
   function notaRebaseDia(f) {
     const r = RB.find((x) => x.cambios.some((c) => c.f === f)); if (!r) return '';
     const c = r.cambios.find((x) => x.f === f);
+    if (!r.nuevas.length) return `Cifras corregidas con el control del ${fCorta(r.control)}, en el que AXON cambió ${actsCorr(r) || 'este día'}. El control de ese día decía ${pct(c.ejec_antes)} ejecutado y ${pct(c.prog_antes)} programado.`;
     return `Cifras recalculadas con el control del ${fCorta(r.control)}, en el que AXON agregó ${r.nuevas.map((z) => `la actividad ${esc_(z.n)}`).join(' y ')}. El control de ese día decía ${pct(c.ejec_antes)} ejecutado y ${pct(c.prog_antes)} programado.`;
   }
   function kpi(lab, val, foot, cls = '') { return `<div class="kpi ${cls}"><div class="lab">${lab}</div><div class="val">${val}</div><div class="foot">${foot}</div></div>`; }
@@ -78,7 +83,7 @@ export function iniciarTablero(ctx) {
     $('#resKpis').innerHTML =
       kpi('Avance ejecutado del servicio', `${pct(e).replace(' %', '')}<span>%</span>`, `programado ${pct(p)} al ${fCorta(U4D.corte)} · ${DC.ejec_axon != null ? `AXON informa ${pct(DC.ejec_axon)} (ver nota)` : 'pesos del control de AXON'}`, 'accent') +
       kpi('SPI · ejecutado / programado', num(spi), `reporte N.º ${DC.reporte ?? '—'} del ${fCorta(U4D.corte)} · avance del día ${DC.ejec_dia != null ? num(DC.ejec_dia) + ' %' : '—'}`) +
-      kpi('Plazo', `${esc_(DC.dia_plazo || '—')}<span> días</span>`, `${DC.dias_fin != null ? DC.dias_fin + (DC.dias_fin === 1 ? ' día' : ' días') + ' al fin del plan · ' : ''}programa de actividades hasta el ${fCorta(finPrograma)}`) +
+      kpi('Plazo', `${esc_(DC.dia_plazo || '—')}<span> días</span>`, `${DC.dias_fin != null ? (DC.dias_fin === 0 ? 'último día del plan · ' : DC.dias_fin + (DC.dias_fin === 1 ? ' día' : ' días') + ' al fin del plan · ') : ''}programa de actividades hasta el ${fCorta(finPrograma)}`) +
       kpi('Personal de AXON en obra', `${per.axon ?? '—'}`, `${per.ing ?? '—'} ing. · ${per.tec ?? '—'} téc.${per.ayu ? ` · ${per.ayu} ayud.` : ''} · supervisión ${per.sup ?? '—'}`) +
       kpi('Restricciones abiertas', `${rAb.length}<span> de ${restr.length}</span>`, ult ? `última: ${esc_(ult.id)} del ${fCorta(ult.fecha)} (${esc_(ult.cat || '')}) · ${esc_(ult.estado || '')}` : 'sin registro') +
       kpi('Habilitantes vencidos', `${hv.length}<span> de ${habs.length}</span>`, hv.length ? `${hv.join(', ')} · requisitos previos en revisión` : 'ninguno vencido');
@@ -109,7 +114,7 @@ export function iniciarTablero(ctx) {
     $('#resCurva').innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Curva S del servicio de AXON">${g}
       <polygon points="${area}" class="ar"/><polyline points="${pp}" class="pl"/><polyline points="${ee.join(' ')}" class="el"/>
       <line x1="${x(IC)}" x2="${x(IC)}" y1="${T}" y2="${H - B}" class="cl"/><circle cx="${x(IC)}" cy="${y(ec)}" r="4" class="ep"/>
-      <text x="${x(IC) + 6}" y="${y(ec) - 8}" class="lb">${pct(ec)}</text><text x="${IC > (N - 1) / 2 ? x(IC) - 6 : x(IC) + 6}" y="${y(pc) > T + 26 ? T + 10 : H - B - 6}"${IC > (N - 1) / 2 ? ' text-anchor="end"' : ''} class="ax">${fCorta(U4D.corte)}</text>
+      <text x="${IC === N - 1 ? x(IC) - 8 : x(IC) + 6}" y="${y(ec) - 8}"${IC === N - 1 ? ' text-anchor="end"' : ''} class="lb">${pct(ec)}</text><text x="${IC > (N - 1) / 2 ? x(IC) - 6 : x(IC) + 6}" y="${y(pc) > T + 26 ? T + 10 : H - B - 6}"${IC > (N - 1) / 2 ? ' text-anchor="end"' : ''} class="ax">${fCorta(U4D.corte)}</text>
       <text x="${x(N - 1)}" y="${y(U4D.total.prog[N - 1]) - 7}" text-anchor="end" class="ax">programado ${pct(U4D.total.prog[N - 1])}</text>
       ${U4D.total.ejec.slice(0, IC).map((v, k) => (v == null ? '' : `<circle cx="${x(k)}" cy="${y(v)}" r="2.6" class="ep dd"/>`)).join('')}
       ${AJ.filter((j) => F.indexOf(j.f) >= 0 && F.indexOf(j.f) <= IC).map((j) => F.indexOf(j.f)).filter((k, i, A) => A.indexOf(k) === i).map((k) => `<circle cx="${x(k)}" cy="${y(U4D.total.ejec[k])}" r="7" class="aj"><title>${esc_(notaAjuste(F[k]))}</title></circle>`).join('')}
@@ -133,7 +138,7 @@ export function iniciarTablero(ctx) {
     ];
     $('#resDias').innerHTML = `<div class="dd-wrap"><table class="dd"><thead><tr><th></th>${F.map((f, k) => `<th class="${k === IC ? 'hoy ' : ''}${k > IC ? 'fut' : ''}">${fLarga(f).replace(/-\d{2}$/, '').replace('-', ' ')}<small>${k <= IC && U4D.dias[f] && U4D.dias[f].reporte ? `rep. ${U4D.dias[f].reporte}` : k > IC ? 'programa' : '&nbsp;'}</small></th>`).join('')}</tr></thead>
       <tbody>${filas.map(([lab, fn]) => `<tr><th>${lab}</th>${F.map((f, k) => cel(k, fn(k))).join('')}</tr>`).join('')}</tbody></table></div>
-      <div class="leg"><span>Columna resaltada: último reporte (${fCorta(U4D.corte)})</span><span>Días grises: solo programado</span>${RB.map((r) => `<span>Hasta el ${fCorta(r.previo)}: recalculado con el control del ${fCorta(r.control)} (AXON agregó ${r.nuevas.map((z) => `la actividad ${esc_(z.n)}`).join(' y ')}; pesos sobre ${num(r.base, 0)} días)</span>`).join('')}${aj.size ? `<span><sup>*</sup> acumulado que no retrocede: ${[...aj].map((f) => esc_(notaAjuste(f))).join(' ')}</span>` : ''}</div>`;
+      <div class="leg"><span>Columna resaltada: último reporte (${fCorta(U4D.corte)})</span><span>Días grises: solo programado</span>${RB.map((r) => r.nuevas.length ? `<span>Hasta el ${fCorta(r.previo)}: recalculado con el control del ${fCorta(r.control)} (AXON agregó ${r.nuevas.map((z) => `la actividad ${esc_(z.n)}`).join(' y ')}; pesos sobre ${num(r.base, 0)} días)</span>` : `<span>${r.cambios.map((c) => fCorta(c.f)).join(', ')}: corregido con el control del ${fCorta(r.control)} (${(r.acts || []).map((z) => `actividad ${esc_(z.n)}`).join(', ') || 'AXON'})</span>`).join('')}${aj.size ? `<span><sup>*</sup> acumulado que no retrocede: ${[...aj].map((f) => esc_(notaAjuste(f))).join(' ')}</span>` : ''}</div>`;
   }
   function grupos() {
     const gs = [...new Set(ACTS.map((a) => a.grupo))];
@@ -168,7 +173,7 @@ export function iniciarTablero(ctx) {
     const incomp = ACTS.filter((a) => a.ini && (a.prog[N - 1] ?? 0) < 0.999 && (a.peso || 0) > 0);
     const filas = [
       ['Inicio del programa', fLarga(F[0])],
-      ['Día del plazo', `${esc_(DC.dia_plazo || '—')}${DC.dias_fin != null ? ` · ${DC.dias_fin} ${DC.dias_fin === 1 ? 'día' : 'días'} al fin del plan` : ''}`],
+      ['Día del plazo', `${esc_(DC.dia_plazo || '—')}${DC.dias_fin != null ? (DC.dias_fin === 0 ? ' · último día del plan' : ` · ${DC.dias_fin} ${DC.dias_fin === 1 ? 'día' : 'días'} al fin del plan`) : ''}`],
       ['Programa de actividades', `hasta el ${fLarga(finPrograma)} (última actividad programada)`],
       ['El programa llega a', `${pct(U4D.total.prog[N - 1])} el ${fCorta(F[N - 1])}${incomp.length ? ` · no llegan al 100 % en el programa: ${incomp.map((a) => esc_(a.n)).join(', ')}` : ''}`],
       ['Ritmo de los últimos 7 días', ritmo == null ? '—' : `${num(ritmo * 100)} %/día`],
