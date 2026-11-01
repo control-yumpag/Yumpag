@@ -15468,6 +15468,10 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
   const st = { modo: 'sem', unidad: 'pct', barras: true, tabla: false };
   const cur = () => (B.corte || '').slice(0);
   const semIdx = AC.semana - 1;
+  // v72.66 (31-Oct-26): desde el último día de la LB1 el Plan de Recuperación está vencido y no hay ritmo requerido
+  // (base_ms_build deja ritmo_req_dia en null y trae fin_lb1 / dias_vencido)
+  const pdrVenc = AC.ritmo_req_dia == null, finPdr = AC.fin_lb1 || B.fin, dVenc = AC.dias_vencido || 0;
+  const vencTxt = dVenc > 0 ? `venció el ${fd(finPdr)} (hace ${dVenc} día${dVenc === 1 ? '' : 's'})` : `vence hoy, ${fd(finPdr)}`;
   const HECHOS = window.BMS_HECHOS || {};
 
   /* ============================ Reportes semanales ============================ */
@@ -15499,7 +15503,9 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       // cierre de la semana —spi_ab_sem / spi_are_sem— con la fórmula del día: «0,29 = 29,35 / 91,16»)
       { c: ((AC.lb0 > 0 ? AC.ev / AC.lb0 : 0)) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB0 · contractual', v: (AC.lb0 > 0 ? F2(AC.ev / AC.lb0) : '—') + '<small> LB0</small>', f: `EV ${F2(AC.ev)} % / LB0 ${F2(AC.lb0)} % · mide el atraso frente al contrato` },
       { c: ((AC.lb1 > 0 ? AC.ev / AC.lb1 : 0)) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB1 · planificado', v: (AC.lb1 > 0 ? F2(AC.ev / AC.lb1) : '—') + '<small> LB1</small>', f: `EV ${F2(AC.ev)} % / LB1 ${F2(AC.lb1)} % · mide el atraso frente al Plan de Recuperación` },
-      { c: 'ritmo', l: 'Ritmo requerido', v: F2(AC.ritmo_req_dia) + '<small> %/día</small>', f: `observado ${F2(AC.ritmo_obs_dia)} %/día · hay que multiplicarlo por ${(AC.ritmo_req_dia / Math.max(AC.ritmo_obs_dia, 0.01)).toFixed(1)} para cerrar el ${fd(B.fin)}` } ];
+      pdrVenc
+        ? { c: 'bad', l: 'Plan de Recuperación (LB1)', v: (dVenc > 0 ? 'Vencido' : 'Vence hoy'), f: `${dVenc > 0 ? `venció el ${fd(finPdr)}, hace ${dVenc} día${dVenc === 1 ? '' : 's'}` : `fin del plan: ${fd(finPdr)}`} · falta ${F2(100 - AC.ev)} % · observado ${F2(AC.ritmo_obs_dia)} %/día` }
+        : { c: 'ritmo', l: 'Ritmo requerido', v: F2(AC.ritmo_req_dia) + '<small> %/día</small>', f: `observado ${F2(AC.ritmo_obs_dia)} %/día · hay que multiplicarlo por ${(AC.ritmo_req_dia / Math.max(AC.ritmo_obs_dia, 0.01)).toFixed(1)} para cerrar el ${fd(finPdr)}` } ];
     el.innerHTML = items.map(k => `<div class="k ${k.c}"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="f">${k.f}</div></div>`).join('');
     const tt = $('bmsTitle'); if (tt) tt.textContent = `· Base de seguimiento MS · S${AC.semana} de obra · corte ${fdl(AC.fecha)}`;
     const de = $('bmsDesc'); if (de) de.innerHTML = `Línea base contractual (LB0), línea de recuperación del Plan de Recuperación (LB1) y ejecutado financiero, en % del presupuesto de construcción. Fuente: hojas «Curva S» y «Avance» de <b>${esc(B.fuente)}</b> (${esc(B.archivo)}). El ejecutado está valorizado hasta el ${fdl(AC.ev_fecha)}; el reporte diario ${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : ''} actualiza torres y actividades pero no la valorización.`;
@@ -15581,7 +15587,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     // cortes
     const cxS = sem ? x(semIdx) : x(DI.iCorte);
     s += `<line x1="${cxS}" y1="${mT - 6}" x2="${cxS}" y2="${mT + ph}" stroke="${css('--sky')}" stroke-width="1.6" stroke-dasharray="4 3"/>`;
-    s += `<text x="${cxS - 6}" y="${mT - 10}" text-anchor="end" font-size="9" font-weight="700" fill="${css('--sky')}">${sem ? `CORTE · S${AC.semana} de obra (${fd(AC.sem_ini)} → ${fd(AC.sem_fin)})` : `CORTE DIARIO · ${fdl(AC.fecha)}`}</text>`;
+    s += `<text x="${cxS - 6}" y="${mT - 10}" text-anchor="end" font-size="9" font-weight="700" fill="${css('--sky')}">${sem ? `CORTE · S${AC.semana} de obra (${fd(AC.sem_ini)} → ${fd(AC.sem_fin)})` : `CORTE DIARIO · ${fdl(AC.fecha)}${DI.iReal > DI.iCorte ? ` · la serie diaria termina el ${fd(DI.fechas[DI.iCorte])}` : ''}`}</text>`;
     if (!sem){ const iE = DI.fechas.indexOf(DI.lastEV); if (iE >= 0 && iE !== DI.iCorte){ s += `<line x1="${x(iE)}" y1="${mT + 4}" x2="${x(iE)}" y2="${mT + ph}" stroke="${C_EV}" stroke-width="1" stroke-dasharray="2 3" opacity=".7"/><text x="${x(iE) - 4}" y="${mT + ph - 6}" text-anchor="end" font-size="7.5" fill="${C_EV}">valorizado al ${fd(DI.lastEV)}</text>`; } }
     // líneas
     s += `<path d="${path(lb0)}" fill="none" stroke="${C_LB0}" stroke-width="${sem ? 2.4 : 2}" stroke-linejoin="round"/>`;
@@ -15751,7 +15757,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     const hz = id => brief.hallazgos.find(h => h.id === id);
     // 1. dotación
     if (P.obra / P.plan < 0.85) dec.push({ s: '', t: `Reponer la dotación: ${P.obra} operativos en campo frente a ${P.plan} del Plan de Recuperación (−${P.plan - P.obra})${P.topo === 0 ? ', sin topógrafo' : ''}${P.resid === false ? ' ni residente civil' : ''}.`,
-      x: `Con ${P.obra} personas el ritmo es ${F2(AC.ritmo_obs_dia)} %/día y el PdR exige ${F2(AC.ritmo_req_dia)} %/día; sin topografía no se liberan stubs ni vaciados. <span class="src">${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : 'Reporte diario'} · cuadro de personal.</span>` });
+      x: `Con ${P.obra} personas el ritmo es ${F2(AC.ritmo_obs_dia)} %/día ${pdrVenc ? `y el Plan de Recuperación ${vencTxt} con ${F2(100 - AC.ev)} % por ejecutar` : `y el PdR exige ${F2(AC.ritmo_req_dia)} %/día`}; sin topografía no se liberan stubs ni vaciados. <span class="src">${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : 'Reporte diario'} · cuadro de personal.</span>` });
     // 2. frentes con mayor valor próximo y sin actividad
     const sinFrente = towersB.filter(t => t.pv3 > 5000 && !frentes.includes(t.t)).sort((a, b) => b.pv3 - a.pv3).slice(0, 6);
     if (sinFrente.length) dec.push({ s: '', t: `Abrir frente en ${sinFrente.map(t => t.t).join(', ')}: concentran US$ ${F0(sinFrente.reduce((a, t) => a + t.pv3, 0))} del LB1 de las próximas 3 semanas y hoy no tienen actividad.`,
@@ -15884,7 +15890,8 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     return null;
   }
   function calc(B, nom){
-    const D = B.diario, S = D && D[nom], ev = B.al_corte && B.al_corte.ev, at = D && D.iCorte;
+    // v72.66 (31-Oct-26): días transcurridos al corte real (iReal); iCorte se queda en el último día de la serie diaria
+    const D = B.diario, S = D && D[nom], ev = B.al_corte && B.al_corte.ev, at = D && (D.iReal != null ? D.iReal : D.iCorte);
     if (!S || ev == null || at == null || !(at > 0)) return null;
     const e = esDe(S, ev), P = S.findIndex(v => v != null && v >= 99.995); if (e == null) return null;
     const spi = e / at;
@@ -15894,7 +15901,8 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
   function pron(){
     const body = $('pronBody'), desc = $('pronDesc'), B = window.BASE_MS; if (!body) return;
     if (!B || !B.diario || !B.al_corte){ body.innerHTML = '<div class="ev-res">Este corte no trae la Base de seguimiento MS.</div>'; return; }
-    const AC = B.al_corte, D = B.diario, R1 = calc(B, 'lb1'), R0 = calc(B, 'lb0'), fc = D.fechas[D.iCorte], corte = dia0(fc);
+    const AC = B.al_corte, D = B.diario, R1 = calc(B, 'lb1'), R0 = calc(B, 'lb0'), fc = (D.iReal != null && B.corte) ? B.corte : D.fechas[D.iCorte], corte = dia0(fc);
+    const venc = AC.ritmo_req_dia == null, dV = AC.dias_vencido || 0, finP = AC.fin_lb1 ? dia0(AC.fin_lb1) : R1 && R1.fin;
     if (desc) desc.innerHTML = `¿Cuándo terminaría la construcción? El ejecutado al ${fDMA(corte)} (<b>${N2(AC.ev)} %</b> del presupuesto de construcción) frente al día en que cada plan lo alcanzaba.`;
     if (!R1){ body.innerHTML = '<div class="ev-res">El ejecutado ya supera lo que el Plan de Recuperación pedía al corte: sin atraso que medir.</div>'; return; }
     const ritmo = AC.ritmo_obs_dia, finRitmo = ritmo > 0 ? masDias(fc, (100 - AC.ev) / ritmo) : null;
@@ -15906,7 +15914,8 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
         <div><span>Término según el Plan de Recuperación</span><b>${R1.fin ? fDMA(R1.fin) : '—'}</b></div>
         <div class="mal"><span>Con la eficiencia acumulada frente al PdR (SPI(t) ${N2(R1.spi)})</span><b>≈ ${R1.ieac ? fDMA(R1.ieac) : '—'}</b></div>
         <div class="mal"><span>Al ritmo de los últimos 7 días (${N2(ritmo)} %/día)</span><b>${finRitmo ? '≈ ' + fMA(finRitmo) : 'sin avance'}</b></div>
-        <div><span>Ritmo necesario para terminar el ${R1.fin ? fDM(R1.fin) : '—'}</span><b>${N2(AC.ritmo_req_dia)} %/día</b></div></div>
+        ${venc ? `<div class="mal"><span>Plan de Recuperación ${dV > 0 ? `vencido el ${finP ? fDMA(finP) : '—'} (hace ${dV} día${dV === 1 ? '' : 's'})` : `vence hoy, ${finP ? fDMA(finP) : '—'},`} sin cumplirse: sin ritmo que lo alcance</span><b>falta ${N2(100 - AC.ev)} %</b></div>`
+               : `<div><span>Ritmo necesario para terminar el ${R1.fin ? fDM(R1.fin) : '—'}</span><b>${N2(AC.ritmo_req_dia)} %/día</b></div>`}</div>
       <div class="pr-foot">Earned Schedule (Lipke; PMI): mide el atraso en días y, a diferencia del SPI en US$, no tiende a 1 al acercarse el final. ES = día en que el plan llegaba al ejecutado de hoy; SPI(t) = ES / días transcurridos desde el ${fDMA(dia0(D.fechas[0]))}; término = inicio + duración planificada / SPI(t): supone que lo que falta se ejecuta con la misma eficiencia que hasta hoy. Fuente: serie diaria de ${esc(B.archivo || 'la Base de seguimiento MS')}.</div>`;
   }
 
