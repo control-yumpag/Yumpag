@@ -15508,7 +15508,11 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
         : { c: 'ritmo', l: 'Ritmo requerido', v: F2(AC.ritmo_req_dia) + '<small> %/día</small>', f: `observado ${F2(AC.ritmo_obs_dia)} %/día · hay que multiplicarlo por ${(AC.ritmo_req_dia / Math.max(AC.ritmo_obs_dia, 0.01)).toFixed(1)} para cerrar el ${fd(finPdr)}` } ];
     el.innerHTML = items.map(k => `<div class="k ${k.c}"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="f">${k.f}</div></div>`).join('');
     const tt = $('bmsTitle'); if (tt) tt.textContent = `· Base de seguimiento MS · S${AC.semana} de obra · corte ${fdl(AC.fecha)}`;
-    const de = $('bmsDesc'); if (de) de.innerHTML = `Línea base contractual (LB0), línea de recuperación del Plan de Recuperación (LB1) y ejecutado financiero, en % del presupuesto de construcción. Fuente: hojas «Curva S» y «Avance» de <b>${esc(B.fuente)}</b> (${esc(B.archivo)}). El ejecutado está valorizado hasta el ${fdl(AC.ev_fecha)}; el reporte diario ${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : ''} actualiza torres y actividades pero no la valorización.`;
+    const de = $('bmsDesc'); if (de) de.innerHTML = `Línea base contractual (LB0), línea de recuperación del Plan de Recuperación (LB1) y ejecutado financiero, en % del presupuesto de construcción. Fuente: hojas «Curva S» y «Avance» de <b>${esc(B.fuente)}</b> (${esc(B.archivo)}). El ejecutado está valorizado hasta el ${fdl(AC.ev_fecha)}; el reporte diario ${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : ''} actualiza torres y actividades pero no la valorización.` +
+      // v72.67 (05-Nov-26): semanas posteriores al fin del Plan de Recuperación sin línea base nueva (base_ms_build: sin_linea_base)
+      (() => { const ext = SEM.filter(w => w.sin_linea_base); if (!ext.length) return '';
+        const f = ext[0], l = ext[ext.length - 1];
+        return ` <b>Desde la S${f.n}</b> no hay línea base nueva: la LB0 y la LB1 se mantienen planas al 100 % y el ejecutado sale de la hoja «Avance» (S${l.n}${l.en_curso ? `, en curso: al ${fdl(l.ev_al)}` : ''}).`; })();
   }
   function tools(){
     const el = $('bmsTools'); if (!el) return;
@@ -15648,7 +15652,8 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       if (sem){ const w = SEM[i]; html = `<b>Semana ${w.n}</b> · ${fd(w.ini)} → ${fd(w.fin)}<br>LB0: <b style="color:${C_LB0}">${F2(w.lb0)} %</b> (US$ ${F0(w.lb0A)})<br>LB1: <b style="color:${C_LB1}">${F2(w.lb1)} %</b> (US$ ${F0(w.lb1A)})<br>Ejecutado: <b style="color:${C_EV}">${w.ev == null ? '—' : F2(w.ev) + ' %'}</b>${w.evA != null ? ' (US$ ' + F0(w.evA) + ')' : ''}` +
         (w.ev != null ? `<br>Desfase: <b>${F2(w.ev - w.lb1)} pts</b> · SV US$ ${F0((w.evA || 0) - (w.lb1A || 0))}` : '') +
         `<br>Semana · PV LB1 ${F2(w.pvRE)} % (US$ ${F0(w.lb1M)})${w.evS != null ? ` · EV ${F2(w.evS)} % (US$ ${F0(w.evM)})` : ''}` +
-        (w.spiRE != null ? `<br>SPI semana ${F2(w.spiRE)} · acumulado ${F2(w.spiARE)} (LB1) · ${F2(w.spiAB)} (LB0)` : ''); }
+        (w.spiRE != null ? `<br>SPI semana ${F2(w.spiRE)} · acumulado ${F2(w.spiARE)} (LB1) · ${F2(w.spiAB)} (LB0)` : '') +
+        (w.sin_linea_base ? `<br><i>Sin línea base nueva: LB0 y LB1 planas al 100 %${w.en_curso ? ` · semana en curso, ejecutado al ${fd(w.ev_al)}` : ''}</i>` : ''); }
       else { html = `<b>${fdl(DI.fechas[i])}</b><br>LB0: <b style="color:${C_LB0}">${F2(DI.lb0[i])} %</b><br>LB1: <b style="color:${C_LB1}">${F2(DI.lb1[i])} %</b> · día US$ ${F0(DI.lb1d[i])}<br>Ejecutado: <b style="color:${C_EV}">${DI.ev[i] == null ? '— (sin valorizar)' : F2(DI.ev[i]) + ' %'}</b>${DI.evd[i] != null ? ' · día US$ ' + F0(DI.evd[i]) : ''}` + (DI.ev[i] != null ? `<br>Desfase: <b>${F2(DI.ev[i] - DI.lb1[i])} pts</b>` : ''); }
       tip.innerHTML = html; tip.style.display = 'block';
       const r = el.getBoundingClientRect(); let lx = e.clientX - r.left + 14, ly = e.clientY - r.top + 10;
@@ -15695,7 +15700,9 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     const pvRest = 100 - AC.lb1_sem;
     const pico = SEM.slice().sort((a, b) => (b.pvRE || 0) - (a.pvRE || 0))[0];
     r.innerHTML = `<p><b>Lectura.</b> El SPI acumulado frente a la línea de recuperación llegó a <b>${F2(peakW.spiARE)}</b> en la S${peakW.n} y cae desde entonces (${fall.length} semanas seguidas) hasta <b>${F2(last.spiARE)}</b> en la S${last.n}: la obra dejó de seguir el PdR cuando el plan pedía acelerar (${n1} de ${N} semanas con SPI ≥ 1).</p>` +
-      `<p>Desde la S${AC.semana + 1} el PdR concentra el <b>${F1(pvRest)} %</b> restante en ${semLB1.length} semanas (${F1(pvRest / Math.max(1, semLB1.length))} % por semana, pico de ${F2(pico.pvRE)} % en la S${pico.n}); en la S${AC.semana} se ejecutó ${F2(SEM[semIdx].evS)} %.</p>` +
+      (pdrVenc   // v72.67 (05-Nov-26): con el PdR vencido no queda plan por delante; se dice qué pasó desde el fin de la LB1
+        ? `<p>El Plan de Recuperación terminó el ${fd(finPdr)} con la LB1 al 100 % (pico de ${F2(pico.pvRE)} % en la S${pico.n}) y aún no hay línea base nueva; en la S${AC.semana}${SEM[semIdx].en_curso ? ` (en curso, al ${fd(SEM[semIdx].ev_al)})` : ''} se ejecutó ${F2(SEM[semIdx].evS)} %.</p>`
+        : `<p>Desde la S${AC.semana + 1} el PdR concentra el <b>${F1(pvRest)} %</b> restante en ${semLB1.length} semanas (${F1(pvRest / Math.max(1, semLB1.length))} % por semana, pico de ${F2(pico.pvRE)} % en la S${pico.n}); en la S${AC.semana} se ejecutó ${F2(SEM[semIdx].evS)} %.</p>`) +
       `<p>Al corte diario (${fd(AC.fecha)}) el PV de LB1 ya es ${F2(AC.lb1)} % y el ejecutado valorizado ${F2(AC.ev)} % (${fd(AC.ev_fecha)}): SV US$ ${F0(AC.svUSD)}, SPI ${F2(AC.spi_re)}.</p>`;
   }
 
