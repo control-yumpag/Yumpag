@@ -32,6 +32,11 @@ python3 -I gen/bases_build.py <OC703_1.dxf> > bases.json     # posiciones y huel
 ```
 `gen/geo.py` tiene el sistema local (origen S1) y las conversiones UTM ↔ local.
 
+Modelo para el tablero BIM 4D (repetir siempre que cambie `ypg3d.js`; necesita Playwright, `three@0.160.0` local y `gltfpack` 0.21 de npm):
+```bash
+python3 gen/exportar_tablero.py --three <carpeta three@0.160.0> --gltfpack <node_modules/gltfpack/cli.js> --si 0.25   # → tablero/ypg_tablero.glb + .json
+```
+
 ## Registro de cambios
 - 23-Oct-26 · versión inicial: patio 138 kV, pórtico P-19 m, transformador, llegada de la LT por la T23, salas ER1/ER2
   con interior, pórtico y salidas 10 kV, SSAA, obra civil con subsuelo, malla de tierra, edificaciones, cerco y
@@ -47,3 +52,6 @@ python3 -I gen/bases_build.py <OC703_1.dxf> > bases.json     # posiciones y huel
 - 24-Oct-26 · llegada de la LT con criterio de ingeniería (pedido del usuario: «las conexiones están en el aire, y los aisladores…
   tener criterio para dibujar»): cadenas de anclaje horizontales de 2,5 m en la T23 y en la viga del pórtico, en la dirección del
   vano, con el puente al pararrayos; la cota de la T23 puede fijarla el BIM general (`AJUSTE_T23`), que reutiliza esta llegada.
+- 06-Nov-26 · una sola representación de la SE (pedido del usuario: «tiene que conversar esos diseños y ser una misma representación»):
+  `gen/exportar_tablero.py` exporta este modelo a `tablero/ypg_tablero.glb` (0,8 MB, meshopt) y el tablero BIM 4D lo coloca en su
+  posición real junto a la T23, a la escala de las torres, con los conductores y cables de guarda llegando al pórtico P-19 m.

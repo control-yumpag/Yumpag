@@ -32,7 +32,8 @@ séptico, cerco prefabricado con concertina y portón; terreno por curvas y talu
 | `terreno.json` | Rejilla del terreno (OC-302) en el sistema local, plataforma y borde de la superficie de diseño |
 | `cad.json` | Líneas del OE-605 (equipos) y del OC-703 (obras civiles) para «Plano CAD sobre el patio» |
 | `unifilar.svg` | Unifilar OE-602 convertido a SVG con zonas enlazadas al 3D |
-| `gen/` | Scripts que regeneran `terreno.json`, `cad.json` y `unifilar.svg` desde los DXF (ver `README.md`) |
+| `gen/` | Scripts que regeneran `terreno.json`, `cad.json` y `unifilar.svg` desde los DXF (ver `README.md`) y `exportar_tablero.py` |
+| `tablero/ypg_tablero.glb`, `tablero/ypg_tablero.json` | Este mismo modelo exportado para la pestaña **BIM 4D** del tablero de la LT (Three r128): sin terreno, sin la llegada de la LT ni lo enterrado, simplificado (gltfpack `-si 0.25`, meshopt) y con los anclajes del pórtico y la transformación local → UTM |
 
 ## Convenciones que no se cambian
 - **Sistema local** (m): origen en el vértice **S1** de los límites de la SE (OC-703, UTM WGS-84 18S
@@ -55,6 +56,10 @@ séptico, cerco prefabricado con concertina y portón; terreno por curvas y talu
   de la T23 lleva `userData.t23 = true` y `AJUSTE_T23.z` permite fijar su cota desde fuera: el BIM general (`../bim-general/`)
   oculta esa silueta, pone la cota real de la T23 y **conserva** la capa `linea` (cadenas, puentes y vano) de este modelo. Si
   cambias la geometría del pórtico de salida o de la T23, revisa `red.js` del BIM general (bloque «llegada a la SE Yumpag»).
+- **Una sola SE Yumpag (06-Nov-26)**: el BIM general importa `ypg3d.js` y el tablero BIM 4D carga `tablero/ypg_tablero.glb`, que sale
+  de este mismo `ypg3d.js`. **Cada vez que cambies `ypg3d.js` vuelve a exportar** (`python3 gen/exportar_tablero.py --three <three@0.160.0>
+  --gltfpack <gltfpack/cli.js> --si 0.25`) y sube los dos archivos de `tablero/`; si cambian los anclajes del pórtico (`pa`, castilletes)
+  actualiza también `anclas`/`guarda` (y `FASES`) en el exportador. El tablero sitúa el modelo junto a la T23 con `S1`, `UX`, `UY` y `T23` del JSON.
 - Realismo con geometría, no con texturas de IA. Texturas solo procedurales (canvas). Nada del proyecto se sube a
   servicios de IA de terceros.
 

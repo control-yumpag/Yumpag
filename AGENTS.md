@@ -9,7 +9,7 @@ Seis cosas distintas conviven aquí:
    pierde en la siguiente publicación.
 2. **`se-uchucchacua/`**: modelo 3D en código de la SE Uchucchacua. Tiene su propio `AGENTS.md`; léelo antes de tocarlo.
 3. **`albarenga/`**: modelo 3D de la instalación eléctrica del SGFVC Albarenga (Loreto). Tiene su propio `AGENTS.md`.
-4. **`se-yumpag/`**: modelo 3D de la SE Yumpag 138/10 kV desde la ingeniería de detalle (sin avance de obra aún).
+4. **`se-yumpag/`**: modelo 3D de la SE Yumpag 138/10 kV desde la ingeniería de detalle (sin avance de obra aún). El tablero BIM 4D muestra este mismo modelo (`se-yumpag/tablero/ypg_tablero.glb`, exportado con `se-yumpag/gen/exportar_tablero.py`): si cambias `ypg3d.js`, vuelve a exportarlo.
    Tiene su propio `AGENTS.md`.
 5. **`se-paragsha2/`**: modelo 3D estimado de la SE Paragsha II 220/138 kV (origen de la L-1123), desde el unifilar
    OE-250 y la imagen satelital. Tiene su propio `AGENTS.md`.
