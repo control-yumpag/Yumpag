@@ -10849,7 +10849,13 @@ function getScheduleStatus(t, activity, cutoff){
   const civ = st.civil.pct;
   if (civ>=99.5) return { code:'green', label:'🟢 EN TIEMPO', motivo:'obra civil terminada' };
   if (civ<=0 && st.civil.acceso<=0) return { code:'none', label:'⚪ SIN INICIAR', motivo:'sin acceso habilitado' };
-  const dias = Math.max(1, Math.round((new Date(CONFIG.hitosPdR.civil) - new Date(cutoff))/86400000));
+  const diasH = Math.round((new Date(CONFIG.hitosPdR.civil) - new Date(cutoff))/86400000);
+  if (diasH <= 0){   // v72.69: hito vencido → el motivo dice cuánto hace, no «requiere N %/día hasta» una fecha pasada
+    const MS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'], h = String(CONFIG.hitosPdR.civil);
+    const hf = h.length >= 10 ? `${h.slice(8, 10)}-${MS[+h.slice(5, 7) - 1]}-${h.slice(2, 4)}` : h;
+    return { code:'red', label:'🔴 ATRASADA', motivo:`hito de obra civil del Plan de Recuperación (${hf}) vencido hace ${-diasH} días con la obra civil de la torre al ${civ.toFixed(0)} %` };
+  }
+  const dias = Math.max(1, diasH);
   const req  = (100-civ)/dias;                                   // %/día que exige el hito
   const ref  = CONFIG.ritmoLineaObs * DATA.towers.length / CONFIG.frentesActivos;   // %/día que logra un frente
   if (!(ref > 0) || !isFinite(ref) || !(dias > 0)) return { code:'none', label:'⚪ SIN DATO', motivo:'sin ritmo observado o frentes activos en el corte' };   // v72.57
@@ -13741,7 +13747,10 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
 (function(){
   const $ = id => document.getElementById(id);
   const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-  const LA = (typeof BRIEF !== 'undefined' && BRIEF.lookahead) ? Object.fromEntries(BRIEF.lookahead.map(l => [l.t, l])) : {};
+  // v72.69 (12-Nov-26, auditoría): las restricciones por torre del BRIEF solo valen si el BRIEF es del corte (≤ 7 días); el BRIEF arrastrado
+  // del 17-Set mostraba como vigentes bloqueos de setiembre (accesos C15 de T22/T23, topógrafo, compresora de T11…). Sin BRIEF vigente no hay filtros de restricción.
+  const LA_VIG = (() => { try { const fb = BRIEF && BRIEF.fecha, fc = DATA.corte_diario && DATA.corte_diario.fecha; return !!(fb && fc) && (new Date(fc) - new Date(fb)) / 864e5 <= 7; } catch (e) { return false; } })();
+  const LA = (LA_VIG && typeof BRIEF !== 'undefined' && BRIEF.lookahead) ? Object.fromEntries(BRIEF.lookahead.map(l => [l.t, l])) : {};
   let filt = 'all';
   const stOf = t => (t.ph && t.ph.civil >= 99.5) ? 'done' : (t.pct > 0 ? 'prog' : 'none');
   const RECURSO = /topógrafo|puesta a tierra|electromecánico/i;
@@ -13758,7 +13767,7 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
     const T = DATA.towers;
     const n = { all: T.length, done: T.filter(t => stOf(t)==='done').length, prog: T.filter(t => stOf(t)==='prog').length,
                 none: T.filter(t => stOf(t)==='none').length, rest: T.filter(t => restLevel(t)==='red').length, wait: T.filter(t => restLevel(t)==='amber').length, hoy: T.filter(t => intervDe(t.t)).length };
-    const opts = [['all','Todas'],['hoy','Intervenidas el ' + intervFecha()],['prog','En ejecución'],['done','Cimentación lista'],['none','Sin iniciar'],['rest','Bloqueadas'],['wait','Esperan recurso']].filter(o => o[0] !== 'hoy' || n.hoy);   // v72.25: «Intervenidas el DD-Mes» · v33: 'done' = 4 zapatas al 100 % (el % del tile incluye caminos y remediación)
+    const opts = [['all','Todas'],['hoy','Intervenidas el ' + intervFecha()],['prog','En ejecución'],['done','Cimentación lista'],['none','Sin iniciar'],['rest','Bloqueadas'],['wait','Esperan recurso']].filter(o => (o[0] !== 'hoy' || n.hoy) && ((o[0] !== 'rest' && o[0] !== 'wait') || Object.keys(LA).length));   // v72.69: sin BRIEF vigente no hay «Bloqueadas» ni «Esperan recurso» · v72.25: «Intervenidas el DD-Mes» · v33: 'done' = 4 zapatas al 100 % (el % del tile incluye caminos y remediación)
     const cEl = $('bimxCnt'); if (cEl) cEl.remove();
     el.innerHTML = `<span class="fl">Filtro:</span>` + opts.map(([k, lab]) => `<button class="chip${filt===k?' on':''}${k==='rest'?' d':k==='done'?' g':k==='prog'||k==='wait'?' w':k==='hoy'?' hoy':''}" data-f="${k}" title="${k==='hoy' ? 'Mostrar las torres trabajadas el día del corte (celdas marcadas en el Resumen del reporte diario)' : k==='all' ? 'Mostrar las 23 torres' : (k==='done' ? 'Mostrar solo las torres con la cimentación (4 zapatas) concluida' : 'Mostrar solo las torres ' + lab.toLowerCase())}">${lab} · ${n[k]}</button>`).join('');
     el.querySelectorAll('button').forEach(b => b.onclick = () => { filt = b.dataset.f; renderFilters(); drawTowerList(); });
