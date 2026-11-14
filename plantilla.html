@@ -8123,7 +8123,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <!-- La tarjeta de personal operativo se retiró de la vista; estos contenedores
          ocultos evitan tocar la lógica que la rellenaba. -->
     <div id="persOculto" hidden><div id="persDesc"></div><div id="persK"></div><div id="persT"></div></div>
-    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · ponderado por pesos de la hoja Avance <b id="k-oc-pond">—</b> · PV_AC financiero 33.3 % <span class="sem-inf">(último informe semanal)</span></div></div>
+    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · ponderado por pesos de la hoja Avance <b id="k-oc-pond">—</b> · PV_AC financiero <span id="k-oc-pvac">33.3</span> % <span class="sem-inf">(último informe semanal)</span></div></div>
     <div class="kpi"><div class="lab">Accesos habilitados</div><div class="val" id="k-acc">—</div><div class="foot" id="k-acc-f">caminos de acceso a torre</div></div>
     <div class="kpi"><div class="lab">Torres iniciadas</div><div class="val" id="k-ini">—</div><div class="foot">al menos acceso o cimentación</div></div>
     <div class="kpi"><div class="lab">EV integral proyecto</div><div class="val" id="k-ev">—<span>%</span></div><div class="foot">valor ganado global (hoja PV_AC)</div></div>
@@ -14125,6 +14125,8 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
       try { const fc = cd.fecha || ''; if (/^\d{4}-\d{2}-\d{2}/.test(fc)) { const d0 = new Date(fc + 'T12:00:00'), t = new Date(d0); t.setDate(d0.getDate() + 3 - ((d0.getDay() + 6) % 7));
         document.querySelectorAll('.badge').forEach(b => { const tx = b.textContent.trim(); if (/^SEM \d+ · \d{4}$/.test(tx)) b.textContent = tx.replace(/\d{4}$/, String(t.getFullYear())); }); } } catch(e){}
       document.querySelectorAll('.sem-inf').forEach(e => { e.textContent = '(' + infSem + ')'; });
+      // v72.70 (14-Nov-26): el «PV_AC financiero» de obra civil sale del informe semanal cargado (DATA.semanal.oc_pvac), ya no de un número fijo de la plantilla
+      { const ep = $('k-oc-pvac'), sv = DATA.semanal; if (ep && sv && sv.oc_pvac != null) ep.textContent = F(sv.oc_pvac); }
       ['k-ev', 'k-spi', 'k-bac'].forEach(id => { const el = $(id); const f = el && el.parentElement.querySelector('.foot'); if (f && !/informe semanal|reporte semanal/.test(f.textContent)) f.textContent += ` · ${infSem}`; });
       const h3 = [...document.querySelectorAll('#v-cur .card h3')].find(h => /Curva S de Construcción/.test(h.textContent));
       const d = h3 && h3.parentElement.querySelector('.desc');
