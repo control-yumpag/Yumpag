@@ -8123,7 +8123,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <!-- La tarjeta de personal operativo se retiró de la vista; estos contenedores
          ocultos evitan tocar la lógica que la rellenaba. -->
     <div id="persOculto" hidden><div id="persDesc"></div><div id="persK"></div><div id="persT"></div></div>
-    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · ponderado por pesos de la hoja Avance <b id="k-oc-pond">—</b> · PV_AC financiero <span id="k-oc-pvac">33.3</span> % <span class="sem-inf">(último informe semanal)</span></div></div>
+    <div class="kpi accent"><div class="lab">Avance obra civil · línea</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot">media simple de las 23 torres (% oficial por torre) · PV_AC financiero <span id="k-oc-pvac">33.3</span> % <span class="sem-inf">(último informe semanal)</span></div></div>
     <div class="kpi"><div class="lab">Accesos habilitados</div><div class="val" id="k-acc">—</div><div class="foot" id="k-acc-f">caminos de acceso a torre</div></div>
     <div class="kpi"><div class="lab">Torres iniciadas</div><div class="val" id="k-ini">—</div><div class="foot">al menos acceso o cimentación</div></div>
     <div class="kpi"><div class="lab">EV integral proyecto</div><div class="val" id="k-ev">—<span>%</span></div><div class="foot">valor ganado global (hoja PV_AC)</div></div>
@@ -12043,7 +12043,7 @@ function renderKPIs(){
       if(a) a.textContent='—'; if(b) b.textContent='—';
     }
   })();
-  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres; ${F(DATA.ocGlobalPond)} % ponderado por pesos). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${c.civilFin} de ${c.total}</b> torres concluidas) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de construcción ${(window.__spiCorte && window.__spiCorte.spi1 != null ? window.__spiCorte.spi1 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(window.__spiCorte && window.__spiCorte.spi0 != null ? window.__spiCorte.spi0 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0)${window.__spiCorte && window.__spiCorte.ref ? ' ' + window.__spiCorte.ref : ''} · S${AVFIS.corte} de obra.`;
+  $('vd-txt').innerHTML = `Obra civil de la línea al <b>${F(DATA.ocGlobal)}%</b> (media de las 23 torres). Accesos viales en <b>${F(pr.acceso)}%</b>. Las fundaciones (<b>${c.civilFin} de ${c.total}</b> torres concluidas) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de construcción ${(window.__spiCorte && window.__spiCorte.spi1 != null ? window.__spiCorte.spi1 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(window.__spiCorte && window.__spiCorte.spi0 != null ? window.__spiCorte.spi0 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0)${window.__spiCorte && window.__spiCorte.ref ? ' ' + window.__spiCorte.ref : ''} · S${AVFIS.corte} de obra.`;
 }
 
 /* Crea el gráfico solo si su canvas sigue existiendo (hay vistas que se retiraron) */
@@ -12608,7 +12608,7 @@ function drawPataGrid(){
     if (win){ win.classList.add('en-panel'); win.dataset.dragged = '1'; }
     return;
   }
-  s += `<div class="tw-kpi-row">${_via}${bigBar('Obra civil', civ, barCol(civ), '', 'Obra civil de la torre: ponderado oficial (hoja Avance del Resumen)')}</div>`;
+  s += `<div class="tw-kpi-row">${_via}${bigBar('Obra civil', civ, barCol(civ), '', 'Obra civil de la torre: % oficial (hoja Avance del Resumen)')}</div>`;
   const fund = towerFundAt(t, d4i);
   s += `<div class="tw-sec">Zapatas · ${F(fund)}% (media de 6 actividades) · ${t.patasFuente==='resumen' ? '% por pata del anexo del Resumen' : t.patasFuente==='campo' ? '% por pata de los datos de campo' : (t.patasFuente==='registro' ? '% por pata del Registro Fotográfico' : 'reparto uniforme estimado por pata')}</div><div class="tw-patas">`;
   ['A','B','C','D'].forEach(L=>{
@@ -13122,7 +13122,7 @@ function b4Medidores(){
   }
   el.innerHTML =
     b4Gauge('Físico · obra civil', fis, css('--c-civ'), F(fis) + ' %',
-      'media de las 23 torres · Resumen' + (d4i === CUT && DATA.ocGlobalPond != null ? ` · ponderado ${F(DATA.ocGlobalPond)} %` : '')) +
+      'media de las 23 torres · Resumen') +
     b4Gauge('Programado · LB1', lb1 ? lb1.v : null, css('--ink-mut'), lb1 ? F(lb1.v) + ' %' : '—',
       lb1 ? `proyecto · Base MS${lb0 ? ` · LB0 ${F(lb0.v)} %` : ''}` : 'sin Base MS en este corte') +
     b4Gauge('Valorizado · EV', ev ? ev.v : null, css('--c-acc'), ev ? F(ev.v) + ' %' : '—',
