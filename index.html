@@ -147,7 +147,7 @@ button:focus-visible{outline:3px solid var(--lima);outline-offset:2px}
       <span class="gl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5L7 21.5M12 2.5l5 19M6 7h12M7.6 12h8.8M9 16.5h6M7 21.5l5-5 5 5"/></svg></span>
       <span class="nm"><i>Línea de transmisión</i><b>LT 138 kV Pomayaros – Yumpag</b></span>
       <span class="dt"><span data-f="oc">—</span> obra civil</span><span class="ch" aria-hidden="true">›</span>
-      <span class="prev"><span><span class="ds">BIM 4D, proceso constructivo, curvas S, alertas y plazos.</span><span class="cf"><span><em><span data-f="oc">—</span></em>obra civil</span><span><em><span data-f="fin">—</span></em>torres terminadas</span><span><em><span data-f="corte">—</span></em>último corte</span></span><span class="go">Entrar →</span></span></span>
+      <span class="prev"><span><span class="ds">BIM 4D, proceso constructivo, curvas S, alertas y plazos.</span><span class="cf"><span><em><span data-f="oc">—</span></em>obra civil</span><span><em><span data-f="py">—</span></em>proyecto completo</span><span><em><span data-f="fin">—</span></em>torres terminadas</span><span><em><span data-f="corte">—</span></em>último corte</span></span><span class="go">Entrar →</span></span></span>
     </button>
     <button class="tab" type="button" id="btnSE">
       <span class="gl"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
@@ -213,6 +213,7 @@ const put = (k, v) => document.querySelectorAll(`[data-f=${k}]`).forEach(e => { 
 const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
 const fCorta = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '-' + MES[+m[2] - 1] + '-' + m[1].slice(2) : ''; };
 const n1 = v => Number(v).toLocaleString('es-ES', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+const n2 = v => Number(v).toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 fetch('datos.json', {cache: 'no-cache'}).then(r => r.json()).then(j => {
   const C = j.completo || j.visita, B = C && C.bloques; let D = B && B.DATA; if (typeof D === 'string') D = JSON.parse(D);
   if (!D || !D.towers) return;
@@ -220,9 +221,17 @@ fetch('datos.json', {cache: 'no-cache'}).then(r => r.json()).then(j => {
   document.querySelectorAll('.int .tw').forEach(el => { const t = tw[el.dataset.t]; if (!t) return; el.classList.add(t.st);
     const ti = el.querySelector('title'); if (ti) ti.textContent = `Torre ${t.t} · ${EST[t.st] || t.st} (${n1(t.pct)} %) · abrir en el BIM 4D`; });
   const c = D.counts || {};
-  if (D.ocGlobal != null) { $('kOc').innerHTML = `${n1(D.ocGlobal)} <small>%</small>`;
-    $('kOcT').textContent = `obra civil de la LT${c.civilFin != null ? ` · ${c.civilFin} de ${c.total} torres terminadas` : ''} · corte ${fCorta(j.corte)}`;
-    put('oc', `${n1(D.ocGlobal)} %`); if (c.civilFin != null) put('fin', `${c.civilFin} de ${c.total}`); put('corte', fCorta(j.corte)); }
+  /* 17-Nov-26 (pedido del usuario con captura de la portada: «esos porcentajes no conversan, actualizar»; decisión del 16-Nov-26: todas las
+     cifras globales de avance salen de la Base de seguimiento). La obra civil de la portada es la misma del tablero: BASE_MS.al_corte.ev
+     (valor ganado ÷ presupuesto de obra civil, secciones 01 a 20), con dos decimales, y a su lado el proyecto completo (obra civil + obra
+     electromecánica: BASE_MS.especialidades.proyecto). DATA.ocGlobal (media de las 23 torres) ya no se muestra: el % por torre queda como
+     detalle en cada torre del gráfico. Sin Base de seguimiento en el corte, la cifra queda en «—» (no se sustituye por otra). */
+  let M = B.BASE_MS; if (typeof M === 'string') { try { M = JSON.parse(M); } catch (e) { M = null; } }
+  const oc = M && M.al_corte ? M.al_corte.ev : null, pE = M && ((M.especialidades || {}).proyecto || M.proyecto), py = pE ? pE.avance : null;
+  if (c.civilFin != null) put('fin', `${c.civilFin} de ${c.total}`); put('corte', fCorta(j.corte));
+  if (oc != null) { $('kOc').innerHTML = `${n2(oc)} <small>%</small>`;
+    $('kOcT').textContent = `obra civil de la LT · Base de seguimiento${py != null ? ` · proyecto ${n2(py)} %` : ''} · corte ${fCorta(j.corte)}`;
+    put('oc', `${n2(oc)} %`); if (py != null) put('py', `${n2(py)} %`); }
 }).catch(() => {});
 import('./se-uchucchacua/uchu4d.js').then(m => { const T = m.U4D.total, i = T.ejec.map((v, k) => v == null ? -1 : k).filter(k => k >= 0).pop();
   if (i < 0) return; const tx = `${n1(T.ejec[i] * 100)} %`;
