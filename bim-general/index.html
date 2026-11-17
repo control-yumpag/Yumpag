@@ -578,7 +578,12 @@ async function cargarAvance() {
     const d = await fetch('../datos.json', { cache: 'no-cache' }).then((r) => r.json());
     const C = [d.completo, d.visita].find((c) => c && c.bloques) || d, J = (x) => (typeof x === 'string' ? JSON.parse(x.replace(/\bNaN\b/g, 'null')) : x);
     const B = J(C.bloques ? C.bloques.DATA : d.DATA), CAM = C.bloques ? J(C.bloques.CAMINOS_DET) : null;
-    AVANCE = { corte: d.corte_txt || d.corte, corteISO: d.corte, reporte: d.reporte, t: Object.fromEntries(B.towers.map((t) => [t.t, t])), caminos: CAM, ocGlobal: B.ocGlobal, counts: B.counts, fases: B.phaseRollup };
+    // 17-Nov-26 (pedido del usuario: «esos porcentajes no conversan»; decisión del 16-Nov-26: las cifras globales salen de la Base de
+    // seguimiento): la obra civil de la línea es la del tablero de la LT, BASE_MS.al_corte.ev (valor ganado ÷ presupuesto de obra civil),
+    // y el proyecto completo (obra civil + obra electromecánica) BASE_MS.especialidades.proyecto. La media de las 23 torres ya no se muestra.
+    const BM = C.bloques && C.bloques.BASE_MS ? J(C.bloques.BASE_MS) : null, PY = BM && ((BM.especialidades || {}).proyecto || BM.proyecto);
+    AVANCE = { corte: d.corte_txt || d.corte, corteISO: d.corte, reporte: d.reporte, t: Object.fromEntries(B.towers.map((t) => [t.t, t])), caminos: CAM,
+      oc: BM && BM.al_corte && BM.al_corte.ev != null ? BM.al_corte.ev : null, py: PY && PY.avance != null ? PY.avance : null, counts: B.counts, fases: B.phaseRollup };
   } catch (e) { console.warn('datos.json', e); AVANCE = null; }
   return AVANCE;
 }
@@ -589,7 +594,7 @@ function pintarAvance() {
     const a = on && AVANCE.t[T.t.t]; const r = ROT.find((o) => o.userData.r.ficha === T.f);
     if (r) { r.userData.el.innerHTML = esc(T.t.t) + (a && escenario === 'despues' ? `<i>${fmt(a.pct, 0)} %</i>` : ''); r.userData.w = 0; }
   });
-  $('#tbCorte').innerHTML = AVANCE ? `Obra al <b>${esc(fCorta(AVANCE.corteISO))}</b>${AVANCE.ocGlobal != null ? ` · civil <b>${fmt(AVANCE.ocGlobal, 1)} %</b>` : ''}` : 'Obra <b>—</b>';
+  $('#tbCorte').innerHTML = AVANCE ? `Obra al <b>${esc(fCorta(AVANCE.corteISO))}</b>${AVANCE.oc != null ? ` · obra civil <b>${fmt(AVANCE.oc, 2)} %</b>` : ''}` : 'Obra <b>—</b>';
   if (typeof MODELOS !== 'undefined' && MODELOS.yumpag.mod) proyectarLlegadaYumpag(MODELOS.yumpag.mod);   // la llegada de la SE sigue el montaje de la T23
   if (actual) resaltar(actual);
   dibujarPerfil(); pedir();
@@ -763,9 +768,9 @@ function bloqueSE(f) {
       <div class="act"><span>Programado</span><i><b style="width:${Math.min(100, p)}%;background:#9aa3ab"></b></i><span>${fmt(p, 0)} %</span></div>
       <p class="fte">${esc(UCH.titulo)} · control diario de AXON al ${esc(fCorta(UCH.fechas[i]))}</p></div>`;
   }
-  if (f === RED.fSE.yumpag && AVANCE && AVANCE.ocGlobal != null && $('#vAva').checked) {
+  if (f === RED.fSE.yumpag && AVANCE && AVANCE.oc != null && $('#vAva').checked) {
     const t23 = AVANCE.t.T23;
-    return `<div class="f4d"><p class="fte"><b>Línea que llega:</b> derivación con obra civil al ${fmt(AVANCE.ocGlobal, 1)} % (media de las 23 torres)${t23 ? ` · T23, la del pórtico: ${fmt(t23.pct, 1)} %` : ''} · corte ${esc(fCorta(AVANCE.corteISO))}</p></div>`;
+    return `<div class="f4d"><p class="fte"><b>Línea que llega:</b> derivación con obra civil al ${fmt(AVANCE.oc, 2)} % (Base de seguimiento)${t23 ? ` · T23, la del pórtico: ${fmt(t23.pct, 1)} %` : ''} · corte ${esc(fCorta(AVANCE.corteISO))}</p></div>`;
   }
   return '';
 }
@@ -806,9 +811,9 @@ function seleccionar(f, volarA = false, extra = null) {
   actual = f;
   if (!f) { $('#ficha').classList.add('oculto'); $('#alcance').classList.remove('oculto'); resaltar(null); alcance(); pedir(); return; }
   const datos = [...(f.datos || [])];
-  if (f.key === 'derivacion' && AVANCE && AVANCE.ocGlobal != null && $('#vAva').checked) {
+  if (f.key === 'derivacion' && AVANCE && AVANCE.oc != null && $('#vAva').checked) {
     const c = AVANCE.counts || {}, fu = `tablero de la LT, corte ${fCorta(AVANCE.corteISO)} (reporte N.° ${AVANCE.reporte})`;
-    datos.unshift(['Obra civil', `${fmt(AVANCE.ocGlobal, 1)} % (media de las 23 torres)${c.civilFin != null ? ` · ${c.civilFin} de ${c.total} torres terminadas` : ''}`, fu],
+    datos.unshift(['Obra civil', `${fmt(AVANCE.oc, 2)} % (Base de seguimiento: valor ganado ÷ presupuesto de obra civil)${AVANCE.py != null ? ` · proyecto completo ${fmt(AVANCE.py, 2)} %` : ''}${c.civilFin != null ? ` · ${c.civilFin} de ${c.total} torres terminadas` : ''}`, fu],
       ...(AVANCE.fases && typeof AVANCE.fases.acceso === 'number' ? [['Accesos', `${fmt(AVANCE.fases.acceso, 1)} %${c.accesoOK != null ? ` · ${c.accesoOK} de ${c.total} torres con acceso` : ''}`, fu]] : []));
   }
   if (extra) datos.unshift(['Elemento tocado', extra, 'modelo 3D de la SE']);

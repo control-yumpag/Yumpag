@@ -20,8 +20,11 @@ cero… relaciónalo, jálalo, es información ya trabajada»):
 - Torre: el código de la torre paramétrica del BIM 4D de la LT se extrae de `../plantilla.html` (`torreDelTablero()` en
   `red.js`: de «TORRE PARAMÉTRICA 138 kV» al final de `buildTorreParam()`). Si la plantilla cambia esos nombres, la página
   sigue con su silueta propia y lo avisa en la consola.
-- Estado de obra: `../datos.json` (DATA.towers: % por torre y actividad, `patasReal`, `ph.elm`; ocGlobal, counts,
-  phaseRollup; CAMINOS_DET). Nada se recalcula aquí: N/A se muestra como N/A.
+- Estado de obra: `../datos.json` (DATA.towers: % por torre y actividad, `patasReal`, `ph.elm`; counts,
+  phaseRollup; CAMINOS_DET). Nada se recalcula aquí: N/A se muestra como N/A. La cifra global de obra civil de la línea
+  es la del tablero de la LT: `BASE_MS.al_corte.ev` (Base de seguimiento: valor ganado ÷ presupuesto de obra civil) y el
+  proyecto completo `BASE_MS.especialidades.proyecto.avance`; `DATA.ocGlobal` (media de las 23 torres) ya no se muestra
+  (decisión del usuario del 16-Nov-26: todas las cifras globales salen de la Base de seguimiento; aplicado el 17-Nov-26).
 - Fotos: `../fotos/fotos.json` (las mismas copias con rostros difuminados del tablero), solo al abrir la ficha de una torre.
 - SE: los modelos de Paragsha II, Yumpag y Uchucchacua se **importan tal cual** desde `../se-paragsha2/pg2_3d.js`,
   `../se-yumpag/ypg3d.js` y `../se-uchucchacua/se3d.js` (su `construir(escena)`), y el avance de AXON desde
