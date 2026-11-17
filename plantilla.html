@@ -2261,6 +2261,12 @@ canvas{max-width:100%}
 .kpi .val span{font-size:.85rem;font-weight:600;color:var(--ink-mut)}
 .kpi .foot{font-size:.63rem;color:var(--ink-2);margin-top:2px}
 .kpi.accent{background:linear-gradient(135deg,var(--sky-soft),transparent)}
+/* v72.73: franja del proyecto completo (obra civil + obra electromecánica) a todo el ancho de la grilla del Resumen */
+#v-res .kpi.kpi-pry{grid-column:1/-1}
+.kpi-pry .pry-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 26px;margin-top:3px}
+.kpi-pry .pry-v{min-width:150px}
+.kpi-pry .pry-txt{flex:1 1 340px;font-size:.68rem;color:var(--ink-2);line-height:1.45}
+@media (max-width:860px){ .kpi-pry .pry-txt{flex-basis:100%;font-size:.6rem} .kpi-pry .pry-v{min-width:120px} }
 
 /* ===== RESUMEN GRID ===== */
 #v-res{grid-template-columns:repeat(6,1fr);grid-template-rows:auto auto 1fr;align-content:start}
@@ -8126,9 +8132,15 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <div class="kpi accent"><div class="lab">Avance obra civil · Base de seguimiento</div><div class="val" id="k-oc">—<span>%</span></div><div class="foot" id="k-oc-f">valor ganado ÷ presupuesto de obra civil (secciones 01 a 20) · proyecto <span id="k-proy">—</span> %</div></div>
     <div class="kpi"><div class="lab">Accesos habilitados</div><div class="val" id="k-acc">—</div><div class="foot" id="k-acc-f">caminos de acceso a torre</div></div>
     <div class="kpi"><div class="lab">Torres iniciadas</div><div class="val" id="k-ini">—</div><div class="foot">al menos acceso o cimentación</div></div>
-    <div class="kpi"><div class="lab">Desfase obra civil · LB1</div><div class="val" id="k-desf">—<span> pts</span></div><div class="foot" id="k-desf-f">valor ganado − planificado LB1 · Base de seguimiento</div></div>
+    <div class="kpi"><div class="lab">Desfase obra civil · LB1</div><div class="val" id="k-desf">—<span> %</span></div><div class="foot" id="k-desf-f">valor ganado − planificado LB1 · Base de seguimiento</div></div>
     <div class="kpi"><div class="lab">SPI obra civil · LB0 contractual</div><div class="val" id="k-spi0">—</div><div class="foot" id="k-spi0f">EV / línea base contractual</div></div>
     <div class="kpi"><div class="lab">SPI obra civil · LB1 planificado</div><div class="val" id="k-spi">—</div><div class="foot" id="k-spif">EV / Plan de Recuperación</div></div>
+    <!-- v72.73 (17-Nov-26, pedido del usuario: «cuánto es la diferencia de la línea base general, que es la obra civil más la obra
+         electromecánica… que se diga obra civil más obra electromecánica tanto»): franja del proyecto completo, a todo el ancho -->
+    <div class="kpi kpi-pry" id="kpiPry"><div class="lab">Proyecto completo · obra civil + obra electromecánica · Base de seguimiento</div>
+      <div class="pry-row"><div class="pry-v"><div class="val" id="k-pry">—<span>%</span></div><div class="foot">avance del proyecto · valor ganado ÷ presupuesto total</div></div>
+      <div class="pry-v"><div class="val" id="k-pry-d">—<span> %</span></div><div class="foot" id="k-pry-df">diferencia con la línea base general</div></div>
+      <div class="pry-txt" id="k-pry-t"></div></div></div>
 
     <div class="verdict">
       <div class="big" style="color:var(--amber)">En ejecución · Ruta crítica en cimentaciones (PdR Línea Base 1) y materiales de PAT</div>
@@ -8144,7 +8156,7 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
          se eliminó el 14-Oct y la tarjeta quedó mostrando «Pronóstico del 13-Oct… ya venció». clima() no hace nada sin #climaBody. -->
 
     <div class="card half"><h3><span class="dot"></span>Avance por especialidad · Base de seguimiento</h3>
-      <div class="desc" id="espDesc">Valor ganado ÷ presupuesto de cada especialidad (hoja «Curva S», tabla «Avance por especialidad»): obra civil = secciones 01 a 20 (accesos, cimentación, PAT, muros); electromecánica = 21 a 29.</div>
+      <div class="desc" id="espDesc">Valor ganado ÷ presupuesto de cada especialidad (hoja «Curva S», tabla «Avance por especialidad»): obra civil = secciones 01 a 20 (accesos, cimentación, PAT, muros); electromecánica = 21 a 29; proyecto = obra civil + obra electromecánica.</div>
       <div class="body"><canvas id="chPhase"></canvas></div></div>
     <div class="card half"><h3><span class="dot"></span>Avance por actividad de obra civil</h3>
       <div class="desc">EV ganado de cada partida de cimentación en el conjunto de la línea.</div>
@@ -12014,9 +12026,25 @@ function renderKPIs(){
   $('k-oc').innerHTML = (BA ? f2(BA.ev) : '—') + '<span>%</span>';
   if ($('k-proy')) $('k-proy').textContent = f2(BP.avance);
   if ($('k-desf')){
-    $('k-desf').innerHTML = (BA ? (BA.desfase_diario > 0 ? '+' : '') + f2(BA.desfase_diario) : '—') + '<span> pts</span>';
+    $('k-desf').innerHTML = (BA ? (BA.desfase_diario > 0 ? '+' : '') + f2(BA.desfase_diario) : '—') + '<span> %</span>';
     $('k-desf').style.color = BA && BA.desfase_diario < 0 ? 'var(--red)' : '';
     if ($('k-desf-f') && BA) $('k-desf-f').textContent = `EV ${f2(BA.ev)} % − LB1 ${f2(BA.lb1)} % · Base de seguimiento al ${fBA}`;
+  }
+  // v72.73 (17-Nov-26, pedido del usuario: «es súper importante… cuánto es la diferencia de la línea base general, que es la obra civil
+  // más la obra electromecánica… que se diga obra civil más obra electromecánica tanto»): el proyecto completo y su diferencia con la
+  // línea base general (LB1 del proyecto), dicho en texto. Sale de BASE_MS.especialidades y BASE_MS.proyecto (hoja «Curva S» de la Base).
+  const BE = BMS.especialidades || {}, EOC = BE.obra_civil || {}, EEL = BE.electromecanica || {}, EPR = BE.proyecto || {};
+  const pAv = EPR.avance != null ? EPR.avance : BP.avance, pLb = BP.lb1 != null ? BP.lb1 : null;
+  const pDf = (pAv != null && pLb != null) ? pAv - pLb : (BP.desfase != null ? BP.desfase : null);
+  const fdmK = iso => iso ? (+iso.slice(8, 10)) + '-' + MESk[+iso.slice(5, 7) - 1] : '';
+  if ($('k-pry')){
+    $('k-pry').innerHTML = f2(pAv) + '<span>%</span>';
+    $('k-pry-d').innerHTML = (pDf > 0 ? '+' : '') + f2(pDf) + '<span> %</span>';
+    $('k-pry-d').style.color = pDf < 0 ? 'var(--red)' : '';
+    $('k-pry-df').textContent = 'diferencia con la línea base general' + (pLb != null ? ` (LB1 del proyecto al ${f2(pLb)} %` + (BA && BA.fin_lb1 && pLb >= 99.995 ? ` desde el ${fdmK(BA.fin_lb1)})` : ')') : '');
+    $('k-pry-t').innerHTML = (EOC.aporte != null && EEL.aporte != null)
+      ? `<b>Obra civil + obra electromecánica = ${f2(pAv)} %</b> del proyecto: la obra civil aporta <b>${f2(EOC.aporte)} %</b> (pesa ${f2(EOC.peso)} % del presupuesto) y la obra electromecánica <b>${f2(EEL.aporte)} %</b> (pesa ${f2(EEL.peso)} %${EEL.avance > 0 ? '' : '; aún no inicia'}). Frente al ${pLb != null ? f2(pLb) : '—'} % de la línea base general, la diferencia es de <b>${f2(pDf)} %</b>.`
+      : `Proyecto completo (obra civil + obra electromecánica): ${f2(pAv)} %.`;
   }
   $('k-acc').textContent = c.accesoOK + '/' + c.total;
   $('k-acc-f').textContent = 'torres con camino de acceso concluido (Resumen)';
@@ -12053,7 +12081,7 @@ function renderKPIs(){
       if(a) a.textContent='—'; if(b) b.textContent='—';
     }
   })();
-  $('vd-txt').innerHTML = `Obra civil al <b>${BA ? f2(BA.ev) : '—'} %</b> según la Base de seguimiento (valor ganado ÷ presupuesto de obra civil; proyecto ${f2(BP.avance)} %), <b>${BA ? f2(BA.desfase_diario) : '—'} pts</b> frente a la LB1. Las fundaciones (<b>${c.civilFin} de ${c.total}</b> torres concluidas) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance por torre del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de obra civil ${(window.__spiCorte && window.__spiCorte.spi1 != null ? window.__spiCorte.spi1 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(window.__spiCorte && window.__spiCorte.spi0 != null ? window.__spiCorte.spi0 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0)${window.__spiCorte && window.__spiCorte.ref ? ' ' + window.__spiCorte.ref : ''} · S${BA ? BA.semana : AVFIS.corte} de obra.`;
+  $('vd-txt').innerHTML = `Obra civil al <b>${BA ? f2(BA.ev) : '—'} %</b> según la Base de seguimiento (valor ganado ÷ presupuesto de obra civil), <b>${BA ? f2(BA.desfase_diario) : '—'} %</b> frente a la LB1; el proyecto completo (obra civil + obra electromecánica) va en <b>${f2(pAv)} %</b>, <b>${f2(pDf)} %</b> frente a la línea base general. Las fundaciones (<b>${c.civilFin} de ${c.total}</b> torres concluidas) y la puesta a tierra marcan la ruta crítica hacia el montaje de estructuras y la conexión con la SE Yumpag (avance por torre del reporte ⟦reporte⟧ del ⟦fecha_dm⟧). SPI de obra civil ${(window.__spiCorte && window.__spiCorte.spi1 != null ? window.__spiCorte.spi1 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.recup[AVFIS.corte-1]).toFixed(2)} frente al PdR (LB1) / ${(window.__spiCorte && window.__spiCorte.spi0 != null ? window.__spiCorte.spi0 : AVFIS.ejec[AVFIS.corte-1]/AVFIS.base[AVFIS.corte-1]).toFixed(2)} frente a la línea base (LB0)${window.__spiCorte && window.__spiCorte.ref ? ' ' + window.__spiCorte.ref : ''} · S${BA ? BA.semana : AVFIS.corte} de obra.`;
 }
 
 /* Crea el gráfico solo si su canvas sigue existiendo (hay vistas que se retiraron) */
@@ -12082,7 +12110,7 @@ function renderAllCharts(){
   charts.phase = mkChart('chPhase', {
     type: 'bar',
     data: {
-      labels: espOk ? espK.map(k => k[1] + ' · ' + BE[k[0]].avance.toFixed(2) + ' %') : ['Accesos', 'Obra Civil', 'Electromecánica'],
+      labels: espOk ? espK.map(k => k[0] === 'proyecto' ? ['Proyecto · ' + BE[k[0]].avance.toFixed(2) + ' %', '(obra civil + electromecánica)'] : k[1] + ' · ' + BE[k[0]].avance.toFixed(2) + ' %') : ['Accesos', 'Obra Civil', 'Electromecánica'],
       datasets: [{
         data: espOk ? espK.map(k => +BE[k[0]].avance.toFixed(2)) : [pr.acceso, pr.civil, pr.elm],
         backgroundColor: espOk ? espK.map(k => css(k[2])) : [css('--c-acc'), css('--c-civ'), css('--c-elm')],
@@ -14201,7 +14229,7 @@ const BRIEF = ⟦bloque:BRIEF⟧ || { lookahead: [], hallazgos: [], restriccione
     if (grupo === 'civil'){
       // v72.72 (16-Nov-26): la cifra de obra civil es la de la Base de seguimiento (valor ganado ÷ presupuesto de obra civil); sin medias de torres
       const BAo = (window.BASE_MS && window.BASE_MS.al_corte) || null;
-      el.innerHTML = `Obra civil <b>${BAo && BAo.ev != null ? BAo.ev.toFixed(2) : '—'} %</b> (Base de seguimiento: valor ganado ÷ presupuesto de obra civil) · ${DATA.counts.civilFin}/${DATA.counts.total} torres con fundaciones concluidas`;
+      el.innerHTML = `Obra civil <b>${BAo && BAo.ev != null ? BAo.ev.toFixed(2) : '—'} %</b> (Base de seguimiento: valor ganado ÷ presupuesto de obra civil) · ${DATA.counts.civilFin}/${DATA.counts.total} torres con fundaciones concluidas${(() => { const P = (window.BASE_MS && window.BASE_MS.proyecto) || null; return P && P.avance != null ? ` · proyecto completo (obra civil + obra electromecánica) <b>${P.avance.toFixed(2)} %</b>, <b>${(P.desfase != null ? P.desfase : P.avance - 100).toFixed(2).replace('-', '−')} %</b> frente a la línea base general` : ''; })()}`;
     } else {
       const planElm = (typeof CURVAS !== 'undefined' && CURVAS.elmPlan) ? CURVAS.elmPlan[CUT] : null;
       let hit = '';
@@ -15815,7 +15843,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       { c: 'lb0', l: 'Línea base LB0 · contractual', v: F2(AC.lb0) + '<small> %</small>', f: `al ${fd(AC.fecha)} · S${AC.semana}: ${F2(SEM[semIdx].lb0)} %` },
       { c: 'lb1', l: 'Planificado LB1 · Plan de Recuperación', v: F2(AC.lb1) + '<small> %</small>', f: `al ${fd(AC.fecha)} · cierre S${AC.semana} (${fd(AC.sem_fin)}): ${F2(AC.lb1_sem)} %` },
       { c: 'ev', l: 'Ejecutado (EV)', v: F2(AC.ev) + '<small> %</small>', f: `valorizado al ${fd(AC.ev_fecha)} · % del presupuesto de ${SER}` },
-      { c: ds < 0 ? 'bad' : 'good', l: 'Desfase vs planificado (LB1)', v: (ds > 0 ? '+' : '−') + F2(Math.abs(ds)) + '<small> pts</small>', f: `S${AC.semana} (reporte) · al ${fd(AC.fecha)} diario: ${dd > 0 ? '+' : '−'}${F2(Math.abs(dd))} pts` },
+      { c: ds < 0 ? 'bad' : 'good', l: 'Desfase vs planificado (LB1)', v: (ds > 0 ? '+' : '−') + F2(Math.abs(ds)) + '<small> %</small>', f: `S${AC.semana} (reporte) · al ${fd(AC.fecha)} diario: ${dd > 0 ? '+' : '−'}${F2(Math.abs(dd))} %` },
       // v72.64 (29-Oct-26, auditoría): el valor es EV/PV AL DÍA, igual que su fórmula y que las tarjetas SPI de arriba (antes mostraba el del
       // cierre de la semana —spi_ab_sem / spi_are_sem— con la fórmula del día: «0,29 = 29,35 / 91,16»)
       { c: ((AC.lb0 > 0 ? AC.ev / AC.lb0 : 0)) < 0.9 ? 'bad' : 'good', l: 'SPI vs LB0 · contractual', v: (AC.lb0 > 0 ? F2(AC.ev / AC.lb0) : '—') + '<small> LB0</small>', f: `EV ${F2(AC.ev)} % / LB0 ${F2(AC.lb0)} % · mide el atraso frente al contrato` },
@@ -15825,7 +15853,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
         : { c: 'ritmo', l: 'Ritmo requerido', v: F2(AC.ritmo_req_dia) + '<small> %/día</small>', f: `observado ${F2(AC.ritmo_obs_dia)} %/día · hay que multiplicarlo por ${(AC.ritmo_req_dia / Math.max(AC.ritmo_obs_dia, 0.01)).toFixed(1)} para cerrar el ${fd(finPdr)}` } ];
     el.innerHTML = items.map(k => `<div class="k ${k.c}"><div class="l">${k.l}</div><div class="v">${k.v}</div><div class="f">${k.f}</div></div>`).join('');
     const tt = $('bmsTitle'); if (tt) tt.textContent = `· Base de seguimiento MS · S${AC.semana} de obra · corte ${fdl(AC.fecha)}`;
-    const pry = B.proyecto && B.proyecto.avance != null ? ` El proyecto completo (obra civil + electromecánica, secciones 01 a 29) va en <b>${F2(B.proyecto.avance)} %</b>.` : '';
+    const pry = B.proyecto && B.proyecto.avance != null ? ` El proyecto completo (obra civil + obra electromecánica, secciones 01 a 29) va en <b>${F2(B.proyecto.avance)} %</b>${B.proyecto.desfase != null ? `, <b>${String(F2(B.proyecto.desfase)).replace('-', '−')} %</b> frente a la línea base general (LB1 del proyecto al ${F2(B.proyecto.lb1)} %)` : ''}.` : '';
     const de = $('bmsDesc'); if (de) de.innerHTML = `Línea base contractual (LB0), línea de recuperación del Plan de Recuperación (LB1) y ejecutado (valor ganado), en % del presupuesto de ${SER_TIT}.${pry} Fuente: hojas «Curva S» y «Avance» de <b>${esc(B.fuente)}</b> (${esc(B.archivo)}). El ejecutado está valorizado hasta el ${fdl(AC.ev_fecha)}; el reporte diario ${(typeof DATA !== 'undefined' && DATA.corte_diario) ? esc(DATA.corte_diario.fuente) : ''} actualiza torres y actividades pero no la valorización.` +
       // v72.67 (05-Nov-26): semanas posteriores al fin del Plan de Recuperación sin línea base nueva (base_ms_build: sin_linea_base)
       (() => { const ext = SEM.filter(w => w.sin_linea_base); if (!ext.length) return '';
@@ -15950,8 +15978,8 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     s += `<rect x="${bx}" y="${by}" width="${bw2}" height="${bh2}" rx="6" fill="${css('--panel')}" stroke="${dcol}" stroke-width="2" opacity=".95"/>`;
     if (usd){
     } else {
-      s += `<text x="${bx + bw2 / 2}" y="${by + 18}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${dcol}">Desfase S${AC.semana}: ${AC.desfase_sem > 0 ? '+' : '−'}${F2(Math.abs(AC.desfase_sem))} pts</text>`;
-      s += `<text x="${bx + bw2 / 2}" y="${by + 34}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${dcol}">EV ${F2(AC.ev_sem)} % − LB1 ${F2(AC.lb1_sem)} % · diario ${fd(AC.fecha)}: ${AC.desfase_diario > 0 ? '+' : '−'}${F2(Math.abs(AC.desfase_diario))} pts</text>`;
+      s += `<text x="${bx + bw2 / 2}" y="${by + 18}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${dcol}">Desfase S${AC.semana}: ${AC.desfase_sem > 0 ? '+' : '−'}${F2(Math.abs(AC.desfase_sem))} %</text>`;
+      s += `<text x="${bx + bw2 / 2}" y="${by + 34}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${dcol}">EV ${F2(AC.ev_sem)} % − LB1 ${F2(AC.lb1_sem)} % · diario ${fd(AC.fecha)}: ${AC.desfase_diario > 0 ? '+' : '−'}${F2(Math.abs(AC.desfase_diario))} %</text>`;
     }
     // guía de hover
     s += `<line id="bmsHover" x1="0" y1="${mT}" x2="0" y2="${mT + ph}" stroke="${css('--ink-mut')}" stroke-width="1" opacity="0"/>`;
@@ -15968,11 +15996,11 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       const i = toI(e.clientX); hv.setAttribute('x1', x(i)); hv.setAttribute('x2', x(i)); hv.setAttribute('opacity', '.6');
       let html;
       if (sem){ const w = SEM[i]; html = `<b>Semana ${w.n}</b> · ${fd(w.ini)} → ${fd(w.fin)}<br>LB0: <b style="color:${C_LB0}">${F2(w.lb0)} %</b> (US$ ${F0(w.lb0A)})<br>LB1: <b style="color:${C_LB1}">${F2(w.lb1)} %</b> (US$ ${F0(w.lb1A)})<br>Ejecutado: <b style="color:${C_EV}">${w.ev == null ? '—' : F2(w.ev) + ' %'}</b>${w.evA != null ? ' (US$ ' + F0(w.evA) + ')' : ''}` +
-        (w.ev != null ? `<br>Desfase: <b>${F2(w.ev - w.lb1)} pts</b> · SV US$ ${F0((w.evA || 0) - (w.lb1A || 0))}` : '') +
+        (w.ev != null ? `<br>Desfase: <b>${F2(w.ev - w.lb1)} %</b> · SV US$ ${F0((w.evA || 0) - (w.lb1A || 0))}` : '') +
         `<br>Semana · PV LB1 ${F2(w.pvRE)} % (US$ ${F0(w.lb1M)})${w.evS != null ? ` · EV ${F2(w.evS)} % (US$ ${F0(w.evM)})` : ''}` +
         (w.spiRE != null ? `<br>SPI semana ${F2(w.spiRE)} · acumulado ${F2(w.spiARE)} (LB1) · ${F2(w.spiAB)} (LB0)` : '') +
         (w.sin_linea_base ? `<br><i>Sin línea base nueva: LB0 y LB1 planas al 100 %${w.en_curso ? ` · semana en curso, ejecutado al ${fd(w.ev_al)}` : ''}</i>` : ''); }
-      else { html = `<b>${fdl(DI.fechas[i])}</b><br>LB0: <b style="color:${C_LB0}">${F2(DI.lb0[i])} %</b><br>LB1: <b style="color:${C_LB1}">${F2(DI.lb1[i])} %</b> · día US$ ${F0(DI.lb1d[i])}<br>Ejecutado: <b style="color:${C_EV}">${DI.ev[i] == null ? '— (sin valorizar)' : F2(DI.ev[i]) + ' %'}</b>${DI.evd[i] != null ? ' · día US$ ' + F0(DI.evd[i]) : ''}` + (DI.ev[i] != null ? `<br>Desfase: <b>${F2(DI.ev[i] - DI.lb1[i])} pts</b>` : ''); }
+      else { html = `<b>${fdl(DI.fechas[i])}</b><br>LB0: <b style="color:${C_LB0}">${F2(DI.lb0[i])} %</b><br>LB1: <b style="color:${C_LB1}">${F2(DI.lb1[i])} %</b> · día US$ ${F0(DI.lb1d[i])}<br>Ejecutado: <b style="color:${C_EV}">${DI.ev[i] == null ? '— (sin valorizar)' : F2(DI.ev[i]) + ' %'}</b>${DI.evd[i] != null ? ' · día US$ ' + F0(DI.evd[i]) : ''}` + (DI.ev[i] != null ? `<br>Desfase: <b>${F2(DI.ev[i] - DI.lb1[i])} %</b>` : ''); }
       tip.innerHTML = html; tip.style.display = 'block';
       const r = el.getBoundingClientRect(); let lx = e.clientX - r.left + 14, ly = e.clientY - r.top + 10;
       if (lx + 230 > r.width) lx = e.clientX - r.left - 240; if (ly + 120 > r.height) ly = Math.max(0, r.height - 130);
@@ -16026,7 +16054,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
 
   function table(){
     const el = $('bmsTable'); if (!el) return;
-    let h = `<table><thead><tr><th>Sem</th><th>Del → al</th><th class="num">LB0 %</th><th class="num">LB1 %</th><th class="num">Ejec. %</th><th class="num">Desfase pts</th><th class="num">PV sem LB1 %</th><th class="num">EV sem %</th><th class="num">SPI sem</th><th class="num">SPI acum LB1</th><th class="num">SPI acum LB0</th><th class="num">LB1 acum US$</th><th class="num">Ejec. acum US$</th><th class="num">SV US$</th></tr></thead><tbody>`;
+    let h = `<table><thead><tr><th>Sem</th><th>Del → al</th><th class="num">LB0 %</th><th class="num">LB1 %</th><th class="num">Ejec. %</th><th class="num">Desfase %</th><th class="num">PV sem LB1 %</th><th class="num">EV sem %</th><th class="num">SPI sem</th><th class="num">SPI acum LB1</th><th class="num">SPI acum LB0</th><th class="num">LB1 acum US$</th><th class="num">Ejec. acum US$</th><th class="num">SV US$</th></tr></thead><tbody>`;
     SEM.forEach((w, i) => { const d = w.ev == null ? null : w.ev - w.lb1, sv = w.evA == null ? null : w.evA - w.lb1A;
       h += `<tr class="${i === semIdx ? 'corte' : ''}"><td>S${w.n}</td><td>${fd(w.ini)} → ${fd(w.fin)}</td><td class="num">${F2(w.lb0)}</td><td class="num">${F2(w.lb1)}</td><td class="num">${w.ev == null ? '—' : F2(w.ev)}</td><td class="num ${d == null ? '' : (d < 0 ? 'neg' : 'pos')}">${d == null ? '—' : F2(d)}</td><td class="num">${F2(w.pvRE)}</td><td class="num">${w.evS == null ? '—' : F2(w.evS)}</td><td class="num">${w.spiRE == null ? '—' : F2(w.spiRE)}</td><td class="num">${w.spiARE == null ? '—' : F2(w.spiARE)}</td><td class="num">${w.spiAB == null ? '—' : F2(w.spiAB)}</td><td class="num">${F0(w.lb1A)}</td><td class="num">${w.evA == null ? '—' : F0(w.evA)}</td><td class="num ${sv == null ? '' : (sv < 0 ? 'neg' : 'pos')}">${sv == null ? '—' : F0(sv)}</td></tr>`; });
     h += `</tbody></table>`;
