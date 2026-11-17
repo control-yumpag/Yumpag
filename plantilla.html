@@ -8016,6 +8016,9 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 .bms-tools label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
 .bms-tools .sp{margin-left:auto;color:var(--ink-mut)}
 .bms-chart{position:relative;height:360px;min-height:300px}
+/* v72.74: curvas S general y electromecánica (solo el gráfico) */
+.bms-chart.cv-chart{height:300px;min-height:260px}
+@media (max-width:860px){ .bms-chart.cv-chart{height:250px;min-height:220px} }
 .bms-chart svg{width:100%;height:100%;display:block}
 .bms-chart .bms-tip{position:absolute;pointer-events:none;z-index:5;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;
   box-shadow:var(--shadow);padding:6px 9px;font-size:.62rem;line-height:1.4;color:var(--ink-2);min-width:150px;display:none}
@@ -8165,6 +8168,13 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
     <div class="card wide" style="max-height:210px"><h3><span class="dot"></span>Distribución de avance de las 23 torres</h3>
       <div class="desc">Cada barra es una estructura (T01 a T23). Altura = % de obra civil. Color = estado al corte.</div>
       <div class="body"><canvas id="chTowers"></canvas></div></div>
+    <!-- v72.74 (17-Nov-26, pedido del usuario: «las tres curvas S… primero la general, luego la civil y luego la electromecánica…
+         diaria tiene que ser»): curva general y curva electromecánica, solo el gráfico (BASE_MS.curvas) -->
+    <div class="card wide cv-card" id="cvGenCard"><h3><span class="dot"></span>Curva S general · obra civil + obra electromecánica <span id="cvGenTit" style="font-weight:500;color:var(--ink-mut)"></span></h3>
+      <div class="desc" id="cvGenDesc"></div>
+      <div class="bms-tools" id="cvGenTools"></div>
+      <div class="bms-chart cv-chart" id="cvGen"><div class="bms-tip" id="cvGenTip"></div></div>
+      <div class="bms-leg" id="cvGenLeg"></div></div>
     <div class="card wide" id="bmsCard"><h3><span class="dot"></span>Curva S de obra civil · valor ganado <span id="bmsTitle" style="font-weight:500;color:var(--ink-mut)"></span></h3>
       <div class="desc" id="bmsDesc"></div>
       <div class="bms-kpis" id="bmsKpis"></div>
@@ -8175,6 +8185,11 @@ body.lay-drag canvas,body.lay-drag iframe,body.lay-drag svg{pointer-events:none}
 
       <div class="bms-table" id="bmsTable" hidden></div>
     </div>
+    <div class="card wide cv-card" id="cvElmCard"><h3><span class="dot"></span>Curva S de obra electromecánica <span id="cvElmTit" style="font-weight:500;color:var(--ink-mut)"></span></h3>
+      <div class="desc" id="cvElmDesc"></div>
+      <div class="bms-tools" id="cvElmTools"></div>
+      <div class="bms-chart cv-chart" id="cvElm"><div class="bms-tip" id="cvElmTip"></div></div>
+      <div class="bms-leg" id="cvElmLeg"></div></div>
   </section>
 
   <!-- ==================== NUEVA PESTAÑA: PRESENTACIÓN BIM 3D/4D ==================== -->
@@ -15807,7 +15822,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
   const K = n => n == null ? '—' : ((n < 0 ? '−' : '') + (Math.abs(n) >= 1000 ? (Math.abs(n)/1000).toFixed(1) + ' k' : Math.abs(n).toFixed(0)));
   const AC = B.al_corte, SEM = B.semanas, DI = B.diario, T = B.totales;
   const C_LB0 = '#2f6fd0', C_LB1 = '#6b7a4a', C_EV = '#c0392b';
-  const st = { modo: 'sem', unidad: 'pct', barras: true, tabla: false };
+  const st = { modo: 'dia', unidad: 'pct', barras: true, tabla: false };   // v72.74: abre en la vista diaria (los reportes son diarios)
   const cur = () => (B.corte || '').slice(0);
   const semIdx = AC.semana - 1;
   // v72.66 (31-Oct-26): desde el último día de la LB1 el Plan de Recuperación está vencido y no hay ritmo requerido
@@ -15867,7 +15882,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
       <label><input type="checkbox" id="bmsBars" ${st.barras?'checked':''}> barras PV / EV semanal</label>
       <label><input type="checkbox" id="bmsTab" ${st.tabla?'checked':''}> tabla de valores</label>
       <span class="sp">pasa el cursor sobre la curva para ver los valores de cada semana</span>`;
-    el.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { st.modo = b.dataset.m; tools(); draw(); });
+    el.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { st.modo = b.dataset.m; tools(); draw(); if (window.cvSync) window.cvSync(st.modo); });
     el.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { st.unidad = b.dataset.u; tools(); draw(); });
     $('bmsBars').onchange = e => { st.barras = e.target.checked; draw(); };
     $('bmsTab').onchange = e => { st.tabla = e.target.checked; $('bmsTable').hidden = !st.tabla; if (st.tabla) table(); };
@@ -15898,7 +15913,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     } else {
       N = DI.fechas.length; xs = DI.fechas.map((s, i) => i);
       lb0 = DI.lb0.map(v => usd ? v / 100 * T.lb0 : v); lb1 = DI.lb1.map(v => usd ? v / 100 * T.lb1 : v); ev = DI.ev.map(v => v == null ? null : (usd ? v / 100 * T.lb1 : v));
-      labels = DI.fechas.map(s => { const [y, m, d] = s.split('-'); return { a: d === '01' ? MES[+m-1] : (+d % 7 === 0 ? +d : ''), b: '' }; });
+      labels = DI.fechas.map(s => { const [y, m, d] = s.split('-'); return { a: d === '01' ? MES[+m-1] : (+d % 7 === 0 && !movil ? +d : ''), b: '' }; });   // v72.74: en celular, solo los meses
     }
     const ymax = usd ? Math.max(T.lb0, T.lb1) * 1.02 : 100;
     const x = i => mL + (N > 1 ? i * pw / (N - 1) : 0);
@@ -15966,7 +15981,13 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     const iC = sem ? semIdx : DI.iCorte;
     const pts = [[lb0[iC], C_LB0], [lb1[iC], C_LB1], [sem ? ev[iC] : ev[DI.fechas.indexOf(DI.lastEV)], C_EV]];
     pts.forEach(([v, c]) => { if (v == null) return; s += `<circle cx="${cxS}" cy="${y(v)}" r="4.5" fill="${c}" stroke="${css('--panel')}" stroke-width="1.6"/>`; });
-    if (!sem){ pts.forEach(([v, c], k) => { if (v == null) return; s += `<text x="${cxS + 8}" y="${y(v) + (k === 2 ? 12 : -6)}" font-size="10" font-weight="800" fill="${c}">${usd ? fv(v) : F2(v) + '%'}</text>`; }); }
+    if (!sem){   // v72.74: a la izquierda del corte si no caben a la derecha, sin pisar el rótulo del corte; LB0 y LB1 en uno si coinciden
+      const izq = cxS + 70 > W - mR, tx = izq ? cxS - 8 : cxS + 8, an = izq ? 'end' : 'start', L = [];
+      pts.forEach(([v, c], k) => { if (v == null) return; if (k === 0 && pts[1][0] != null && Math.abs(y(v) - y(pts[1][0])) < 2) return;
+        L.push({ v, c, y: k === 2 ? (izq ? y(v) - 8 : y(v) + 12) : (y(v) < mT + 16 ? y(v) + 13 : y(v) - 6) }); });
+      L.sort((p, q) => p.y - q.y); for (let k = 1; k < L.length; k++) if (L[k].y - L[k - 1].y < 11) L[k].y = L[k - 1].y + 11;
+      L.forEach(l => { s += `<text x="${tx}" text-anchor="${an}" y="${l.y.toFixed(1)}" font-size="10" font-weight="800" fill="${l.c}">${usd ? fv(l.v) : F2(l.v) + '%'}</text>`; });
+    }
     // recuadro de desfase (en celular no se dibuja: el mismo dato está en los KPIs de arriba)
     const bw2 = 300, bh2 = 44, bx = mL + 12, by = mT + 8;
     if (movil){
@@ -16206,6 +16227,7 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     try { sintesis(); heat(); kpiDesfase(); } catch(e){ console.warn('bms síntesis', e); } }
   window.drawAvanceFisico = function(){ try { draw(); } catch(e){ console.warn('bms draw', e); } };
   window.bmsDraw = draw;
+  window.bmsSetModo = m => { if (st.modo === m) return; st.modo = m; tools(); draw(); };   // v72.74: lo usan las curvas general y electromecánica
   function fixHeights(){ try { const m = window.innerWidth <= 860; [['chPhase', m ? 180 : 200], ['chAct', m ? 180 : 200], ['chTowers', 230]].forEach(([id, h]) => { const cv = $(id); if (cv && cv.parentElement){ const b = cv.parentElement; b.style.height = h + 'px'; b.style.minHeight = h + 'px'; b.style.maxHeight = h + 'px'; } }); } catch(e){} }
   function resizeChartsIn(view){ try { if (typeof Chart === 'undefined' || !Chart.getChart) return; view.querySelectorAll('canvas').forEach(cv => { const c = Chart.getChart(cv); if (c) c.resize(); }); } catch(e){} }
   const boot = () => { all(); fixHeights();
@@ -16214,6 +16236,133 @@ window.BMS_HECHOS = ⟦bloque:BMS_HECHOS⟧;
     window.addEventListener('resize', () => { const v = $('v-res'); if (v && v.classList.contains('on')) { try { draw(); } catch(e){} } });
     document.addEventListener('dc:theme', () => { try { draw(); sintesis(); heat(); kpiDesfase(); } catch(e){} }); };
   if (document.readyState === 'complete') setTimeout(boot, 0); else window.addEventListener('load', () => setTimeout(boot, 0));
+})();
+</script>
+<script id="cv-script">
+/* v72.74 (17-Nov-26): curvas S general (proyecto, secciones 01 a 29) y de obra electromecánica (21 a 29), con el mismo dibujo que la de
+   obra civil: LB0, LB1 y ejecutado, línea del corte y desfase. Vista diaria (hoja «Avance» de la Base) y semanal (tabla de la hoja
+   «Curva S»); las tres curvas del Resumen cambian juntas de vista y abren en la diaria (los reportes son diarios). */
+(function(){
+  const B = window.BASE_MS;
+  const ocultar = () => ['cvGenCard', 'cvElmCard'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  if (!B || !B.curvas || !B.diario){ ocultar(); return; }
+  const $ = id => document.getElementById(id);
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const MES = ['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
+  const fd = s => { if (!s) return '—'; const [y,m,d] = s.split('-'); return (+d) + '-' + MES[+m-1]; };
+  const fdl = s => { if (!s) return '—'; const [y,m,d] = s.split('-'); return (+d) + ' ' + MES[+m-1] + ' ' + y.slice(2); };
+  const F2 = n => n == null ? '—' : (Math.round(n*100)/100).toFixed(2);
+  const SG = n => n == null ? '—' : (n > 0 ? '+' : (n < 0 ? '−' : '')) + F2(Math.abs(n));
+  const C_LB0 = '#2f6fd0', C_LB1 = '#6b7a4a', C_EV = '#c0392b';
+  const DI = B.diario;
+  if (!window.CV_MODO) window.CV_MODO = 'dia';
+  const CFG = [
+    { k: 'proyecto', id: 'cvGen', txt: C => `Proyecto completo (obra civil + obra electromecánica, secciones 01 a 29): línea base contractual (LB0), línea de recuperación del Plan de Recuperación (LB1) y ejecutado (valor ganado), en % del presupuesto total. Al ${fdl(C.al_corte.fecha)}: ejecutado <b>${F2(C.al_corte.ev)} %</b> frente al <b>${F2(C.al_corte.lb1)} %</b> de la LB1: diferencia con la línea base general <b>${SG(C.al_corte.desfase)} %</b>.` },
+    { k: 'electromecanica', id: 'cvElm', txt: C => `Obra electromecánica (secciones 21 a 29): LB0, LB1 y ejecutado en % de su propio presupuesto. Al ${fdl(C.al_corte.fecha)}: ejecutado <b>${F2(C.al_corte.ev)} %</b>${C.al_corte.ev > 0 ? '' : ' (aún no inicia)'} frente al <b>${F2(C.al_corte.lb1)} %</b> de la LB1: desfase <b>${SG(C.al_corte.desfase)} %</b>.` }
+  ];
+  function tools(cfg){
+    const el = $(cfg.id + 'Tools'); if (!el) return; const C = B.curvas[cfg.k], m = window.CV_MODO;
+    el.innerHTML = `<span class="seg"><button data-cm="sem" class="${m === 'sem' ? 'on' : ''}">Semanal (S1–S${(C.semanas || []).length})</button><button data-cm="dia" class="${m === 'dia' ? 'on' : ''}">Diario (${fd(B.inicio)} → ${fd(B.fin)})</button></span><span class="sp">pasa el cursor sobre la curva para ver los valores</span>`;
+    el.querySelectorAll('[data-cm]').forEach(b => b.onclick = () => cvModo(b.dataset.cm));
+  }
+  function legend(cfg){
+    const el = $(cfg.id + 'Leg'); if (!el) return;
+    el.innerHTML = `<span><i style="background:${C_LB0}"></i>Línea base LB0 (contrato)</span><span><i style="background:${C_LB1}"></i>Planificado LB1 (Plan de Recuperación)</span><span><i style="background:${C_EV}"></i>Ejecutado (valor ganado)</span><span>Fuente: Base de seguimiento · ${window.CV_MODO === 'sem' ? 'tabla semanal de la hoja «Curva S»' : 'hoja «Avance» (diario)'}</span>`;
+  }
+  function draw(cfg){
+    const el = $(cfg.id); const C = B.curvas[cfg.k]; if (!el || !C) return;
+    let tip = $(cfg.id + 'Tip'); if (!tip){ tip = document.createElement('div'); tip.className = 'bms-tip'; tip.id = cfg.id + 'Tip'; }
+    const sem = window.CV_MODO === 'sem', SW = C.semanas || [];
+    const W = Math.max(360, Math.round(el.clientWidth || 900)), H = Math.max(220, Math.round(el.clientHeight || 300));
+    const movil = W < 620, denso = sem && W / Math.max(1, SW.length) < 46;
+    const mL = 44, mR = 18, mT = 26, mB = sem ? 40 : 34, pw = W - mL - mR, ph = Math.max(80, H - mT - mB);
+    const N = sem ? SW.length : DI.fechas.length;
+    const lb0 = sem ? SW.map(w => w.lb0) : C.diario.lb0, lb1 = sem ? SW.map(w => w.lb1) : C.diario.lb1, ev = sem ? SW.map(w => w.ev) : C.diario.ev;
+    const x = i => mL + (N > 1 ? i * pw / (N - 1) : 0);
+    const y = v => mT + ph - (Math.max(0, Math.min(v, 100)) / 100) * ph;
+    const path = arr => { let d = '', open = false; arr.forEach((v, i) => { if (v == null){ open = false; return; } d += (open ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; open = true; }); return d; };
+    let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="${cfg.id}Svg">`;
+    [0, 20, 40, 60, 80, 100].forEach(v => { s += `<line x1="${mL}" y1="${y(v)}" x2="${W - mR}" y2="${y(v)}" stroke="${css('--grid')}" stroke-width="1"/><text x="${mL - 6}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="${css('--ink-mut')}" font-family="IBM Plex Mono,monospace">${v}%</text>`; });
+    if (sem){
+      SW.forEach((w, i) => { if (denso && i % 2 && i !== N - 1) return; s += `<text x="${x(i)}" y="${mT + ph + 12}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${css('--ink-2')}">S${w.n}</text>` + (W / N >= 40 ? `<text x="${x(i)}" y="${mT + ph + 22}" text-anchor="middle" font-size="7.5" fill="${css('--ink-mut')}">${fd(w.fin)}</text>` : ''); });
+    } else {
+      DI.fechas.forEach((f, i) => { const d = f.slice(8, 10), m = +f.slice(5, 7), first = d === '01'; if (!first && (movil || (+d % 7))) return;
+        s += `<line x1="${x(i)}" y1="${mT + ph}" x2="${x(i)}" y2="${mT + ph + (first ? 6 : 3)}" stroke="${css('--ink-mut')}" stroke-width="1"/><text x="${x(i)}" y="${mT + ph + 16}" text-anchor="middle" font-size="${first ? 8.5 : 7}" font-weight="${first ? 700 : 400}" fill="${first ? css('--ink-2') : css('--ink-mut')}">${first ? MES[m - 1] : +d}</text>`; });
+    }
+    { let d = '', st = false, last = 0; ev.forEach((v, i) => { if (v == null) return; if (!st){ d += `M ${x(i)} ${mT + ph} `; st = true; } d += `L ${x(i).toFixed(1)} ${y(v).toFixed(1)} `; last = i; });
+      if (st) s += `<path d="${d} L ${x(last)} ${mT + ph} Z" fill="${C_EV}" opacity=".06"/>`; }
+    const iC = sem ? N - 1 : Math.min(DI.iCorte, N - 1), cx = x(iC), AC = C.al_corte;
+    s += `<line x1="${cx}" y1="${mT - 6}" x2="${cx}" y2="${mT + ph}" stroke="${css('--sky')}" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+    s += `<text x="${cx - 6}" y="${mT - 10}" text-anchor="end" font-size="9" font-weight="700" fill="${css('--sky')}">${sem ? `CORTE · S${SW[N - 1].n} de obra (${fd(SW[N - 1].ini)} → ${fd(SW[N - 1].fin)})` : `CORTE DIARIO · ${fdl(AC.fecha)}`}</text>`;
+    s += `<path d="${path(lb0)}" fill="none" stroke="${C_LB0}" stroke-width="${sem ? 2.4 : 2}" stroke-linejoin="round"/>`;
+    s += `<path d="${path(lb1)}" fill="none" stroke="${C_LB1}" stroke-width="${sem ? 2.4 : 2}" stroke-linejoin="round"/>`;
+    s += `<path d="${path(ev)}" fill="none" stroke="${C_EV}" stroke-width="${sem ? 2.8 : 2.4}" stroke-linejoin="round"/>`;
+    const fv = v => (Math.round(v * 10) / 10).toFixed(v >= 99.95 ? 0 : 1) + '%';
+    if (sem){
+      SW.forEach((w, i) => {
+        const a = lb0[i], b = lb1[i], e = ev[i], every = movil ? (i === 0 || i === N - 1) : (denso ? (i % 2 === 0 || i === N - 1) : true), labs = [];
+        const nz = v => v != null && v > 0.0001;   // los ceros repetidos (antes de empezar) no se rotulan
+        if (a != null && every && nz(a) && !(a >= 99.95 && i > 0 && lb0[i - 1] >= 99.95) && !(b != null && Math.abs(a - b) < 0.05)) labs.push({ v: a, c: C_LB0, y: y(a) - 6 });
+        if (b != null && every && (nz(b) || i === N - 1) && !(b >= 99.95 && i > 0 && lb1[i - 1] >= 99.95 && i !== N - 1)) labs.push({ v: b, c: C_LB1, y: y(b) - 6 });
+        if (e != null && every && (nz(e) || i === N - 1)) labs.push({ v: e, c: C_EV, y: y(e) + 11 });
+        labs.sort((p, q) => p.y - q.y); const lim = mT + ph - 2;
+        for (let k = labs.length - 1; k >= 0; k--){ if (labs[k].y > lim) labs[k].y = lim; if (k < labs.length - 1 && labs[k + 1].y - labs[k].y < 9) labs[k].y = labs[k + 1].y - 9; }
+        const last = i === N - 1;   // la semana del corte: rótulos a la izquierda (no se cortan en el borde) y bajo la línea si está al 100 %
+        labs.forEach(l => { s += `<text x="${last ? x(i) - 7 : x(i)}" y="${(last && l.v >= 99.95 ? y(l.v) + 13 : l.y).toFixed(1)}" text-anchor="${last ? 'end' : 'middle'}" font-size="7.5" font-weight="700" fill="${l.c}">${last ? F2(l.v) + '%' : fv(l.v)}</text>`; });
+        s += `<circle cx="${x(i)}" cy="${y(a)}" r="2.2" fill="${C_LB0}"/><circle cx="${x(i)}" cy="${y(b)}" r="2.2" fill="${C_LB1}"/>` + (e != null ? `<circle cx="${x(i)}" cy="${y(e)}" r="2.4" fill="${C_EV}"/>` : '');
+      });
+    }
+    const pts = [[lb0[iC], C_LB0], [lb1[iC], C_LB1], [sem ? ev[iC] : AC.ev, C_EV]];
+    pts.forEach(([v, c]) => { if (v == null) return; s += `<circle cx="${cx}" cy="${y(v)}" r="4.5" fill="${c}" stroke="${css('--panel')}" stroke-width="1.6"/>`; });
+    if (!sem){
+      const izq = cx + 70 > W - mR, tx = izq ? cx - 8 : cx + 8, an = izq ? 'end' : 'start', L = [];
+      const [a0, b0, e0] = [lb0[iC], lb1[iC], AC.ev];
+      if (b0 != null) L.push({ v: b0, c: C_LB1, y: y(b0) < mT + 16 ? y(b0) + 13 : y(b0) - 6 });
+      if (a0 != null && (b0 == null || Math.abs(a0 - b0) >= 0.05)) L.push({ v: a0, c: C_LB0, y: y(a0) < mT + 16 ? y(a0) + 13 : y(a0) - 6 });
+      if (e0 != null) L.push({ v: e0, c: C_EV, y: izq ? y(e0) - 8 : y(e0) + 12 });
+      L.sort((p, q) => p.y - q.y); for (let k = 1; k < L.length; k++) if (L[k].y - L[k - 1].y < 11) L[k].y = L[k - 1].y + 11;
+      L.forEach(l => { s += `<text x="${tx}" text-anchor="${an}" y="${l.y.toFixed(1)}" font-size="10" font-weight="800" fill="${l.c}">${F2(l.v)}%</text>`; });
+    }
+    if (!movil){
+      const dcol = AC.desfase < 0 ? css('--red') : css('--lime'), bw = 300, bh = 44, bx = mL + 12, by = mT + 8;
+      s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="${css('--panel')}" stroke="${dcol}" stroke-width="2" opacity=".95"/>`;
+      s += `<text x="${bx + bw / 2}" y="${by + 18}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${dcol}">${cfg.k === 'proyecto' ? 'Diferencia con la línea base general' : 'Desfase'}: ${SG(AC.desfase)} %</text>`;
+      s += `<text x="${bx + bw / 2}" y="${by + 34}" text-anchor="middle" font-size="8.5" font-weight="700" fill="${dcol}">EV ${F2(AC.ev)} % − LB1 ${F2(AC.lb1)} % · al ${fd(AC.fecha)}</text>`;
+    }
+    s += `<line id="${cfg.id}Hover" x1="0" y1="${mT}" x2="0" y2="${mT + ph}" stroke="${css('--ink-mut')}" stroke-width="1" opacity="0"/>`;
+    s += `<rect x="${mL}" y="${mT}" width="${pw}" height="${ph}" fill="transparent" id="${cfg.id}Hit"/></svg>`;
+    el.innerHTML = s; el.appendChild(tip);
+    const svg = $(cfg.id + 'Svg'), hit = $(cfg.id + 'Hit'), hv = $(cfg.id + 'Hover');
+    if (svg && hit){
+      const toI = evx => { const r = svg.getBoundingClientRect(); const px = (evx - r.left) / r.width * W; return Math.max(0, Math.min(N - 1, Math.round((px - mL) / pw * (N - 1)))); };
+      hit.onmousemove = e => {
+        const i = toI(e.clientX); hv.setAttribute('x1', x(i)); hv.setAttribute('x2', x(i)); hv.setAttribute('opacity', '.6');
+        const cab = sem ? `<b>Semana ${SW[i].n}</b> · ${fd(SW[i].ini)} → ${fd(SW[i].fin)}` : `<b>${fdl(DI.fechas[i])}</b>`;
+        tip.innerHTML = cab + `<br>LB0: <b style="color:${C_LB0}">${F2(lb0[i])} %</b><br>LB1: <b style="color:${C_LB1}">${F2(lb1[i])} %</b><br>Ejecutado: <b style="color:${C_EV}">${ev[i] == null ? '— (sin valorizar)' : F2(ev[i]) + ' %'}</b>` + (ev[i] != null ? `<br>Desfase: <b>${SG(ev[i] - lb1[i])} %</b>` : '');
+        tip.style.display = 'block';
+        const r = el.getBoundingClientRect(); let lx = e.clientX - r.left + 14, ly = e.clientY - r.top + 10;
+        if (lx + 230 > r.width) lx = e.clientX - r.left - 240; if (ly + 110 > r.height) ly = Math.max(0, r.height - 120);
+        tip.style.left = lx + 'px'; tip.style.top = ly + 'px';
+      };
+      hit.onmouseleave = () => { tip.style.display = 'none'; hv.setAttribute('opacity', '0'); };
+    }
+  }
+  function all(){
+    CFG.forEach(cfg => { try {
+      const C = B.curvas[cfg.k]; if (!C){ const e = $(cfg.id + 'Card'); if (e) e.style.display = 'none'; return; }
+      const d = $(cfg.id + 'Desc'); if (d) d.innerHTML = cfg.txt(C);
+      const t = $(cfg.id + 'Tit'); if (t) t.textContent = `· Base de seguimiento MS · S${C.al_corte.semana} de obra · corte ${fdl(C.al_corte.fecha)}`;
+      tools(cfg); legend(cfg); draw(cfg);
+    } catch(e){ console.warn('curva S', cfg.k, e); } });
+  }
+  function cvModo(m){ window.CV_MODO = m; all(); if (window.bmsSetModo) window.bmsSetModo(m); }
+  window.cvSync = m => { if (window.CV_MODO === m) return; window.CV_MODO = m; all(); };
+  const prev = window.drawAvanceFisico;
+  window.drawAvanceFisico = function(){ try { if (prev) prev(); } catch(e){} try { all(); } catch(e){} };
+  const boot = () => { all();
+    window.addEventListener('resize', () => { const v = $('v-res'); if (v && v.classList.contains('on')) all(); });
+    document.addEventListener('dc:theme', () => { try { all(); } catch(e){} }); };
+  if (document.readyState === 'complete') setTimeout(boot, 60); else window.addEventListener('load', () => setTimeout(boot, 60));
 })();
 </script>
 <script id="pron-script">
